@@ -808,6 +808,7 @@ export const hi = {
 
   entryForm: {
     logSaved: 'लॉग सहेजा गया',
+    logUpdated: 'लॉग अपडेट किया गया',
     taskSaved: 'कार्य सहेजा गया',
     activityType: 'गतिविधि प्रकार',
     selectActivityTypeHint: 'पूर्ण-स्क्रीन फॉर्म खोलने के लिए गतिविधि प्रकार चुनें।',
@@ -1610,6 +1611,7 @@ export const hi = {
     loggingTo: 'लॉगिंग कर रहे हैं',
     switch: 'बदलें',
     loggingToNoFarm: 'अभी कोई खेत नहीं है',
+    editFarmUnavailable: 'इस लॉग का खेत अब उपलब्ध नहीं है।',
   },
   assistant: {
     placeholder: 'आपका AI कृषि सहायक — फसल, मिट्टी और शेड्यूल के बारे में पूछें',
@@ -2477,6 +2479,7 @@ export const hi = {
       title: 'हाल की गतिविधि',
       openFarm: '{{name}} के खेत का विवरण खोलें',
       openFarmDetails: 'खेत का विवरण खोलें',
+      editActivity: '{{label}} संपादित करें',
     },
     empty: {
       recentActivity: 'अभी तक कोई हालिया गतिविधि नहीं।\nशुरू करने के लिए एक प्रविष्टि जोड़ें।',

@@ -811,6 +811,7 @@ export const mr = {
 
   entryForm: {
     logSaved: 'नोंद जतन केली',
+    logUpdated: 'नोंद अपडेट केली',
     taskSaved: 'कार्य जतन केले',
     activityType: 'क्रियाकलाप प्रकार',
     selectActivityTypeHint: 'पूर्ण फॉर्म उघडण्यासाठी क्रियाकलाप प्रकार निवडा.',
@@ -1620,6 +1621,7 @@ export const mr = {
     loggingTo: 'नोंद करत आहे',
     switch: 'बदला',
     loggingToNoFarm: 'अद्याप शेत नाही',
+    editFarmUnavailable: 'या नोंदीचे शेत आता उपलब्ध नाही.',
   },
   assistant: {
     placeholder: 'तुमचे प्रश्न विचारा — मी कशी मदत करू?',
@@ -2493,6 +2495,7 @@ export const mr = {
       title: 'अलीकडील क्रियाकलाप',
       openFarm: '{{name}} चे $t(glossary.farm) तपशील उघडा',
       openFarmDetails: '$t(glossary.farm) तपशील उघडा',
+      editActivity: '{{label}} संपादित करा',
     },
     empty: {
       recentActivity: 'अजून अलीकडील क्रियाकलाप नाहीत.\nसुरू करण्यासाठी नोंद जोडा.',

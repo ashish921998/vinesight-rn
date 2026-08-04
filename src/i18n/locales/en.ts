@@ -822,6 +822,7 @@ export const en = {
 
   entryForm: {
     logSaved: 'Log saved',
+    logUpdated: 'Log updated',
     taskSaved: 'Task saved',
     activityType: 'Activity type',
     selectActivityTypeHint: 'Select an activity type to open the full-screen form.',
@@ -1627,6 +1628,7 @@ export const en = {
     loggingTo: 'Logging to',
     switch: 'Switch',
     loggingToNoFarm: 'No farm yet',
+    editFarmUnavailable: "This log's farm is no longer available.",
   },
 
   assistant: {
@@ -2486,6 +2488,7 @@ export const en = {
       title: 'Recent activity',
       openFarm: 'Open farm details for {{name}}',
       openFarmDetails: 'Open farm details',
+      editActivity: 'Edit {{label}}',
     },
     empty: {
       recentActivity: 'No recent activity yet.\nAdd an entry to get started.',

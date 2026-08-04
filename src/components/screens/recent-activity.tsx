@@ -17,7 +17,7 @@ interface RecentActivityListProps {
   hasFarms: boolean;
   /** Only true with 2+ farms — with one farm the header already names it. */
   showFarmName: boolean;
-  onOpenFarm: (farmId: number) => void;
+  onEditActivity: (activity: RecentActivity) => void;
   onViewAll: () => void;
 }
 
@@ -31,7 +31,7 @@ export function RecentActivityList({
   isLoading,
   hasFarms,
   showFarmName,
-  onOpenFarm,
+  onEditActivity,
   onViewAll,
 }: RecentActivityListProps) {
   const m3 = useM3();
@@ -110,13 +110,11 @@ export function RecentActivityList({
             return (
               <Pressable
                 key={activity.id}
-                onPress={() => onOpenFarm(activity.farmId)}
+                onPress={() => onEditActivity(activity)}
                 accessibilityRole="button"
-                accessibilityLabel={`${p.label}${detail ? `, ${detail}` : ''}, ${activityDate}, ${
-                  activity.farmName
-                    ? t('dashboard.recentActivity.openFarm', { name: activity.farmName })
-                    : t('dashboard.recentActivity.openFarmDetails')
-                }`}
+                accessibilityLabel={t('dashboard.recentActivity.editActivity', {
+                  label: `${p.label}${detail ? `, ${detail}` : ''}, ${activityDate}`,
+                })}
                 style={({ pressed }) => ({
                   flexDirection: 'row',
                   alignItems: 'center',

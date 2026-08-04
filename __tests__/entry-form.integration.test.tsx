@@ -18,6 +18,11 @@ const mockDeleteHarvestMutate = jest.fn();
 const mockDeleteExpenseMutate = jest.fn();
 const mockDeleteFertigationMutate = jest.fn();
 const mockDeleteDailyNoteMutate = jest.fn();
+const mockUpdateIrrigationMutate = jest.fn();
+const mockUpdateSprayMutate = jest.fn();
+const mockUpdateHarvestMutate = jest.fn();
+const mockUpdateExpenseMutate = jest.fn();
+const mockUpdateFertigationMutate = jest.fn();
 const mockUpdateWaterLevelMutate = jest.fn();
 const mockTaskCreateMutate = jest.fn();
 const mockTaskUpdateMutate = jest.fn();
@@ -79,6 +84,17 @@ jest.mock('@/hooks', () => ({
   useDeleteExpenseRecord: () => ({ mutateAsync: mockDeleteExpenseMutate }),
   useDeleteFertigationRecord: () => ({ mutateAsync: mockDeleteFertigationMutate }),
   useDeleteDailyNote: () => ({ mutateAsync: mockDeleteDailyNoteMutate }),
+  // Edit-mode hooks used by QuickLogSheet (farm details edit flow)
+  useUpdateIrrigationRecord: () => ({ mutateAsync: mockUpdateIrrigationMutate }),
+  useUpdateSprayRecord: () => ({ mutateAsync: mockUpdateSprayMutate }),
+  useUpdateHarvestRecord: () => ({ mutateAsync: mockUpdateHarvestMutate }),
+  useUpdateExpenseRecord: () => ({ mutateAsync: mockUpdateExpenseMutate }),
+  useUpdateFertigationRecord: () => ({ mutateAsync: mockUpdateFertigationMutate }),
+  useQuickLogEdit: () => ({
+    isEditMode: false,
+    isFertigationEditSettled: false,
+    saveEdit: jest.fn(),
+  }),
   useUpdateFarmWaterLevel: () => ({ mutateAsync: mockUpdateWaterLevelMutate }),
   useFarms: (...args: unknown[]) => mockUseFarms(...args),
   useProfile: () => ({ data: { area_unit_preference: 'acres' } }),

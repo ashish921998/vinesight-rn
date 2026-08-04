@@ -65,7 +65,6 @@ export function FarmLogForm({ onClose }: FarmLogFormProps) {
       onClose={onClose}
       presentation="screen"
       farm={editActivity.farm}
-      logType={editActivity.logType}
       record={editActivity.record}
     />
   );

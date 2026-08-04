@@ -82,24 +82,35 @@ import {
   useSprayInputSources,
   useFertigationInputSources,
   useDeleteIrrigationRecord,
+  useQuickLogEdit,
 } from '@/hooks';
 import {
   LinkedFertigationSaveError,
   useSaveSingleLog,
   saveIrrigationWithLinkedFertigation,
 } from '@/features/entry-log-session';
+import {
+  irrigationRecordToFormData,
+  sprayRecordToFormData,
+  harvestRecordToFormData,
+  expenseRecordToFormData,
+} from '@/utils/record-to-form';
+import type { QuickLogEditTarget } from '@/utils/quick-log-edit-save';
+import { fromSupabaseDateString } from '@/types/database';
+import { toast } from '@/components/ui/toast';
 
 export type QuickLogType = Extract<LogTypeId, 'irrigation' | 'spray' | 'harvest' | 'expense'>;
 
-/**
- * Draft payload handed to `onSubmitDraft` when the sheet runs in draft mode
- * (add-log full screen). Same form-data shapes the host's pending-log
- * pipeline already consumes; the host enqueues them onto its multi-draft
- * stack instead of persisting immediately. Spray is the raw draft (with
- * `phiOverride` applied when the PHI double-confirm was accepted) — the host
- * finalizes it via its own `buildSprayPendingData`, mirroring the path a
- * spray draft takes when added from the inline composer.
- */
+const QUICK_LOG_TYPES: readonly QuickLogType[] = ['irrigation', 'spray', 'harvest', 'expense'];
+
+/** Type guard for the four quick-log types (shared by farm/logs/home gates). */
+export function isQuickLogType(type: string | null | undefined): type is QuickLogType {
+  return type != null && (QUICK_LOG_TYPES as readonly string[]).includes(type);
+}
+
+export type { QuickLogEditTarget };
+
+/** Draft payload handed to `onSubmitDraft` in draft mode. Spray is raw (phiOverride applied); the host finalizes via buildSprayPendingData. */
 export type QuickLogDraftPayload =
   | {
       type: 'irrigation';
@@ -111,14 +122,7 @@ export type QuickLogDraftPayload =
   | { type: 'expense'; expense: ExpenseFormData }
   | { type: 'harvest'; harvest: HarvestFormData };
 
-/**
- * Prefill for the sheet's drafts (draft mode). The add-log screen builds this
- * from its prefill sources (plan one-tap chemicals, task irrigation duration,
- * voice extraction) so a prefilled log opens in the SAME sheet as a manual
- * chip tap instead of a separate inline form. Only the field for the opening
- * `type` is read; the rest are ignored. Seeded once per open — the host keeps
- * the object in state so its reference stays stable while the sheet is open.
- */
+/** Prefill for the sheet's drafts (draft mode). Only the field for the opening `type` is read. */
 export interface QuickLogInitialDraft {
   irrigation?: IrrigationFormData;
   spray?: SprayFormData;
@@ -131,33 +135,16 @@ interface QuickLogSheetProps {
   type: QuickLogType | null;
   farm: Farm | null;
   onClose: () => void;
-  /**
-   * Draft mode (add-log full screen): when provided, Save assembles the draft
-   * and calls this instead of persisting immediately, then closes the sheet.
-   * Absent on the dashboard, which keeps the original immediate-save behavior.
-   * PHI double-confirm for spray runs in both modes before the payload is built.
-   */
+  /** Draft mode: Save assembles the draft and calls this instead of persisting. Absent on the dashboard. */
   onSubmitDraft?: (payload: QuickLogDraftPayload) => void;
-  /**
-   * Live validity pulse for the host. The sheet owns its form state, so a host
-   * that needs to know whether the current draft is valid (e.g. the add-log
-   * full screen feeding the guided-tour coach) subscribes here. Fires on mount
-   * and whenever validity flips. Absent on the dashboard, which ignores it.
-   */
+  /** Live validity pulse for the host. Absent on the dashboard. */
   onValidityChange?: (valid: boolean) => void;
-  /**
-   * Controlled date (draft mode): when provided, the sheet uses this date
-   * instead of its own, keeping the draft synchronized with the host's
-   * pending-log date and PHI computation. Value and setter travel as one
-   * pair so a half-controlled date is unrepresentable. Absent on the
-   * dashboard, which owns its own date.
-   */
+  /** Controlled date (draft mode). Value and setter travel as one pair so half-controlled is unrepresentable. */
   date?: { value: Date; onChange: (date: Date) => void };
-  /**
-   * Prefill drafts, seeded when the sheet opens (draft mode only — the
-   * dashboard never prefills). See {@link QuickLogInitialDraft}.
-   */
+  /** Prefill drafts, seeded when the sheet opens (draft mode only). */
   initialDraft?: QuickLogInitialDraft | null;
+  /** Edit mode: discriminated type+record pair. Pre-fills from the record and updates on Save. */
+  editTarget?: QuickLogEditTarget | null;
 }
 
 interface HeroStepperProps {
@@ -405,6 +392,7 @@ export function QuickLogSheet({
   onValidityChange,
   date: controlledDate,
   initialDraft = null,
+  editTarget = null,
 }: QuickLogSheetProps) {
   const { t } = useTranslation();
   const m3 = useM3();
@@ -513,22 +501,44 @@ export function QuickLogSheet({
     [scrollToNode],
   );
 
-  // Fresh sheet per open: empty drafts, or the host's prefill when one was
-  // provided (plan/voice/duration handoff). Saving guards reset on every type
-  // change (open and close) so a draft-mode save that set them doesn't leak.
-  // Date is only reset when uncontrolled (dashboard); draft mode uses the
-  // host's date, which the host manages.
+  // Fresh sheet per open: empty drafts or the host's prefill. Saving guards
+  // reset on every type change so a draft-mode save doesn't leak.
   useEffect(() => {
     savingRef.current = false;
     setSaving(false);
     if (!type) return;
+
+    // Edit mode: pre-fill from the discriminated target
+    if (editTarget) {
+      const parsedDate = fromSupabaseDateString(editTarget.record.date);
+      if (parsedDate && !isControlledDate) setInternalDate(parsedDate);
+      switch (editTarget.type) {
+        case 'irrigation':
+          setIrrigationDraft(irrigationRecordToFormData(editTarget.record));
+          break;
+        case 'spray':
+          setSprayDraft(sprayRecordToFormData(editTarget.record));
+          break;
+        case 'harvest':
+          setHarvestDraft(harvestRecordToFormData(editTarget.record));
+          break;
+        case 'expense':
+          setExpenseDraft(expenseRecordToFormData(editTarget.record));
+          break;
+      }
+      // Linked fertigation for irrigation edit is hydrated via a separate
+      // effect once the query settles (see below).
+      setFertigationDraft({ fertilizers: [] });
+      return;
+    }
+
     if (!isControlledDate) setInternalDate(new Date());
     setIrrigationDraft(initialDraft?.irrigation ?? { duration: undefined });
     setFertigationDraft({ fertilizers: [] });
     setSprayDraft(initialDraft?.spray ?? createEmptySprayFormData());
     setExpenseDraft(initialDraft?.expense ?? createEmptyExpenseFormData());
     setHarvestDraft(initialDraft?.harvest ?? createEmptyHarvestFormData());
-  }, [type, isControlledDate, initialDraft]);
+  }, [type, isControlledDate, initialDraft, editTarget]);
 
   // Picker sources — catalog for spray (per design), plan/warehouse/history for both.
   const spraySources = useSprayInputSources(farmId);
@@ -564,6 +574,32 @@ export function QuickLogSheet({
 
   const saveLog = useSaveSingleLog();
   const deleteIrrigation = useDeleteIrrigationRecord();
+
+  const editDrafts = useMemo(
+    () => ({
+      irrigation: irrigationDraft,
+      spray: sprayDraft,
+      harvest: harvestDraft,
+      expense: expenseDraft,
+      fertigation: fertigationDraft,
+    }),
+    [irrigationDraft, sprayDraft, harvestDraft, expenseDraft, fertigationDraft],
+  );
+  const { saveEdit, isFertigationEditSettled } = useQuickLogEdit({
+    editTarget,
+    farm,
+    farmAreaAcres,
+    preferredAreaUnit,
+    isGrapeFarm,
+    dateStr,
+    drafts: editDrafts,
+    setFertigationDraft,
+  });
+  // Irrigation edit must wait for the linked-fertigation query so Save can't
+  // create a duplicate rider (or skip a create) against a stale "no rows" view.
+  const isIrrigationEditPendingLinkedFert =
+    editTarget?.type === 'irrigation' && !isFertigationEditSettled;
+
   // Retain a successfully created irrigation when compensation fails so an
   // immediate retry only saves its fertigation rider instead of duplicating it.
   const pendingIrrigationRef = useRef<Awaited<ReturnType<typeof saveLog>> | null>(null);
@@ -605,9 +641,7 @@ export function QuickLogSheet({
             ? validateHarvestForm(harvestDraft)
             : false;
 
-  // Pulse validity to the host (add-log full screen feeds the guided-tour
-  // coach, which needs to know when the sheet's draft is complete). The sheet
-  // owns its form state, so the host can't derive this itself. No-op on the
+  // Pulse validity to the host (guided-tour coach needs it). No-op on the
   // dashboard, which doesn't pass onValidityChange.
   const onValidityChangeRef = useRef(onValidityChange);
   useEffect(() => {
@@ -633,10 +667,8 @@ export function QuickLogSheet({
     }
   }, []);
 
-  // Assemble the draft payload for draft mode (onSubmitDraft). Same shapes
-  // performSave persists in immediate mode; the host finalizes spray via its
-  // own buildSprayPendingData, so the spray draft is handed back raw (with
-  // phiOverride already applied by the caller).
+  // Assemble the draft payload for draft mode. The host finalizes spray via
+  // buildSprayPendingData, so the spray draft is handed back raw.
   const buildDraftPayload = useCallback(
     (sprayPayload?: SprayFormData): QuickLogDraftPayload | null => {
       if (type === 'irrigation') {
@@ -670,13 +702,35 @@ export function QuickLogSheet({
 
   const performSave = useCallback(
     async (sprayPayload?: SprayFormData) => {
-      if (!type || !farm || savingRef.current || isBlockedByNoSeason) return;
+      if (!type || !farm || savingRef.current) return;
 
-      // Draft mode (add-log full screen): hand the assembled draft to the host
-      // instead of persisting. The PHI double-confirm for spray already ran in
-      // handleSave before reaching here, so the override payload is honored.
-      // Set saving guards before the callback to prevent a rapid double-tap
-      // from enqueuing the same draft twice before onClose() takes effect.
+      // Edit mode: shared update orchestration (incl. linked fertigation).
+      // Season gate is create-only — historical edits must still save when the
+      // farm has no active season (parity with the old ActivityEditForm).
+      if (editTarget) {
+        if (isIrrigationEditPendingLinkedFert) return;
+        savingRef.current = true;
+        setSaving(true);
+        try {
+          await saveEdit(sprayPayload);
+          triggerHapticSuccess();
+          toast.success(t('entryForm.logUpdated'));
+          onClose();
+        } catch (error) {
+          toast.error(
+            error instanceof Error ? error.message : t('common.errors.failedToUpdateLog'),
+          );
+        } finally {
+          setSaving(false);
+          savingRef.current = false;
+        }
+        return;
+      }
+
+      if (isBlockedByNoSeason) return;
+
+      // Draft mode: hand the assembled draft to the host instead of persisting.
+      // Set saving guards before the callback to prevent a double-tap.
       if (onSubmitDraft) {
         const payload = buildDraftPayload(sprayPayload);
         if (!payload) return;
@@ -764,6 +818,9 @@ export function QuickLogSheet({
       type,
       farm,
       isBlockedByNoSeason,
+      editTarget,
+      isIrrigationEditPendingLinkedFert,
+      saveEdit,
       onSubmitDraft,
       buildDraftPayload,
       saveLog,
@@ -868,7 +925,14 @@ export function QuickLogSheet({
   }, [farm?.id, onClose, router]);
 
   const logType = type ? getLogType(type) : null;
-  const saveDisabled = !isValid || saving || isBlockedByNoSeason || !farm;
+  // Season gate is create-only (see performSave). Irrigation edit also waits
+  // for linked-fertigation hydration so Save can't race the query.
+  const saveDisabled =
+    !isValid ||
+    saving ||
+    !farm ||
+    isIrrigationEditPendingLinkedFert ||
+    (editTarget == null && isBlockedByNoSeason);
 
   // Spray & irrigation are tall, multi-row forms (chemical/fertilizer rows, each
   // with a typeahead + unit control, plus the keyboard) — they need full space,
@@ -946,7 +1010,7 @@ export function QuickLogSheet({
           />
         </View>
 
-        {isBlockedByNoSeason ? (
+        {editTarget == null && isBlockedByNoSeason ? (
           <View style={{ marginBottom: spacing[4] }}>
             <NoActiveSeasonBanner onStartSeason={goStartSeason} />
           </View>

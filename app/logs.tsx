@@ -56,6 +56,7 @@ import { useDomainColors } from '@/styles/use-domain-colors';
 import { getDaysAfterPruning } from '@/utils/date';
 import { createAddLogHref } from '@/utils/add-log-navigation';
 import { ALL_FARMS_ID } from '@/constants/farm-selection';
+import { QuickLogSheet, type QuickLogEditTarget } from '@/components/sheets/quick-log-sheet';
 
 interface CombinedLog {
   id: string;
@@ -187,6 +188,8 @@ export default function LogsScreen() {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showFarmSelector, setShowFarmSelector] = useState(false);
   const [showRecordsPerPageSelector, setShowRecordsPerPageSelector] = useState(false);
+  // Edit-log bottom sheet (QuickLogSheet edit mode; fertigation keeps full-screen route)
+  const [editTarget, setEditTarget] = useState<QuickLogEditTarget | null>(null);
 
   const deleteIrrigation = useDeleteIrrigationRecord();
   const deleteSpray = useDeleteSprayRecord();
@@ -1298,16 +1301,44 @@ export default function LogsScreen() {
                                                     });
                                                     return;
                                                   }
-                                                  const record = log.data as Exclude<
-                                                    typeof log.data,
-                                                    DailyNoteRecord
-                                                  >;
-                                                  setEditActivity({
-                                                    farm: logFarm!,
-                                                    logType: log.type,
-                                                    record,
-                                                  });
-                                                  router.push(`/log-entry/edit/${log.id}`);
+                                                  // Four quick types → QuickLogSheet;
+                                                  // fertigation → full-screen ActivityEditForm.
+                                                  if (log.type === 'irrigation') {
+                                                    setEditTarget({
+                                                      type: 'irrigation',
+                                                      record: log.data as IrrigationRecord,
+                                                    });
+                                                    return;
+                                                  }
+                                                  if (log.type === 'spray') {
+                                                    setEditTarget({
+                                                      type: 'spray',
+                                                      record: log.data as SprayRecord,
+                                                    });
+                                                    return;
+                                                  }
+                                                  if (log.type === 'harvest') {
+                                                    setEditTarget({
+                                                      type: 'harvest',
+                                                      record: log.data as HarvestRecord,
+                                                    });
+                                                    return;
+                                                  }
+                                                  if (log.type === 'expense') {
+                                                    setEditTarget({
+                                                      type: 'expense',
+                                                      record: log.data as ExpenseRecord,
+                                                    });
+                                                    return;
+                                                  }
+                                                  if (log.type === 'fertigation') {
+                                                    setEditActivity({
+                                                      farm: logFarm!,
+                                                      logType: 'fertigation',
+                                                      record: log.data as FertigationRecord,
+                                                    });
+                                                    router.push(`/log-entry/edit/${log.id}`);
+                                                  }
                                                 },
                                               });
                                             }
@@ -2136,6 +2167,18 @@ export default function LogsScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Edit-log bottom sheet (same QuickLogSheet as dashboard, edit mode) */}
+      <QuickLogSheet
+        type={editTarget?.type ?? null}
+        farm={
+          editTarget?.record.farm_id != null
+            ? (farms.find((f) => f.id === editTarget.record.farm_id) ?? null)
+            : null
+        }
+        editTarget={editTarget}
+        onClose={() => setEditTarget(null)}
+      />
     </>
   );
 }

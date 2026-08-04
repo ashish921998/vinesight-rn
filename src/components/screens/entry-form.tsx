@@ -67,6 +67,7 @@ import { Tabs, type EntryTab } from '@/components/screens/entry-form/Tabs';
 import { LogForm } from '@/components/screens/entry-form/LogForm';
 import {
   QuickLogSheet,
+  isQuickLogType,
   type QuickLogDraftPayload,
   type QuickLogInitialDraft,
   type QuickLogType,
@@ -192,24 +193,7 @@ interface EntryFormProps {
   presentation?: 'modal' | 'screen';
 }
 
-// The four log types the dashboard's QuickLogSheet handles. Tapping one of
-// these in the type selector opens that shared sheet (draft mode) instead of
-// the inline LogForm modal — same component as the dashboard, no duplication.
-// Fertigation + note stay on the inline modal (not covered by QuickLogSheet).
-const QUICK_LOG_TYPE_IDS: readonly LogTypeId[] = ['irrigation', 'spray', 'harvest', 'expense'];
-function isQuickLogType(type: LogTypeId): type is QuickLogType {
-  return (QUICK_LOG_TYPE_IDS as readonly string[]).includes(type);
-}
-
-/**
- * The ONE policy for "does this log open in the shared QuickLogSheet or the
- * inline LogForm modal", shared by the type-chip tap and the initialLogType
- * effect so the two entry points can't drift. The sheet wins unless this is
- * all-farms expense: the sheet takes a single farm and has no all-farms
- * concept, and the inline composer's pending-log pipeline already handles the
- * all-farms scope. Prefills (plan/voice/duration) do NOT force the inline
- * modal — they seed the sheet via its `initialDraft` prop.
- */
+/** Sheet wins for quick types unless it's all-farms expense (sheet takes a single farm). */
 function canOpenQuickLogSheet(
   type: LogTypeId,
   { allFarmsSelected }: { allFarmsSelected: boolean },
@@ -522,12 +506,9 @@ export function EntryForm({
     };
   }, [scrollToNode, windowHeight]);
 
-  // Open the requested log surface on entry. Quick types go to the shared
-  // QuickLogSheet — prefills (plan chemicals, task duration, voice extraction)
-  // seed it via `initialDraft`, so a prefilled log looks exactly like a manual
-  // chip tap with values filled in. Fertigation/note and the all-farms expense
-  // case open the inline LogForm modal. One effect owns the whole decision so
-  // the entry points can't drift.
+  // Open the requested log surface on entry. Quick types go to QuickLogSheet
+  // (prefills seed it via initialDraft); fertigation/note and all-farms
+  // expense open the inline LogForm modal.
   useEffect(() => {
     if (!isVisible) return;
     const type = initialLogType ?? initialVoiceLogPrefill?.type ?? null;
@@ -882,10 +863,8 @@ export function EntryForm({
     [buildPendingLog, enqueuePendingLogs],
   );
 
-  // Inline composer Add Entry. Only the inline-modal survivors arrive here
-  // (fertigation, note, all-farms expense) — the four quick types are enqueued
-  // by the QuickLogSheet via handleQuickLogDraft, including the spray PHI
-  // double-confirm, which the sheet runs before calling back.
+  // Inline composer Add Entry — only fertigation, note, and all-farms expense
+  // arrive here; quick types go through QuickLogSheet via handleQuickLogDraft.
   const addLogToSession = useCallback(() => {
     if (!selectedLogType || !isLogFormValid) return;
     if (!activeFarm && !isAllFarmsSelected) return;
@@ -921,15 +900,9 @@ export function EntryForm({
     enqueuePendingLog,
   ]);
 
-  // QuickLogSheet draft handoff: the dashboard sheet (opened for the four quick
-  // types) assembles its draft and calls back here instead of persisting. Route
-  // it through the same pending-log pipeline the inline composer uses, so the
-  // draft joins the multi-draft stack and saves together with the rest. Spray
-  // is finalized here via buildSprayPendingData (the sheet hands back the raw
-  // draft with phiOverride already applied); the sheet's PHI double-confirm ran
-  // before calling back, so no PHI re-check is needed here. The sheet gates
-  // Save on the same form validators, so payloads arrive valid and are
-  // enqueued as-is — no re-validation at this boundary.
+  // QuickLogSheet draft handoff: route the sheet's draft through the same
+  // pending-log pipeline as the inline composer. Spray is finalized via
+  // buildSprayPendingData (phiOverride already applied by the sheet).
   const handleQuickLogDraft = useCallback(
     (payload: QuickLogDraftPayload) => {
       if (payload.type === 'irrigation') {
