@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, ScrollView, Pressable, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,6 +15,7 @@ import { useM3 } from '@/styles/use-theme';
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { telemetry } from '@/services/telemetry';
+import { toast } from '@/components/ui/toast';
 import {
   QuickLogSheet,
   isQuickLogType,
@@ -63,6 +64,12 @@ export function SimplifiedHome() {
   // the dashboard's default quick-log target.
   const [editFarm, setEditFarm] = useState<Farm | null>(null);
 
+  // Sheet-intent guard: bumped on every action that changes what the sheet
+  // should show (edit fetch, quick-add, close). An async edit captures the
+  // value and bails if it changed by the time the fetch resolves — so a stale
+  // fetch can no longer clobber a newer tap.
+  const sheetIntentId = useRef(0);
+
   // Resolve the selected farm against the live list — a persisted id may be
   // stale (deleted farm). Falls back to the first farm, then null.
   const selectedFarm = useMemo(() => {
@@ -89,11 +96,13 @@ export function SimplifiedHome() {
   };
 
   const goAddFarm = () => {
+    sheetIntentId.current += 1;
     telemetry.capture('add_farm_tapped', ANALYTICS_BASE);
     router.push('/farm/add');
   };
 
   const handleSwitchFarm = () => {
+    sheetIntentId.current += 1;
     telemetry.capture('farm_switch_tapped', ANALYTICS_BASE);
     setShowFarmPicker(true);
   };
@@ -114,6 +123,7 @@ export function SimplifiedHome() {
     }
     telemetry.capture('quick_action_tapped', { ...ANALYTICS_BASE, action: type });
     // Clear any in-flight edit target so a quick-add can't reopen on the edit path.
+    sheetIntentId.current += 1;
     setEditTarget(null);
     setQuickLogType(type);
   };
@@ -124,6 +134,7 @@ export function SimplifiedHome() {
   const handleEditActivity = async (activity: RecentActivity) => {
     const numericId = Number(activity.id.split('_')[1]);
     if (!numericId || !isQuickLogType(activity.type)) {
+      sheetIntentId.current += 1;
       router.push(`/farm/${activity.farmId}`);
       return;
     }
@@ -137,20 +148,35 @@ export function SimplifiedHome() {
             ? 'harvest_records'
             : 'expense_records';
 
+    // Claim the sheet for this edit; if any newer tap bumps the counter
+    // before the fetch resolves, drop this stale result.
+    const myIntentId = (sheetIntentId.current += 1);
+
     const { data, error } = await getDataAccess()
       .from(table)
       .select('*')
       .eq('id', numericId)
       .maybeSingle();
 
+    // A newer tap (quick-add, another edit, or close) wins — don't reopen.
+    if (myIntentId !== sheetIntentId.current) return;
+
     if (error || !data) {
       router.push(`/farm/${activity.farmId}`);
       return;
     }
 
+    // Farm must still be in the current list. A stale recent-activity or lost
+    // access means per-acre/PHI derivations and linked-fertigation create would
+    // silently fall back to the selected farm — refuse rather than corrupt.
+    const farm = farms?.find((f) => f.id === activity.farmId) ?? null;
+    if (!farm) {
+      toast.error(t('simplifiedHome.editFarmUnavailable'));
+      return;
+    }
+
     setEditTarget({ type: activity.type, record: data } as QuickLogEditTarget);
     setQuickLogType(activity.type);
-    const farm = farms?.find((f) => f.id === activity.farmId) ?? null;
     setEditFarm(farm);
   };
 
@@ -262,7 +288,10 @@ export function SimplifiedHome() {
               </Pressable>
 
               <Pressable
-                onPress={() => router.push('/app-settings')}
+                onPress={() => {
+                  sheetIntentId.current += 1;
+                  router.push('/app-settings');
+                }}
                 accessibilityRole="button"
                 accessibilityLabel={t('assistant.settingsGearA11y')}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -357,7 +386,10 @@ export function SimplifiedHome() {
             hasFarms={hasFarms}
             showFarmName={canSwitch}
             onEditActivity={handleEditActivity}
-            onViewAll={() => router.push('/logs')}
+            onViewAll={() => {
+              sheetIntentId.current += 1;
+              router.push('/logs');
+            }}
           />
         </View>
       </ScrollView>
@@ -376,9 +408,14 @@ export function SimplifiedHome() {
           Add mode: quickLogType only. Edit mode: editTarget set. */}
       <QuickLogSheet
         type={quickLogType}
+        // editFarm is non-null in edit mode — handleEditActivity guards against
+        // a missing farm and bails before opening. The ?? selectedFarm fallback
+        // is defensive only (keeps the farm: Farm | null type satisfied).
         farm={editTarget ? (editFarm ?? selectedFarm) : selectedFarm}
         editTarget={editTarget}
         onClose={() => {
+          // Bump so any in-flight edit fetch can't reopen the sheet after close.
+          sheetIntentId.current += 1;
           setQuickLogType(null);
           setEditTarget(null);
           setEditFarm(null);

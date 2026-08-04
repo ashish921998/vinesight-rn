@@ -1621,6 +1621,7 @@ export const mr = {
     loggingTo: 'नोंद करत आहे',
     switch: 'बदला',
     loggingToNoFarm: 'अद्याप शेत नाही',
+    editFarmUnavailable: 'या नोंदीचे शेत आता उपलब्ध नाही.',
   },
   assistant: {
     placeholder: 'तुमचे प्रश्न विचारा — मी कशी मदत करू?',

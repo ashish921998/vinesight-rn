@@ -118,6 +118,39 @@ describe('saveQuickLogEdit', () => {
     expect(m.saveLinkedFertigation).not.toHaveBeenCalled();
   });
 
+  it('does not create linked fertigation when its lookup failed', async () => {
+    const m = mutations();
+    const drafts = {
+      ...emptyDrafts,
+      fertigation: {
+        fertilizers: [
+          {
+            id: 'f1',
+            name: 'Urea',
+            quantity: 5,
+            unit: 'kg',
+            quantityBasis: 'total' as const,
+          },
+        ],
+      },
+    };
+
+    await saveQuickLogEdit({
+      target: { type: 'irrigation', record: { id: 11, date: DATE } as IrrigationRecord },
+      drafts,
+      dateStr: DATE,
+      farm,
+      farmAreaAcres: 2,
+      preferredAreaUnit: 'acres',
+      isGrapeFarm: true,
+      isFertigationSettled: false,
+      mutations: m,
+    });
+
+    expect(m.updateIrrigation).toHaveBeenCalled();
+    expect(m.saveLinkedFertigation).not.toHaveBeenCalled();
+  });
+
   it('updates spray via shared builder fields', async () => {
     const m = mutations();
     await saveQuickLogEdit({

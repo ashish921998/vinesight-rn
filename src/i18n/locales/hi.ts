@@ -1611,6 +1611,7 @@ export const hi = {
     loggingTo: 'लॉगिंग कर रहे हैं',
     switch: 'बदलें',
     loggingToNoFarm: 'अभी कोई खेत नहीं है',
+    editFarmUnavailable: 'इस लॉग का खेत अब उपलब्ध नहीं है।',
   },
   assistant: {
     placeholder: 'आपका AI कृषि सहायक — फसल, मिट्टी और शेड्यूल के बारे में पूछें',

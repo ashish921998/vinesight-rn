@@ -1628,6 +1628,7 @@ export const en = {
     loggingTo: 'Logging to',
     switch: 'Switch',
     loggingToNoFarm: 'No farm yet',
+    editFarmUnavailable: "This log's farm is no longer available.",
   },
 
   assistant: {

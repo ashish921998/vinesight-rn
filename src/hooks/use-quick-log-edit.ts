@@ -118,7 +118,9 @@ export function useQuickLogEdit({
         isGrapeFarm,
         sprayPayload,
         linkedFertigationRecord,
-        isFertigationSettled: isFertigationEditSettled,
+        // An errored lookup still allows the irrigation row to save, but it
+        // must not authorize creating a possibly duplicate linked record.
+        isFertigationSettled: fertigationEditQuery.isSuccess,
         mutations: {
           updateIrrigation: (args) => updateIrrigation.mutateAsync(args),
           updateSpray: (args) => updateSpray.mutateAsync(args),
@@ -155,7 +157,7 @@ export function useQuickLogEdit({
       preferredAreaUnit,
       isGrapeFarm,
       linkedFertigationRecord,
-      isFertigationEditSettled,
+      fertigationEditQuery.isSuccess,
       updateIrrigation,
       updateSpray,
       updateHarvest,
