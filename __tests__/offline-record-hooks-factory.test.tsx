@@ -232,7 +232,7 @@ describe('factory create hooks for non-irrigation event tables', () => {
 });
 
 describe('factory update + delete hooks (irrigation)', () => {
-  it('updates by id and invalidates listByFarm', async () => {
+  it('updates by id and invalidates listByFarm + broad lists', async () => {
     const { chain, calls } = makeChain({ data: { id: 5, farm_id: 7 }, error: null });
     mockedFrom.mockReturnValue(chain);
     const { invalidateSpy, wrapper } = setup();
@@ -247,6 +247,10 @@ describe('factory update + delete hooks (irrigation)', () => {
     expect(calls.eqCalls).toContainEqual(['id', 5]);
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: queryKeys.irrigationRecords.listByFarm(7),
+    });
+    // Broad-list invalidation covers cross-farm listByFarms queries.
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: queryKeys.irrigationRecords.lists(),
     });
   });
 
