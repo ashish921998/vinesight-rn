@@ -33,7 +33,7 @@ module.exports = {
   expo: {
     name: 'Vinesight',
     slug: 'vinesight-rn',
-    version: '3.3.24',
+    version: '3.3.25',
     orientation: 'portrait',
     // EAS Update (OTA). Builds fetch updates from the project's EAS URL on
     // launch; `fallbackToCacheTimeout: 0` runs the cached update immediately
@@ -102,7 +102,7 @@ module.exports = {
     },
     android: {
       package: 'com.vinesight.app',
-      versionCode: 42,
+      versionCode: 43,
       // Required for FCM so `FirebaseApp.initializeApp` runs at build time;
       // without it `getExpoPushTokenAsync` fails on Android with
       // E_REGISTRATION_FAILED ("Default FirebaseApp is not initialized").
