@@ -138,6 +138,13 @@ export const createSocialActions = (set: SetState) => ({
         }
         if (shouldUpdateEmail) {
           updatePayload.email = appleEmail!;
+          // Supabase email changes require confirmation — the response
+          // user may still have null email while pending. Persist the
+          // one-time Apple address in metadata so it is never lost.
+          updatePayload.data = {
+            ...(updatePayload.data || {}),
+            apple_email: appleEmail!,
+          };
         }
 
         const { data: updateData, error: updateError } =
