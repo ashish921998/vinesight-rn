@@ -25,6 +25,7 @@
     "build:android:preview:local": "eas build --platform android --profile preview --local",
     "build:android:production:local": "eas build --platform android --profile production --local",
     "build:android:dev:local": "eas build --platform android --profile development --local",
+    "update:development": "eas update --branch development --platform all --non-interactive",
     "update:staging": "eas update --branch staging --platform all --non-interactive",
     "update:production": "eas update --branch production --platform all --message \"Release $(git describe --tags --abbrev=0 2>/dev/null || git log -1 --format=%s)\" --non-interactive",
     "storybook-generate": "sb-rn-get-stories"
