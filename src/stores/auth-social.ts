@@ -125,16 +125,20 @@ export const createSocialActions = (set: SetState) => ({
       let effectiveUser = data.user;
 
       const fullName = [givenName, familyName].filter(Boolean).join(' ').trim();
+      const shouldUpdateEmail = Boolean(appleEmail) && !effectiveUser.email;
 
-      if (fullName) {
-        const updatePayload = {
-          data: {
+      if (fullName || shouldUpdateEmail) {
+        const updatePayload: { data?: Record<string, string>; email?: string } = {};
+        if (fullName) {
+          updatePayload.data = {
             full_name: fullName,
-            first_name: givenName,
+            first_name: givenName!,
             ...(familyName ? { last_name: familyName } : {}),
-          },
-          ...(appleEmail && !effectiveUser.email ? { email: appleEmail } : {}),
-        };
+          };
+        }
+        if (shouldUpdateEmail) {
+          updatePayload.email = appleEmail!;
+        }
 
         const { data: updateData, error: updateError } =
           await getDataAccess().auth.updateUser(updatePayload);
