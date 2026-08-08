@@ -3249,11 +3249,40 @@ export const mr = {
     absent: 'गैरहजर',
   },
 
+  welcome: {
+    title: 'VineSight',
+    kicker: 'द्राक्ष बागांच्या टीमसाठी',
+    headline: 'तुमचा द्राक्ष बाग, एकच अॅप',
+    subtitle:
+      '$t(glossary.irrigation), $t(glossary.spray), $t(glossary.harvest) आणि $t(glossary.task) \u2014 सर्व एकाच ठिकाणी।',
+    features: {
+      log: {
+        title: 'प्रत्येक कृती नोंदलेली',
+        description:
+          '$t(glossary.irrigation), $t(glossary.spray), $t(glossary.harvest) आणि $t(glossary.task) एका वेळापत्रकात।',
+      },
+      export: {
+        title: 'निर्यात-सज्ज रिपोर्ट',
+        description: 'खरेदीदारांसाठी कृती नोंदवही त्वरित तयार करा।',
+      },
+      team: {
+        title: 'तुमच्या टीमसाठी',
+        description: '$t(glossary.worker), साठा आणि $t(glossary.expense) एकत्र ट्रॅक करा।',
+      },
+    },
+    cta: {
+      getStarted: 'सुरू करा',
+      hasAccount: 'आधीच खाते आहे?',
+      logIn: 'लॉग इन करा',
+    },
+  },
+
   reports: {
     title: '$t(glossary.report)',
     fpc: {
       audience: 'निर्यातदारांसाठी',
       exportTitle: 'निर्यातदार कृती नोंदवही',
+      exportDescription: 'खरेदीदाराची नोंदवही XLSX स्प्रेडशीट म्हणून सामायिक करा.',
       shareXlsx: 'XLSX सामायिक करा',
       sectionTitle: 'निर्यातदार कृती नोंदवही ({{count}} दिवस)',
       day: 'दिवस',

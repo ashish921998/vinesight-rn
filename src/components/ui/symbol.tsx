@@ -236,6 +236,7 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   function: 'calculator',
   scissors: 'cut',
   'square.and.arrow.down.fill': 'download',
+  'square.and.arrow.up': 'share-outline',
   'slider.horizontal.3': 'options',
   'hand.tap.fill': 'hand-right',
   'line.3.horizontal.decrease': 'options',

@@ -19,6 +19,7 @@ export interface OnboardingActivationState {
 
 export interface OnboardingState {
   isComplete: boolean;
+  hasSeenWelcome: boolean;
   hasHydrated: boolean;
   currentStep: OnboardingStep;
   preferences: OnboardingPreferences;
