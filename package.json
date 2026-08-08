@@ -25,6 +25,9 @@
     "build:android:preview:local": "eas build --platform android --profile preview --local",
     "build:android:production:local": "eas build --platform android --profile production --local",
     "build:android:dev:local": "eas build --platform android --profile development --local",
+    "update:development": "eas update --branch development --platform all --non-interactive",
+    "update:staging": "eas update --branch staging --platform all --non-interactive",
+    "update:production": "eas update --branch production --platform all --message \"Release $(git describe --tags --abbrev=0 2>/dev/null || git log -1 --format=%s)\" --non-interactive",
     "storybook-generate": "sb-rn-get-stories"
   },
   "lint-staged": {
@@ -85,6 +88,7 @@
     "expo-status-bar": "~57.0.1",
     "expo-symbols": "~57.0.1",
     "expo-system-ui": "~57.0.1",
+    "expo-updates": "~57.0.11",
     "expo-web-browser": "~57.0.1",
     "fflate": "^0.8.2",
     "i18next": "^25.8.0",

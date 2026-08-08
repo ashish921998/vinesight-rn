@@ -21,12 +21,38 @@ const googleServicesFile =
 // (EAS secret present vs. local/size build) gets the right behavior.
 const hasSentryAuthToken = Boolean(process.env.SENTRY_AUTH_TOKEN?.trim());
 
+// EAS Update runtime version policy. `fingerprint` hashes native config +
+// code so any native change (new module, manifest edit, plugin config) auto-
+// bumps the runtime version, preventing OTA pushes that can't run on the
+// build's native layer. On a bump, a new store build is required; OTA updates
+// only flow to builds that share the fingerprint. This is the safest policy
+// for a bare/prebuilt project.
+//
+// Size-analysis CI builds use sdkVersion instead — the runner lacks file-type
+// EAS secrets (GOOGLE_SERVICES_JSON, EXPO_APPLE_TEAM_ID) that change the
+// fingerprint hash, causing a mismatch that fails the Configure expo-updates
+// build phase during local builds.
+const EAS_PROJECT_ID = 'ede2bb37-3ad0-4503-9522-02bd1539e79b';
+const isSizeAnalysis = process.env.SIZE_ANALYSIS === 'true';
+
 module.exports = {
   expo: {
     name: 'Vinesight',
     slug: 'vinesight-rn',
-    version: '3.3.24',
+    version: '3.3.25',
     orientation: 'portrait',
+    // EAS Update (OTA). Builds fetch updates from the project's EAS URL on
+    // launch; `fallbackToCacheTimeout: 0` runs the cached update immediately
+    // and applies the downloaded one on next launch (non-blocking). Runtime
+    // version is derived from a native fingerprint so an update is only
+    // delivered to a build whose native layer can actually run it.
+    updates: {
+      url: `https://u.expo.dev/${EAS_PROJECT_ID}`,
+      enabled: true,
+      fallbackToCacheTimeout: 0,
+      checkAutomatically: 'ON_LOAD',
+    },
+    runtimeVersion: isSizeAnalysis ? { policy: 'sdkVersion' } : { policy: 'fingerprint' },
     icon: './assets/icons/ios-light.png',
     userInterfaceStyle: 'automatic',
     scheme: 'vinesight',
@@ -80,7 +106,7 @@ module.exports = {
     },
     android: {
       package: 'com.vinesight.app',
-      versionCode: 42,
+      versionCode: 43,
       // Required for FCM so `FirebaseApp.initializeApp` runs at build time;
       // without it `getExpoPushTokenAsync` fails on Android with
       // E_REGISTRATION_FAILED ("Default FirebaseApp is not initialized").
@@ -132,7 +158,16 @@ module.exports = {
       'expo-system-ui',
       ['expo-navigation-bar', { enforceContrast: false }],
       './plugins/with-android-navigation-bar',
-      'expo-audio',
+      [
+        'expo-audio',
+        {
+          // The plugin defaults enableBackgroundPlayback to true, which adds
+          // UIBackgroundModes: ['audio'] to Info.plist. The app does not play
+          // persistent background audio, so leaving it on triggers App Store
+          // Guideline 2.5.4 rejections.
+          enableBackgroundPlayback: false,
+        },
+      ],
       'expo-notifications',
       [
         '@sentry/react-native/expo',
@@ -232,7 +267,7 @@ module.exports = {
     },
     extra: {
       eas: {
-        projectId: 'ede2bb37-3ad0-4503-9522-02bd1539e79b',
+        projectId: EAS_PROJECT_ID,
       },
     },
   },
