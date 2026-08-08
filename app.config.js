@@ -27,7 +27,13 @@ const hasSentryAuthToken = Boolean(process.env.SENTRY_AUTH_TOKEN?.trim());
 // build's native layer. On a bump, a new store build is required; OTA updates
 // only flow to builds that share the fingerprint. This is the safest policy
 // for a bare/prebuilt project.
+//
+// Size-analysis CI builds use sdkVersion instead — the runner lacks file-type
+// EAS secrets (GOOGLE_SERVICES_JSON, EXPO_APPLE_TEAM_ID) that change the
+// fingerprint hash, causing a mismatch that fails the Configure expo-updates
+// build phase during local builds.
 const EAS_PROJECT_ID = 'ede2bb37-3ad0-4503-9522-02bd1539e79b';
+const isSizeAnalysis = process.env.SIZE_ANALYSIS === 'true';
 
 module.exports = {
   expo: {
@@ -46,9 +52,7 @@ module.exports = {
       fallbackToCacheTimeout: 0,
       checkAutomatically: 'ON_LOAD',
     },
-    runtimeVersion: {
-      policy: 'fingerprint',
-    },
+    runtimeVersion: isSizeAnalysis ? { policy: 'sdkVersion' } : { policy: 'fingerprint' },
     icon: './assets/icons/ios-light.png',
     userInterfaceStyle: 'automatic',
     scheme: 'vinesight',
