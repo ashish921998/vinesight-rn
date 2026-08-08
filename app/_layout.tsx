@@ -776,6 +776,10 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
                     name="language-selection"
                     options={{ headerShown: false, gestureEnabled: false }}
                   />
+                  <Stack.Screen
+                    name="welcome"
+                    options={{ headerShown: false, gestureEnabled: false }}
+                  />
                   <Stack.Screen name="(auth)" />
                   <Stack.Screen name="(tabs)" />
                   {/*

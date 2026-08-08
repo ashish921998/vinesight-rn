@@ -17,6 +17,7 @@ import {
 } from '../types/onboarding';
 interface OnboardingStore extends OnboardingState {
   // Actions
+  markWelcomeSeen: () => void;
   setCurrentStep: (step: OnboardingStep) => void;
   nextStep: () => void;
   previousStep: () => void;
@@ -33,6 +34,7 @@ interface OnboardingStore extends OnboardingState {
 
 const initialState: OnboardingState = {
   isComplete: false,
+  hasSeenWelcome: false,
   hasHydrated: false,
   currentStep: 'firstFarm',
   preferences: {
@@ -99,6 +101,8 @@ export const useOnboardingStore = create<OnboardingStore>()(
   persist(
     (set, get) => ({
       ...initialState,
+
+      markWelcomeSeen: () => set({ hasSeenWelcome: true }),
 
       setCurrentStep: (step) => set({ currentStep: step }),
 
@@ -181,7 +185,7 @@ export const useOnboardingStore = create<OnboardingStore>()(
     }),
     {
       name: 'vinesight-onboarding',
-      version: 3,
+      version: 4,
       storage: createJSONStorage(() => onboardingStorage),
       migrate: (persistedState, version) => {
         const state = persistedState as Record<string, unknown>;
@@ -222,9 +226,15 @@ export const useOnboardingStore = create<OnboardingStore>()(
           currentStep = 'firstFarm';
         }
 
+        const hasSeenWelcome =
+          typeof state.hasSeenWelcome === 'boolean'
+            ? state.hasSeenWelcome
+            : state.isComplete === true;
+
         return {
           ...initialState,
           ...state,
+          hasSeenWelcome,
           currentStep: currentStep as OnboardingStep,
           activation,
         } as unknown as OnboardingStore;

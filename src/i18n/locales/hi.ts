@@ -3222,11 +3222,38 @@ export const hi = {
     absent: 'अनुपस्थित',
   },
 
+  welcome: {
+    title: 'VineSight',
+    kicker: 'द्राक्षाबागी टीमों के लिए',
+    headline: 'आपका द्राक्षाबाग, एक ऐप',
+    subtitle: 'सिंचाई, छिड़काव, कटाई और कार्य \u2014 सब एक जगह।',
+    features: {
+      log: {
+        title: 'हर गतिविधि, दर्ज',
+        description: 'सिंचाई, छिड़काव, कटाई और कार्य एक समयरेखा में।',
+      },
+      export: {
+        title: 'निर्यात-तैयार रिपोर्ट',
+        description: 'खरीदारों के लिए गतिविधि रजिस्टर तुरंत तैयार करें।',
+      },
+      team: {
+        title: 'आपकी टीम के लिए',
+        description: 'मजदूरी, स्टॉक और खर्च एक साथ ट्रैक करें।',
+      },
+    },
+    cta: {
+      getStarted: 'शुरू करें',
+      hasAccount: 'पहले से खाता है?',
+      logIn: 'लॉग इन करें',
+    },
+  },
+
   reports: {
     title: 'रिपोर्ट',
     fpc: {
       audience: 'निर्यातकों के लिए',
       exportTitle: 'निर्यातक गतिविधि रजिस्टर',
+      exportDescription: 'खरीदार का रजिस्टर XLSX स्प्रेडशीट के रूप में साझा करें।',
       shareXlsx: 'XLSX साझा करें',
       sectionTitle: 'निर्यातक गतिविधि रजिस्टर ({{count}} दिन)',
       day: 'दिन',

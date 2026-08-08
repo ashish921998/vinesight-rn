@@ -1,6 +1,7 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import { ReportExportActions } from '@/components/screens/reports/report-export-actions';
+import { ReportExporterCard } from '@/components/screens/reports/report-exporter-card';
 import { getDefaultReportFormat } from '@/components/screens/reports/report-format';
 
 jest.mock('react-i18next', () => ({
@@ -44,7 +45,6 @@ describe('Exporter report controls', () => {
   it('keeps the exporter workbook separate from the farmer report actions', () => {
     const onShare = jest.fn();
     const onSave = jest.fn();
-    const onShareExporter = jest.fn();
     const props = {
       canExport: true,
       isExporting: false,
@@ -52,22 +52,37 @@ describe('Exporter report controls', () => {
       onSelectFormat: jest.fn(),
       onShare,
       onDownload: onSave,
-      onShareExporter,
       panelStyle: {},
     };
     const { getByText, queryByText, rerender } = render(<ReportExportActions {...props} />);
 
     fireEvent.press(getByText('reports.share'));
     fireEvent.press(getByText('reports.saveToFiles'));
-    fireEvent.press(getByText('reports.fpc.shareXlsx'));
 
     expect(onShare).toHaveBeenCalledTimes(1);
     expect(onSave).toHaveBeenCalledTimes(1);
-    expect(onShareExporter).toHaveBeenCalledTimes(1);
-    expect(getByText('reports.fpc.audience')).toBeTruthy();
-    expect(getByText('reports.fpc.exportTitle')).toBeTruthy();
+
+    // The exporter register is rendered as a separate card in the parent, not here.
+    expect(queryByText('reports.fpc.shareXlsx')).toBeNull();
+    expect(queryByText('reports.fpc.audience')).toBeNull();
+    expect(queryByText('reports.fpc.exportTitle')).toBeNull();
 
     rerender(<ReportExportActions {...props} isExporting />);
+    expect(queryByText('reports.share')).toBeNull();
+  });
+
+  it('renders the exporter card only when the parent has exporter activity', () => {
+    const onShare = jest.fn();
+    const { getByText, queryByText, rerender } = render(
+      <ReportExporterCard isExporting={false} onShare={onShare} panelStyle={{}} />,
+    );
+
+    expect(getByText('reports.fpc.audience')).toBeTruthy();
+    expect(getByText('reports.fpc.exportTitle')).toBeTruthy();
+    fireEvent.press(getByText('reports.fpc.shareXlsx'));
+    expect(onShare).toHaveBeenCalledTimes(1);
+
+    rerender(<ReportExporterCard isExporting panelStyle={{}} onShare={onShare} />);
     expect(queryByText('reports.fpc.shareXlsx')).toBeNull();
   });
 

@@ -3239,11 +3239,38 @@ export const en = {
     absent: 'Absent',
   },
 
+  welcome: {
+    title: 'VineSight',
+    kicker: 'Built for vineyard teams',
+    headline: 'Your vineyard, one app',
+    subtitle: 'Track irrigation, sprays, harvests, and tasks \u2014 all in one place.',
+    features: {
+      log: {
+        title: 'Every activity, logged',
+        description: 'Irrigation, sprays, harvests, and tasks in one timeline.',
+      },
+      export: {
+        title: 'Export-ready in seconds',
+        description: 'Generate activity registers buyers trust.',
+      },
+      team: {
+        title: 'Built for your team',
+        description: 'Labour, stock, and expenses tracked together.',
+      },
+    },
+    cta: {
+      getStarted: 'Get Started',
+      hasAccount: 'Already have an account?',
+      logIn: 'Log In',
+    },
+  },
+
   reports: {
     title: 'Reports',
     fpc: {
       audience: 'For exporters',
       exportTitle: 'Exporter activity register',
+      exportDescription: 'Share the buyer\u2019s register as an XLSX spreadsheet.',
       shareXlsx: 'Share XLSX',
       sectionTitle: 'Exporter Activity Register ({{count}} days)',
       day: 'Day',

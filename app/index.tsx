@@ -25,6 +25,7 @@ export default function Index() {
   const hasSeenOnboarding = useAuthStore((s) => s.hasSeenOnboarding);
   const user = useAuthStore((s) => s.user);
   const onboardingHydrated = useOnboardingStore((s) => s.hasHydrated);
+  const hasSeenWelcome = useOnboardingStore((s) => s.hasSeenWelcome);
   const onboardingComplete = useOnboardingStore((s) => s.isComplete);
   const { languageHydrated, hasSelectedLanguage, language } = useLanguageStore(
     useShallow((s) => ({
@@ -115,16 +116,22 @@ export default function Index() {
     );
   }
 
+  if (!onboardingHydrated) {
+    return <AnimatedSplash duration={2500} />;
+  }
+
+  // Welcome screen is a pre-auth flow. Authenticated users must continue
+  // through the normal route resolver instead of being sent back to login.
+  if (!isAuthenticated && !hasSeenWelcome) {
+    return <Redirect href="/welcome" />;
+  }
+
   // Use isPending (not isLoading) so the splash stays up during
   // PersistQueryClientProvider cache restoration, when queries are paused:
   // isLoading = isPending && isFetching, which is false during the pause even
   // though data is still undefined — causing a premature redirect to
   // profile-completion. isPending is true whenever data hasn't arrived.
   if (isAuthenticated && (profilePending || workspacePending)) {
-    return <AnimatedSplash duration={2500} />;
-  }
-
-  if (isAuthenticated && !onboardingHydrated) {
     return <AnimatedSplash duration={2500} />;
   }
 
