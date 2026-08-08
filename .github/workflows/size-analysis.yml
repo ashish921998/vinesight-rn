@@ -126,6 +126,11 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EXPO_APPLE_TEAM_ID: ${{ secrets.EXPO_APPLE_TEAM_ID }}
+          # SENTRY_AUTH_TOKEN must be present during the build so app.config.js
+          # evaluates identically to an EAS cloud build. Without it the Sentry
+          # plugin config differs, producing a different expo-updates fingerprint
+          # hash and failing the Configure expo-updates build phase.
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: |
           mkdir -p build
           eas build \
