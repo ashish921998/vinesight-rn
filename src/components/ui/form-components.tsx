@@ -781,6 +781,8 @@ interface FormInputProps {
   blurOnSubmit?: boolean;
   /** Keeps the input discoverable to assistive technology when its visual label is omitted. */
   accessibilityLabel?: string;
+  /** Inline validation message shown below the input; also reddens the border. */
+  error?: string;
 }
 
 export function FormInput({
@@ -801,6 +803,7 @@ export function FormInput({
   returnKeyType = multiline ? 'default' : 'done',
   blurOnSubmit = true,
   accessibilityLabel,
+  error,
 }: FormInputProps) {
   const m3 = useM3();
   const containerStyle: ViewStyle = {
@@ -825,10 +828,16 @@ export function FormInput({
     alignItems: multiline ? 'flex-start' : 'center',
     backgroundColor: m3.surface.s100,
     borderWidth: 1,
-    borderColor: m3.surface.s300,
+    borderColor: error ? m3.colorScheme.error : m3.surface.s300,
     borderRadius: borderRadius.sm,
     minHeight: 48,
     overflow: 'hidden',
+  };
+
+  const errorStyle: TextStyle = {
+    fontSize: fontSize.xs,
+    color: m3.colorScheme.error,
+    marginTop: spacing[2],
   };
 
   const prefixSuffixStyle: TextStyle = {
@@ -875,6 +884,7 @@ export function FormInput({
         />
         {suffix && <Text style={[prefixSuffixStyle, { paddingRight: spacing[4] }]}>{suffix}</Text>}
       </View>
+      {error ? <Text style={errorStyle}>{error}</Text> : null}
     </View>
   );
 }

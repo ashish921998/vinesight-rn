@@ -507,6 +507,11 @@ export const en = {
     saveLabel: {
       createFarm: 'Create Farm',
     },
+    validation: {
+      nameRequired: 'Enter a farm name to continue.',
+      areaRequired: 'Enter an area greater than 0.',
+      cropRequired: 'Enter a crop name to continue.',
+    },
     sections: {
       details: 'Farm Details',
       cropType: 'Crop Type',

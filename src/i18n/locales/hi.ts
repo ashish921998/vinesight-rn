@@ -495,6 +495,11 @@ export const hi = {
     saveLabel: {
       createFarm: 'खेत बनाएं',
     },
+    validation: {
+      nameRequired: 'जारी रखने के लिए खेत का नाम दर्ज करें।',
+      areaRequired: '0 से अधिक क्षेत्रफल दर्ज करें।',
+      cropRequired: 'जारी रखने के लिए फसल का नाम दर्ज करें।',
+    },
     sections: {
       details: 'खेत विवरण',
       cropType: 'फसल प्रकार',

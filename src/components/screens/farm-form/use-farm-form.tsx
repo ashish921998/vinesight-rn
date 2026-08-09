@@ -39,9 +39,10 @@ import {
   ensureValidDate,
   formatLocalDate,
   getErrorMessage,
-  isFarmCoreFieldsValid,
+  getFarmCoreFieldError,
   resolveFarmCoreSelection,
   sanitizeDecimalInput,
+  type FarmCoreFieldError,
 } from './utils';
 
 interface KnownCropOption {
@@ -88,6 +89,9 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
   );
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isGuidedTourScrollLocked, setIsGuidedTourScrollLocked] = useState(false);
+  // Which required core field failed the last blocked save, or null. Drives the
+  // inline error under Farm Name / Area / Custom Crop.
+  const [coreFieldError, setCoreFieldError] = useState<FarmCoreFieldError | null>(null);
 
   const formScrollViewRef = useRef<ScrollView>(null);
   const nameInputRef = useRef<TextInput>(null);
@@ -553,28 +557,6 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
     return null;
   }, [formState.sandPercentage, formState.siltPercentage, formState.clayPercentage, t]);
 
-  const isValid = useMemo(
-    () =>
-      isFarmCoreFieldsValid({
-        name: formState.name,
-        region: formState.region,
-        area: formState.area,
-        selectedCrop: formState.selectedCrop,
-        customCropName: formState.customCropName,
-        cropVariety: formState.cropVariety,
-        customVariety: formState.customVariety,
-      }),
-    [
-      formState.name,
-      formState.region,
-      formState.area,
-      formState.selectedCrop,
-      formState.customCropName,
-      formState.cropVariety,
-      formState.customVariety,
-    ],
-  );
-
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
@@ -623,6 +605,7 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
   };
 
   const handleSelectCrop = (crop: CropType, customCropName = '') => {
+    if (crop !== 'Other') setCoreFieldError((prev) => (prev === 'customCrop' ? null : prev));
     setFormState((prev) => ({
       ...prev,
       selectedCrop: crop,
@@ -703,15 +686,36 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
 
   const handleReset = () => {
     const initialState = isEdit ? buildFormStateFromFarm(farm) : buildFormStateFromFarm(undefined);
+    setCoreFieldError(null);
     setFormState(initialState);
   };
 
   const handleSave = async () => {
-    if (!isValid) {
-      Alert.alert(
-        t('common.alerts.missingInformationTitle'),
-        t('common.alerts.fillAllRequiredFields'),
-      );
+    const missingField = getFarmCoreFieldError({
+      name: formState.name,
+      region: formState.region,
+      area: formState.area,
+      selectedCrop: formState.selectedCrop,
+      customCropName: formState.customCropName,
+      cropVariety: formState.cropVariety,
+      customVariety: formState.customVariety,
+    });
+    if (missingField) {
+      // Show an inline error and focus the missing field rather than leaving a
+      // silently disabled button. Emit telemetry so a validation block is
+      // visible in the funnel without a session recording.
+      setCoreFieldError(missingField);
+      telemetry.capture('farm_create_blocked', {
+        missing_field: missingField,
+        mode: isEdit ? 'edit' : 'add',
+      });
+      const fieldRef =
+        missingField === 'name'
+          ? nameInputRef
+          : missingField === 'area'
+            ? areaInputRef
+            : customCropInputRef;
+      fieldRef.current?.focus();
       return;
     }
 
@@ -1046,14 +1050,21 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
   // Inline state setters exposed to the view
   // ---------------------------------------------------------------------------
 
-  const setName = (v: string) => setFormState((prev) => ({ ...prev, name: v }));
+  const setName = (v: string) => {
+    setCoreFieldError((prev) => (prev === 'name' ? null : prev));
+    setFormState((prev) => ({ ...prev, name: v }));
+  };
   const setRegion = (v: string) => setFormState((prev) => ({ ...prev, region: v }));
   const setArea = (v: string) => {
     const sanitized = sanitizeDecimalInput(v);
+    setCoreFieldError((prev) => (prev === 'area' ? null : prev));
     setFormState((prev) => ({ ...prev, area: sanitized }));
     return sanitized;
   };
-  const setCustomCropName = (v: string) => setFormState((prev) => ({ ...prev, customCropName: v }));
+  const setCustomCropName = (v: string) => {
+    setCoreFieldError((prev) => (prev === 'customCrop' ? null : prev));
+    setFormState((prev) => ({ ...prev, customCropName: v }));
+  };
   const setCustomVariety = (v: string) => setFormState((prev) => ({ ...prev, customVariety: v }));
   const setVineSpacing = (v: string) => setFormState((prev) => ({ ...prev, vineSpacing: v }));
   const setRowSpacing = (v: string) => setFormState((prev) => ({ ...prev, rowSpacing: v }));
@@ -1108,7 +1119,7 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
     // Loading state
     farmLoading,
     isEdit,
-    isValid,
+    coreFieldError,
     isLoading: createFarm.isPending || updateFarm.isPending,
 
     // Form state (read-only surface)

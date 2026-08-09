@@ -27,6 +27,8 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatNumber } from '@/i18n/format';
 import { useM3 } from '@/styles/use-theme';
+import { useAppModeStore } from '@/stores';
+import { telemetry } from '@/services/telemetry';
 import { GUIDED_TOUR_TARGET_IDS, GuidedTourTarget } from '@/features/guided-tour';
 
 /**
@@ -572,6 +574,10 @@ export default function FarmsScreen() {
   );
 
   const handleAddFarm = useCallback(() => {
+    telemetry.capture('add_farm_tapped', {
+      app_mode: useAppModeStore.getState().detailedMode ? 'detailed' : 'simplified',
+      surface: 'farms',
+    });
     router.push('/farm/add');
   }, [router]);
 
