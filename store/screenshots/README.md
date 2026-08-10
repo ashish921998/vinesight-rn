@@ -126,7 +126,7 @@ Google Play Console supports store listing experiments:
 2. Launched Vinesight (`com.vinesight.ios`)
 3. Navigated to each screen via UI interaction
 4. Captured at full resolution (scale: 1.0 PNG)
-5. Resized to exact App Store dimensions using `sips`
+5. Composited with ImageMagick (`compose.sh`): white canvas + headline/subtitle + screenshot, resized and flattened to opaque RGB (no alpha) for App Store / Google Play requirements
 
 ## Update Checklist
 

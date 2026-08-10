@@ -75,10 +75,11 @@ process() {
     -compose Over -composite \
     "$canvas"
 
-  # 6. Save outputs
-  cp "$canvas" "$OUT_67/$output"
-  sips -z 2778 1284 "$canvas" --out "$OUT_65/$output" >/dev/null 2>&1
-  cp "$canvas" "$OUT_GP/$output"
+  # 6. Save outputs — flatten alpha, force opaque RGB
+  # App Store requires opaque PNGs; Google Play requires 24-bit no-alpha PNGs.
+  magick "$canvas" -background white -alpha remove -alpha off "$OUT_67/$output"
+  magick "$canvas" -background white -alpha remove -alpha off -resize "1284x2778!" "$OUT_65/$output"
+  magick "$canvas" -background white -alpha remove -alpha off "$OUT_GP/$output"
 
   rm -rf "$tmpdir"
 }

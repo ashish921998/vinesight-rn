@@ -373,10 +373,10 @@ export class SupabaseDataAccess implements DataAccess {
         };
       const farmIds = farms.map((farm) => farm.id);
       const tables = [
-        ['irrigation_records', 'id, farm_id, date, duration'],
-        ['spray_records', 'id, farm_id, date, chemical'],
-        ['harvest_records', 'id, farm_id, date, quantity, grade'],
-        ['expense_records', 'id, farm_id, date, type, cost'],
+        ['irrigation_records', 'id, farm_id, date, duration, moisture_status'],
+        ['spray_records', 'id, farm_id, date, chemical, weather'],
+        ['harvest_records', 'id, farm_id, date, quantity, grade, buyer, notes'],
+        ['expense_records', 'id, farm_id, date, type, cost, remarks'],
         ['fertigation_records', 'id, farm_id, date'],
         ['daily_notes', 'id, farm_id, date, notes'],
       ] as const;

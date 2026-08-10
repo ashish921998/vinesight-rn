@@ -51,10 +51,14 @@ export type DashboardCounts = {
 };
 export type DashboardActivityRows = {
   farms: Array<Pick<Farm, 'id' | 'name'>>;
-  irrigation: Array<Pick<IrrigationRecord, 'id' | 'farm_id' | 'date' | 'duration'>>;
-  spray: Array<Pick<SprayRecord, 'id' | 'farm_id' | 'date' | 'chemical'>>;
-  harvest: Array<Pick<HarvestRecord, 'id' | 'farm_id' | 'date' | 'quantity' | 'grade'>>;
-  expense: Array<Pick<ExpenseRecord, 'id' | 'farm_id' | 'date' | 'type' | 'cost'>>;
+  irrigation: Array<
+    Pick<IrrigationRecord, 'id' | 'farm_id' | 'date' | 'duration' | 'moisture_status'>
+  >;
+  spray: Array<Pick<SprayRecord, 'id' | 'farm_id' | 'date' | 'chemical' | 'weather'>>;
+  harvest: Array<
+    Pick<HarvestRecord, 'id' | 'farm_id' | 'date' | 'quantity' | 'grade' | 'buyer' | 'notes'>
+  >;
+  expense: Array<Pick<ExpenseRecord, 'id' | 'farm_id' | 'date' | 'type' | 'cost' | 'remarks'>>;
   fertigation: Array<Pick<FertigationRecord, 'id' | 'farm_id' | 'date'>>;
   dailyNotes: Array<Pick<DailyNoteRecord, 'id' | 'farm_id' | 'date' | 'notes'>>;
 };

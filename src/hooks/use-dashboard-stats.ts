@@ -285,6 +285,7 @@ export function useRecentActivities(limit: number = 5) {
           type: 'irrigation',
           date: r.date,
           description: `${displayDuration}h`,
+          secondaryDetail: r.moisture_status?.trim() || undefined,
           farmId: r.farm_id,
           farmName: farmMap.get(r.farm_id) ?? 'Unknown',
         });
@@ -297,6 +298,7 @@ export function useRecentActivities(limit: number = 5) {
           type: 'spray',
           date: r.date,
           description: r.chemical?.trim() ?? '',
+          secondaryDetail: r.weather?.trim() || undefined,
           farmId: r.farm_id,
           farmName: farmMap.get(r.farm_id) ?? '',
         });
@@ -311,6 +313,7 @@ export function useRecentActivities(limit: number = 5) {
           type: 'harvest',
           date: r.date,
           description: grade ? `${quantity} · ${grade}` : quantity,
+          secondaryDetail: r.buyer?.trim() || r.notes?.trim() || undefined,
           farmId: r.farm_id,
           farmName: farmMap.get(r.farm_id) ?? '',
         });
@@ -327,6 +330,7 @@ export function useRecentActivities(limit: number = 5) {
           type: 'expense',
           date: r.date,
           description: expenseType ? `${formattedCost} · ${expenseType}` : formattedCost,
+          secondaryDetail: r.remarks?.trim() || undefined,
           farmId: r.farm_id,
           farmName: farmMap.get(r.farm_id) ?? '',
         });
