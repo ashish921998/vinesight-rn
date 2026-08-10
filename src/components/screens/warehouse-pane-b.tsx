@@ -129,7 +129,14 @@ export function WarehousePaneB({
           onPress={() => onItemPress(item)}
           onLongPress={onItemLongPress ? () => onItemLongPress(item) : undefined}
           accessibilityRole="button"
-          accessibilityLabel={`${item.name}${low ? `, ${t('warehouse.labels.lowStock')}` : ''}`}
+          accessibilityLabel={[
+            item.name,
+            subtitleParts.join(' · '),
+            stockParts.join(' · '),
+            low ? t('warehouse.labels.lowStock') : null,
+          ]
+            .filter(Boolean)
+            .join(', ')}
           android_ripple={{ color: colorWithOpacity(m3.colorScheme.primary, 0.08) }}
           style={{
             marginHorizontal: spacing[4],

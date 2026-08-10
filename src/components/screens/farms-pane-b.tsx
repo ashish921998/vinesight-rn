@@ -133,12 +133,22 @@ export function FarmsPaneB({
         item.region,
       ].filter(Boolean);
 
+      // Visible metadata: "Pruning · 45/130" (or just the stage pre-pruning).
+      const metaText = days != null ? `${stage} · ${days}/${SEASON_LENGTH_DAYS}` : stage;
+
       return (
         <Pressable
           onPress={() => onFarmPress(item)}
           onLongPress={() => onEditFarm(item)}
           accessibilityRole="button"
-          accessibilityLabel={`${item.name}, ${stage}${lowWater ? `, ${t('explore.farms.water.low', { defaultValue: 'Low water' })}` : ''}`}
+          accessibilityLabel={[
+            item.name,
+            subtitleParts.join(' · '),
+            metaText,
+            lowWater ? t('explore.farms.water.low', { defaultValue: 'Low water' }) : null,
+          ]
+            .filter(Boolean)
+            .join(', ')}
           android_ripple={{ color: colorWithOpacity(m3.colorScheme.primary, 0.08) }}
           style={{
             marginHorizontal: spacing[4],
