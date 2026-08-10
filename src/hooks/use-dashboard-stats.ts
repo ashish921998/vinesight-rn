@@ -185,6 +185,8 @@ export interface RecentActivity {
   type: LogTypeId;
   date: string;
   description: string;
+  /** Optional detail used by richer activity surfaces such as Farm Details. */
+  secondaryDetail?: string;
   farmId: number;
   farmName: string;
 }

@@ -39,11 +39,15 @@ import {
   useFarmSeasonStatus,
   useRecomputeFarmSeasonAssignments,
   useEarliestSafeHarvestForSeason,
+  useLogPresentation,
   isAndroid,
   isIOS,
   useCurrency,
 } from '@/hooks';
-import { TimelineLogCard } from '@/components/cards';
+import {
+  SwipeableRecentActivityRow,
+  type ActivityRowModel,
+} from '@/components/activity/recent-activity-row';
 import { useTranslation } from 'react-i18next';
 import type {
   IrrigationRecord,
@@ -58,6 +62,9 @@ import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency, formatDate } from '@/i18n/format';
 import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
 import { isGrapeCrop } from '@/utils/crop';
+import { shouldShowHarvestUnverifiedBanner } from '@/utils/harvest-safety-visibility';
+import { getDescriptionFromData } from '@/utils/log-description';
+import { getDelegatedAttribution, getSecondaryDetail } from '@/utils/activity-details';
 
 import { useModalStore, useAppModeStore } from '@/stores';
 import { useM3 } from '@/styles/use-theme';
@@ -102,35 +109,6 @@ type FarmActivityLog = {
   };
 }[LogTypeId];
 
-interface RecentActivityCardProps {
-  log: FarmActivityLog;
-  farmName?: string;
-  onEdit: (log: FarmActivityLog) => void;
-  onDelete: (log: FarmActivityLog) => void;
-}
-
-const RecentActivityCard = React.memo(function RecentActivityCard({
-  log,
-  farmName,
-  onEdit,
-  onDelete,
-}: RecentActivityCardProps) {
-  const handleEdit = React.useCallback(() => onEdit(log), [log, onEdit]);
-  const handleDelete = React.useCallback(() => onDelete(log), [log, onDelete]);
-
-  return (
-    <TimelineLogCard
-      type={log.type}
-      date={log.date}
-      data={log.data}
-      farmName={farmName}
-      onEdit={handleEdit}
-      onDelete={log.type === 'note' ? undefined : handleDelete}
-      onPress={handleEdit}
-    />
-  );
-});
-
 const NOW_TICK_MS = 60_000;
 
 export default function FarmDetailScreen() {
@@ -138,6 +116,7 @@ export default function FarmDetailScreen() {
   const domain = useDomainColors();
   const { t } = useTranslation();
   const currency = useCurrency();
+  const activityPresentation = useLogPresentation();
 
   const router = useRouter();
   const isFocused = useIsFocused();
@@ -1201,6 +1180,26 @@ export default function FarmDetailScreen() {
     return filteredLogs.slice(0, RECENT_ACTIVITY_LIMIT);
   }, [filteredLogs]);
 
+  const recentActivities = useMemo<ActivityRowModel[]>(
+    () =>
+      farm
+        ? recentLogs.map((log) => ({
+            id: log.id,
+            type: log.type,
+            date: log.date,
+            description: getDescriptionFromData(log.type, t, log.data, currency),
+            secondaryDetail: [
+              getSecondaryDetail(log.type, log.data, { showArea: false }),
+              getDelegatedAttribution(t, log.data),
+            ]
+              .filter((detail): detail is string => Boolean(detail))
+              .join(' • '),
+            farmName: farm.name,
+          }))
+        : [],
+    [currency, farm, recentLogs, t],
+  );
+
   // Toggle log type filter
   const toggleLogTypeFilter = (type: LogTypeId) => {
     setSelectedLogTypes((prev) =>
@@ -1380,6 +1379,27 @@ export default function FarmDetailScreen() {
       );
     },
     [deleteExpense, deleteFertigation, deleteHarvest, deleteIrrigation, deleteSpray, t],
+  );
+
+  const findRecentActivityLog = React.useCallback(
+    (activityId: string) => recentLogs.find((log) => log.id === activityId),
+    [recentLogs],
+  );
+
+  const handleEditRecentActivity = React.useCallback(
+    (activity: ActivityRowModel) => {
+      const log = findRecentActivityLog(activity.id);
+      if (log) handleEditActivity(log);
+    },
+    [findRecentActivityLog, handleEditActivity],
+  );
+
+  const handleDeleteRecentActivity = React.useCallback(
+    (activity: ActivityRowModel) => {
+      const log = findRecentActivityLog(activity.id);
+      if (log && log.type !== 'note') handleDeleteActivity(log);
+    },
+    [findRecentActivityLog, handleDeleteActivity],
   );
 
   const handleDeleteFarm = () => {
@@ -2070,13 +2090,18 @@ export default function FarmDetailScreen() {
           {/* Harvest-status unverified advisory — calm "needs attention", distinct
               from the red PHI-conflict banner above. Fail-closed: shown when season
               sprays are unmapped so "no conflict banner" never implies "safe". */}
-          {isGrapeFarm && earliestSafeHarvest?.status === 'unverified' && !hasPhiConflict && (
+          {shouldShowHarvestUnverifiedBanner({
+            detailedMode,
+            isGrapeFarm,
+            status: earliestSafeHarvest?.status,
+            hasPhiConflict,
+          }) && (
             <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[3] }}>
               <View
                 accessible
                 accessibilityLiveRegion="polite"
                 accessibilityLabel={t('farmDetails.harvestUnverified.a11y', {
-                  count: earliestSafeHarvest.unverifiedCount,
+                  count: earliestSafeHarvest?.unverifiedCount ?? 0,
                   defaultValue_one:
                     'Harvest safety not yet verified. {{count}} spray not yet mapped to label data.',
                   defaultValue_other:
@@ -2114,7 +2139,7 @@ export default function FarmDetailScreen() {
                     }}
                   >
                     {t('farmDetails.harvestUnverified.subtitle', {
-                      count: earliestSafeHarvest.unverifiedCount,
+                      count: earliestSafeHarvest?.unverifiedCount ?? 0,
                       defaultValue_one: '{{count}} spray not yet mapped to label data',
                       defaultValue_other: '{{count}} sprays not yet mapped to label data',
                     })}
@@ -2488,24 +2513,17 @@ export default function FarmDetailScreen() {
             </View>
 
             {/* Log rows */}
-            {recentLogs.length > 0 ? (
-              <View
-                style={{
-                  borderRadius: m3.shape.cornerLarge,
-                  padding: spacing[2],
-                  backgroundColor: m3.surface.surfaceContainerLow,
-                  borderWidth: 1,
-                  borderColor: m3.colorScheme.outlineVariant,
-                  gap: spacing[2],
-                }}
-              >
-                {recentLogs.map((log) => (
-                  <RecentActivityCard
-                    key={log.id}
-                    log={log}
-                    farmName={farm?.name ?? undefined}
-                    onEdit={handleEditActivity}
-                    onDelete={handleDeleteActivity}
+            {recentActivities.length > 0 ? (
+              <View style={{ gap: spacing[1] }}>
+                {recentActivities.map((activity) => (
+                  <SwipeableRecentActivityRow
+                    key={activity.id}
+                    activity={activity}
+                    showFarmName={false}
+                    presentation={activityPresentation}
+                    onPress={handleEditRecentActivity}
+                    onSwipeEdit={handleEditRecentActivity}
+                    onDelete={activity.type === 'note' ? undefined : handleDeleteRecentActivity}
                   />
                 ))}
               </View>
