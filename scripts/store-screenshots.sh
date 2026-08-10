@@ -21,6 +21,18 @@ log() { printf '\n[screenshots] %s\n' "$*"; }
 die() { printf '\n[screenshots] error: %s\n' "$*" >&2; exit 1; }
 require_command() { command -v "$1" >/dev/null 2>&1 || die "'$1' is required; see docs/store-screenshots.md"; }
 
+# Create (or recreate empty) a working directory, clearing stale output from
+# previous runs. Contents are deleted, never the directory itself, and the
+# repository root is refused to guard against a bad env override.
+reset_dir() {
+  local dir="$1" resolved
+  [[ -n "$dir" ]] || die 'reset_dir: empty directory path'
+  mkdir -p "$dir"
+  resolved="$(cd "$dir" && pwd)"
+  [[ "$resolved" != "$ROOT_DIR" ]] || die "refusing to clear repository root as $dir"
+  find "$dir" -mindepth 1 -delete
+}
+
 resolve_udid() {
   local device_line
   device_line="$(xcrun simctl list devices available | grep -F "($REQUESTED_UDID)" || true)"
@@ -82,7 +94,7 @@ build() {
 
 capture() {
   require_command asc
-  mkdir -p "$RAW_DIR"
+  reset_dir "$RAW_DIR"
   log "Capturing the plan in .asc/screenshots.json"
   local udid
   udid="$(resolve_udid)"
@@ -137,7 +149,7 @@ frame() {
   require_command magick
   command -v kou >/dev/null 2>&1 || die "'kou' is required; install koubou==0.18.1 as documented in docs/store-screenshots.md"
   find "$RAW_DIR" -type f -name '*.png' -print -quit | grep -q . || die "no raw PNGs found in $RAW_DIR; run capture first"
-  mkdir -p "$FRAMED_DIR"
+  reset_dir "$FRAMED_DIR"
 
   while IFS= read -r -d '' input; do
     local output="$FRAMED_DIR/$(basename "$input")"
