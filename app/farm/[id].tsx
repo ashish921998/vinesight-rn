@@ -1188,12 +1188,13 @@ export default function FarmDetailScreen() {
             type: log.type,
             date: log.date,
             description: getDescriptionFromData(log.type, t, log.data, currency),
-            secondaryDetail: [
-              getSecondaryDetail(log.type, log.data, { showArea: false }),
-              getDelegatedAttribution(t, log.data),
-            ]
-              .filter((detail): detail is string => Boolean(detail))
-              .join(' • '),
+            secondaryDetail:
+              [
+                getSecondaryDetail(log.type, log.data, { showArea: false }),
+                getDelegatedAttribution(t, log.data),
+              ]
+                .filter((detail): detail is string => Boolean(detail))
+                .join(' • ') || undefined,
             farmName: farm.name,
           }))
         : [],

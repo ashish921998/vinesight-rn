@@ -13,7 +13,7 @@ All notable changes to this project will be documented in this file.
 ## [1.7.0.2] - 2026-08-10
 
 ### Added
-- App Store and Google Play screenshot workflow now uses the supported `asc screenshots` CLI pipeline (capture, frame, review, and upload; see the `asc-shots-pipeline` skill). Generated assets are written to the ignored `screenshots/` directories and are not checked in.
+- Store screenshot workflow now uses the repository-backed `scripts/store-screenshots.sh` entrypoint and tracked `.asc` plan (capture, frame, review, approve, and App Store Connect upload). See `docs/store-screenshots.md` for prerequisites, credentials, commands, Google Play handoff, and generated output paths; generated assets are ignored and are not checked in.
 - Recent-activity rows now carry a `secondaryDetail` line (irrigation moisture status, spray weather, harvest buyer/notes, expense remarks) on both the home dashboard and the farm detail screen.
 - Delegated-professional attribution and a harvest-safety "unverified" advisory banner on the farm detail screen (Detailed mode, grape farms).
 

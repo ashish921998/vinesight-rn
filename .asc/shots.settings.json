@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "app": {
+    "bundle_id": "com.vinesight.ios",
+    "project": "ios/Vinesight.xcworkspace",
+    "scheme": "Vinesight",
+    "simulator_udid": "booted"
+  },
+  "paths": {
+    "plan": ".asc/screenshots.json",
+    "raw_dir": "./screenshots/raw",
+    "framed_dir": "./screenshots/framed",
+    "review_dir": "./screenshots/review"
+  },
+  "pipeline": {
+    "frame_enabled": true,
+    "upload_enabled": false
+  },
+  "upload": {
+    "version_localization_id": "",
+    "device_type": "IPHONE_65",
+    "source_dir": "./screenshots/framed"
+  }
+}

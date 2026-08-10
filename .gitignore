@@ -82,5 +82,9 @@ ios/.xcode.env.local
 .agents
 
 
-# App Store screenshots (use skills: app-store-screenshots, asc-shots-pipeline)
+# App Store screenshots (see docs/store-screenshots.md)
+/screenshots/
+/.build/
+/.asc/reports/
+/.asc/config.json
 store/screenshots/
