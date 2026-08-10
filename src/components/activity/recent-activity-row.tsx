@@ -2,7 +2,6 @@ import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { AppIcon } from '@/components/ui/app-icon';
-import { SwipeableRow } from '@/components/ui/swipeable-row';
 import type { RecentActivity } from '@/hooks';
 import type { LogPresentation } from '@/hooks/use-log-presentation';
 import { useM3 } from '@/styles/use-theme';
@@ -24,6 +23,8 @@ interface RecentActivityRowProps {
   showFarmName: boolean;
   presentation: Record<RecentActivity['type'], LogPresentation>;
   onPress: (activity: ActivityRowModel) => void;
+  /** Long-press handler — typically opens a delete confirmation. */
+  onLongPress?: (activity: ActivityRowModel) => void;
 }
 
 export const RecentActivityRow = React.memo(function RecentActivityRow({
@@ -31,6 +32,7 @@ export const RecentActivityRow = React.memo(function RecentActivityRow({
   showFarmName,
   presentation,
   onPress,
+  onLongPress,
 }: RecentActivityRowProps) {
   const m3 = useM3();
   const { t } = useTranslation();
@@ -50,6 +52,7 @@ export const RecentActivityRow = React.memo(function RecentActivityRow({
   return (
     <Pressable
       onPress={() => onPress(activity)}
+      onLongPress={onLongPress ? () => onLongPress(activity) : undefined}
       accessibilityRole="button"
       accessibilityLabel={t('dashboard.recentActivity.editActivity', {
         label: `${p.label}${detail ? `, ${detail}` : ''}, ${activityDate}`,
@@ -125,62 +128,5 @@ export const RecentActivityRow = React.memo(function RecentActivityRow({
         ) : null}
       </View>
     </Pressable>
-  );
-});
-
-interface SwipeableRecentActivityRowProps extends RecentActivityRowProps {
-  onDelete?: (activity: ActivityRowModel) => void;
-  onSwipeEdit?: (activity: ActivityRowModel) => void;
-}
-
-export const SwipeableRecentActivityRow = React.memo(function SwipeableRecentActivityRow({
-  activity,
-  showFarmName,
-  presentation,
-  onPress,
-  onDelete,
-  onSwipeEdit,
-}: SwipeableRecentActivityRowProps) {
-  const { t } = useTranslation();
-  const leadingAction = React.useMemo(
-    () =>
-      onSwipeEdit
-        ? {
-            label: t('common.edit', { defaultValue: 'Edit' }),
-            icon: 'pencil',
-            onPress: () => onSwipeEdit(activity),
-          }
-        : undefined,
-    [activity, onSwipeEdit, t],
-  );
-  const trailingAction = React.useMemo(
-    () =>
-      onDelete
-        ? {
-            label: t('common.delete'),
-            icon: 'trash',
-            onPress: () => onDelete(activity),
-          }
-        : undefined,
-    [activity, onDelete, t],
-  );
-
-  return (
-    <SwipeableRow leadingAction={leadingAction} trailingAction={trailingAction}>
-      {({ isOpen, close }) => (
-        <RecentActivityRow
-          activity={activity}
-          showFarmName={showFarmName}
-          presentation={presentation}
-          onPress={(row) => {
-            if (isOpen) {
-              close();
-              return;
-            }
-            onPress(row);
-          }}
-        />
-      )}
-    </SwipeableRow>
   );
 });

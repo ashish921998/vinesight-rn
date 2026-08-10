@@ -45,7 +45,7 @@ import {
   useCurrency,
 } from '@/hooks';
 import {
-  SwipeableRecentActivityRow,
+  RecentActivityRow,
   type ActivityRowModel,
 } from '@/components/activity/recent-activity-row';
 import { useTranslation } from 'react-i18next';
@@ -2516,14 +2516,13 @@ export default function FarmDetailScreen() {
             {recentActivities.length > 0 ? (
               <View style={{ gap: spacing[1] }}>
                 {recentActivities.map((activity) => (
-                  <SwipeableRecentActivityRow
+                  <RecentActivityRow
                     key={activity.id}
                     activity={activity}
                     showFarmName={false}
                     presentation={activityPresentation}
                     onPress={handleEditRecentActivity}
-                    onSwipeEdit={handleEditRecentActivity}
-                    onDelete={activity.type === 'note' ? undefined : handleDeleteRecentActivity}
+                    onLongPress={activity.type === 'note' ? undefined : handleDeleteRecentActivity}
                   />
                 ))}
               </View>

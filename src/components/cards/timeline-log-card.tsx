@@ -1,12 +1,11 @@
 /**
  * TimelineLogCard Component
- * Displays a single activity log entry with timeline styling and swipe actions
+ * Displays a single activity log entry with timeline styling.
  */
 
 import React from 'react';
 import { View, Text, Pressable, type ViewStyle, type TextStyle } from 'react-native';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
-import { SwipeableRow } from '@/components/ui/swipeable-row';
 import { getLogType, type LogTypeId } from '../../constants';
 import { fromSupabaseDateString } from '../../types';
 import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
@@ -43,8 +42,6 @@ interface TimelineLogCardProps {
   farmName?: string;
   showDate?: boolean;
   onPress?: () => void;
-  onEdit?: () => void;
-  onDelete?: () => void;
 }
 
 export const TimelineLogCard = React.memo(function TimelineLogCard({
@@ -55,8 +52,6 @@ export const TimelineLogCard = React.memo(function TimelineLogCard({
   farmName,
   showDate = true,
   onPress,
-  onEdit,
-  onDelete,
 }: TimelineLogCardProps) {
   const m3 = useM3();
   const { t } = useTranslation();
@@ -125,89 +120,60 @@ export const TimelineLogCard = React.memo(function TimelineLogCard({
   };
 
   return (
-    <SwipeableRow
-      leadingAction={
-        onEdit
-          ? {
-              label: t('common.edit', { defaultValue: 'Edit' }),
-              icon: 'pencil',
-              onPress: onEdit,
-            }
-          : undefined
-      }
-      trailingAction={
-        onDelete
-          ? {
-              label: t('common.delete'),
-              icon: 'trash',
-              onPress: onDelete,
-            }
-          : undefined
-      }
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${displayDescription || t(logType.labelKey)}${farmName ? `, ${farmName}` : ''}. ${displayDate}.`}
+      style={({ pressed }) => [
+        cardStyle,
+        {
+          opacity: pressed ? 0.9 : 1,
+        },
+      ]}
     >
-      {({ isOpen, close }) => (
-        <Pressable
-          onPress={() => {
-            if (isOpen) {
-              close();
-            } else {
-              onPress?.();
-            }
+      <View style={contentContainerStyle}>
+        {/* Top row: Description + Date */}
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: showDate ? 'space-between' : 'flex-start',
+            alignItems: 'center',
           }}
-          accessibilityRole="button"
-          accessibilityLabel={`${displayDescription || t(logType.labelKey)}${farmName ? `, ${farmName}` : ''}. ${displayDate}.`}
-          style={({ pressed }) => [
-            cardStyle,
-            {
-              opacity: pressed ? 0.9 : 1,
-            },
-          ]}
         >
-          <View style={contentContainerStyle}>
-            {/* Top row: Description + Date */}
-            <View
+          <Text style={descriptionTextStyle} numberOfLines={1}>
+            {displayDescription || t(logType.labelKey)}
+          </Text>
+          {showDate ? (
+            <Text
               style={{
-                flexDirection: 'row',
-                justifyContent: showDate ? 'space-between' : 'flex-start',
-                alignItems: 'center',
+                fontSize: fontSize.xs,
+                color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
+                marginLeft: spacing[2],
               }}
             >
-              <Text style={descriptionTextStyle} numberOfLines={1}>
-                {displayDescription || t(logType.labelKey)}
-              </Text>
-              {showDate ? (
-                <Text
-                  style={{
-                    fontSize: fontSize.xs,
-                    color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
-                    marginLeft: spacing[2],
-                  }}
-                >
-                  {displayDate}
-                </Text>
-              ) : null}
-            </View>
+              {displayDate}
+            </Text>
+          ) : null}
+        </View>
 
-            {/* Secondary detail */}
-            {secondaryDetail && (
-              <Text style={secondaryTextStyle} numberOfLines={1}>
-                {secondaryDetail}
-              </Text>
-            )}
-            {delegatedAttribution && (
-              <Text style={secondaryTextStyle} numberOfLines={1}>
-                {delegatedAttribution}
-              </Text>
-            )}
+        {/* Secondary detail */}
+        {secondaryDetail && (
+          <Text style={secondaryTextStyle} numberOfLines={1}>
+            {secondaryDetail}
+          </Text>
+        )}
+        {delegatedAttribution && (
+          <Text style={secondaryTextStyle} numberOfLines={1}>
+            {delegatedAttribution}
+          </Text>
+        )}
 
-            {/* Type pill */}
-            <View style={typePillStyle}>
-              <UiSymbol name={iconName} size={10} color={logType.color} />
-              <Text style={typePillTextStyle}>{t(logType.labelKey)}</Text>
-            </View>
-          </View>
-        </Pressable>
-      )}
-    </SwipeableRow>
+        {/* Type pill */}
+        <View style={typePillStyle}>
+          <UiSymbol name={iconName} size={10} color={logType.color} />
+          <Text style={typePillTextStyle}>{t(logType.labelKey)}</Text>
+        </View>
+      </View>
+    </Pressable>
   );
 });
