@@ -138,7 +138,7 @@ export function FarmsPaneB({
           onPress={() => onFarmPress(item)}
           onLongPress={() => onEditFarm(item)}
           accessibilityRole="button"
-          accessibilityLabel={`${item.name}, ${stage}`}
+          accessibilityLabel={`${item.name}, ${stage}${lowWater ? `, ${t('explore.farms.water.low', { defaultValue: 'Low water' })}` : ''}`}
           android_ripple={{ color: colorWithOpacity(m3.colorScheme.primary, 0.08) }}
           style={{
             marginHorizontal: spacing[4],

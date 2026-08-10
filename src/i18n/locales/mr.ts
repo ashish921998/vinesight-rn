@@ -778,7 +778,7 @@ export const mr = {
       heroValueLow: '{{count}} कमी',
       heroValueOk: 'सर्व ठीक',
       reorderFlag: '⚠ पुनःऑर्डर · {{count}}',
-      reorderAt: 'पुनःऑर्डर ≤ ',
+      reorderAt: 'पुनःऑर्डर ≤ {{quantity}}',
       legendLow: '{{count}} कमी',
       stockOk: 'ठीक',
       stockLow: 'कमी',

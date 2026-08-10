@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { EmptyState, LoadingState } from '@/components/ui';
 import { fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
-import { formatCurrency, formatDate } from '@/i18n/format';
+import { formatCurrency, formatDate, formatNumber } from '@/i18n/format';
 import { useM3 } from '@/styles/use-theme';
 import { useDomainColors } from '@/styles/use-domain-colors';
 import type { WarehouseItem } from '@/types';
@@ -97,7 +97,7 @@ export function WarehousePaneB({
       const low = isLowStock(item);
       const dotColor = categoryDotColor(item.type);
       const reorder = item.reorder_quantity ?? 0;
-      const stockNumber = Math.round(item.quantity * 10) / 10;
+      const stockNumber = formatNumber(item.quantity, { maximumFractionDigits: 1 });
       const formattedUnitPrice = formatCurrency(item.unit_price, currency, {
         maximumFractionDigits: 0,
         minimumFractionDigits: 0,
@@ -113,7 +113,10 @@ export function WarehousePaneB({
       const stockParts = [
         `${stockNumber} ${item.unit}`,
         reorder > 0
-          ? t('explore.warehouse.reorderAt', { defaultValue: 'Reorder ≤ ' }) + reorder
+          ? t('explore.warehouse.reorderAt', {
+              defaultValue: 'Reorder ≤ {{quantity}}',
+              quantity: formatNumber(reorder, { maximumFractionDigits: 1 }),
+            })
           : undefined,
         `${formattedUnitPrice} /${item.unit}`,
         item.expiry_date
@@ -126,7 +129,7 @@ export function WarehousePaneB({
           onPress={() => onItemPress(item)}
           onLongPress={onItemLongPress ? () => onItemLongPress(item) : undefined}
           accessibilityRole="button"
-          accessibilityLabel={`${item.name}${low ? ', Low stock' : ''}`}
+          accessibilityLabel={`${item.name}${low ? `, ${t('warehouse.labels.lowStock')}` : ''}`}
           android_ripple={{ color: colorWithOpacity(m3.colorScheme.primary, 0.08) }}
           style={{
             marginHorizontal: spacing[4],

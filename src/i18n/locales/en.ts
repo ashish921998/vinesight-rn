@@ -789,7 +789,7 @@ export const en = {
       heroValueLow: '{{count}} LOW',
       heroValueOk: 'All OK',
       reorderFlag: '⚠ REORDER · {{count}}',
-      reorderAt: 'Reorder ≤ ',
+      reorderAt: 'Reorder ≤ {{quantity}}',
       legendLow: '{{count}} low',
       stockOk: 'OK',
       stockLow: 'Low',
