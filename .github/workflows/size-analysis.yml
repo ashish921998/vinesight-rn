@@ -128,8 +128,9 @@ jobs:
           EXPO_APPLE_TEAM_ID: ${{ secrets.EXPO_APPLE_TEAM_ID }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           # Size-analysis builds use the same appVersion runtime policy as
-          # production builds. Native changes must bump expo.version before
-          # publishing an OTA update or shipping a new store build.
+          # production builds. Native runtime changes require bumping
+          # expo.version and shipping a compatible production binary before
+          # publishing OTA updates for the new runtime.
         run: |
           mkdir -p build
           eas build \
