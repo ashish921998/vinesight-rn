@@ -465,6 +465,9 @@ export const hi = {
       acres: '{{value}} एकड़',
       unknownAcres: '— एकड़',
     },
+    details: {
+      noDetails: 'खेत का विवरण',
+    },
     waterBalance: {
       label: 'पानी का संतुलन',
       value: '{{value}} मिमी',
@@ -483,6 +486,7 @@ export const hi = {
       bloom: 'फूल',
       veraison: 'वेरेसन',
       harvest: 'फसल',
+      progress: 'मौसम की प्रगति',
       sincePruning: 'छंटाई से',
     },
   },

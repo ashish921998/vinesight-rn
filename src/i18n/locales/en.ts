@@ -477,6 +477,9 @@ export const en = {
       acres: '{{value}} acres',
       unknownAcres: '— acres',
     },
+    details: {
+      noDetails: 'Farm details',
+    },
     waterBalance: {
       label: 'Water balance',
       value: '{{value}} mm',
@@ -495,6 +498,7 @@ export const en = {
       bloom: 'Bloom',
       veraison: 'Véraison',
       harvest: 'Harvest',
+      progress: 'Season progress',
       sincePruning: 'since pruning',
     },
   },

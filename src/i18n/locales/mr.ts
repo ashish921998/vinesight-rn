@@ -467,6 +467,9 @@ export const mr = {
       acres: '{{value}} एकर',
       unknownAcres: '— एकर',
     },
+    details: {
+      noDetails: 'शेत तपशील',
+    },
     waterBalance: {
       label: 'पाणी शिल्लक',
       value: '{{value}} mm',
@@ -485,6 +488,7 @@ export const mr = {
       bloom: 'फुलणे',
       veraison: 'व्हेरेसन',
       harvest: 'काढणी',
+      progress: 'हंगामाची प्रगती',
       sincePruning: '$t(glossary.pruning)पासून',
     },
   },
