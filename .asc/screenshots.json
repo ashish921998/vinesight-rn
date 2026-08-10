@@ -2,12 +2,62 @@
   "version": 1,
   "app": {
     "bundle_id": "com.vinesight.ios",
-    "udid": "booted",
+    "udid": "55FFD765-28F0-434B-A873-9087E8A06C39",
     "output_dir": "./screenshots/raw"
   },
+  "gallery": [
+    {
+      "name": "01-vineyard-overview",
+      "screen": "Farming tab",
+      "caption": { "title": "See Your Entire Vineyard", "subtitle": "at a Glance" },
+      "layout": "hero"
+    },
+    {
+      "name": "02-ai-assistant",
+      "screen": "AI Assistant conversation",
+      "caption": { "title": "Ask Your AI Farming", "subtitle": "Assistant Anything" },
+      "layout": "differentiator"
+    },
+    {
+      "name": "03-farm-vitals",
+      "screen": "Farm detail workboard",
+      "caption": { "title": "Track Soil, Water & Weather", "subtitle": "in Real Time" },
+      "layout": "vitals"
+    },
+    {
+      "name": "04-reports",
+      "screen": "Reports summary",
+      "caption": { "title": "Know Your Harvest,", "subtitle": "Revenue & Profit" },
+      "layout": "outcome"
+    },
+    {
+      "name": "05-quick-log",
+      "screen": "Home quick-log and recent activity",
+      "caption": { "title": "Log Irrigation, Spray", "subtitle": "& Harvest in Seconds" },
+      "layout": "supporting"
+    }
+  ],
   "steps": [
     { "action": "launch" },
     { "action": "wait", "duration_ms": 1500 },
-    { "action": "screenshot", "name": "launch" }
+    { "action": "tap", "label": "Farming" },
+    { "action": "wait_for", "label": "Farming", "timeout_ms": 15000 },
+    { "action": "screenshot", "name": "01-vineyard-overview" },
+    { "action": "tap", "label": "Sassy" },
+    { "action": "wait_for", "label": "Reports", "timeout_ms": 15000 },
+    { "action": "screenshot", "name": "03-farm-vitals" },
+    { "action": "tap", "label": "Reports" },
+    { "action": "wait", "duration_ms": 1500 },
+    { "action": "screenshot", "name": "04-reports" },
+    { "action": "tap", "label": "Go Back" },
+    { "action": "tap", "label": "Go Back" },
+    { "action": "tap", "label": "Home" },
+    { "action": "wait_for", "label": "Home", "timeout_ms": 15000 },
+    { "action": "screenshot", "name": "05-quick-log" },
+    { "action": "tap", "label": "Settings" },
+    { "action": "wait_for", "label": "Open AI Assistant", "timeout_ms": 15000 },
+    { "action": "tap", "label": "Open AI Assistant" },
+    { "action": "wait", "duration_ms": 1500 },
+    { "action": "screenshot", "name": "02-ai-assistant" }
   ]
 }

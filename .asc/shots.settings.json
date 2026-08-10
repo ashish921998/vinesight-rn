@@ -4,7 +4,7 @@
     "bundle_id": "com.vinesight.ios",
     "project": "ios/Vinesight.xcworkspace",
     "scheme": "Vinesight",
-    "simulator_udid": "booted"
+    "simulator_udid": "55FFD765-28F0-434B-A873-9087E8A06C39"
   },
   "paths": {
     "plan": ".asc/screenshots.json",
@@ -18,7 +18,7 @@
   },
   "upload": {
     "version_localization_id": "",
-    "device_type": "IPHONE_65",
+    "device_type": "IPHONE_69",
     "source_dir": "./screenshots/framed"
   }
 }

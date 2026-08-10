@@ -16,6 +16,8 @@ Run the pipeline on macOS with:
 - App Store Connect CLI (`brew install asc`)
 - Koubou 0.18.1 for framing:
   `python3 -m pip install --user koubou==0.18.1`
+- ImageMagick for flattening framed PNGs:
+  `brew install imagemagick`
 
 Verify the two pipeline dependencies before starting:
 
@@ -62,14 +64,17 @@ The commands perform these steps:
 2. `capture` runs the tracked `.asc/screenshots.json` plan with
    `asc screenshots run`.
 3. `frame` converts every PNG in `screenshots/raw/` into a device-framed PNG in
-   `screenshots/framed/` using the pinned Koubou version.
+   `screenshots/framed/` using the pinned Koubou version, then composites each
+   output onto the configured opaque background.
 4. `review` writes an HTML review and manifest to `screenshots/review/`.
    Set `OPEN_REVIEW=1` to open the report automatically.
 5. `approve` records the reviewed files as ready for upload.
 6. `upload` sends the framed files to App Store Connect. Use
    `UPLOAD_DRY_RUN=1` to validate the upload without changing App Store Connect.
 
-The default simulator is a booted iPhone. Override it with an explicit UDID:
+The default simulator is the iPhone 17 Pro Max with UDID
+`55FFD765-28F0-434B-A873-9087E8A06C39`. Override it with an explicit UDID
+when using another simulator:
 
 ```bash
 IOS_SIMULATOR_UDID="SIMULATOR-UDID" npm run screenshots:build
@@ -81,25 +86,21 @@ tracked in `.asc/shots.settings.json`. The shell entrypoint also accepts these
 environment overrides: `APP_BUNDLE_ID`, `IOS_WORKSPACE`, `IOS_SCHEME`,
 `IOS_CONFIGURATION`, `IOS_DERIVED_DATA`, `SCREENSHOTS_RAW_DIR`,
 `SCREENSHOTS_FRAMED_DIR`, `SCREENSHOTS_REVIEW_DIR`,
-`SCREENSHOTS_FRAME_DEVICE`, and `SCREENSHOTS_DEVICE_TYPE`.
+`SCREENSHOTS_FRAME_DEVICE`, `SCREENSHOTS_FRAME_BACKGROUND`, and
+`SCREENSHOTS_DEVICE_TYPE`. Framing composites each output onto the configured
+background (default `#FFFFFF`) and writes an opaque 8-bit RGB PNG. Review,
+approval, and upload stop if any framed PNG is transparent or is not an 8-bit
+RGB PNG.
 
 ## Capture plan
 
-`.asc/screenshots.json` is a deliberately small, runnable starter plan: launch
-the installed app, wait for it to settle, and capture `launch.png`. Edit this
-tracked file to capture the actual store gallery. Supported plan actions are
-`launch`, `tap`, `type`, `wait`, `wait_for`, and `screenshot`; keep each
-screenshot step named and deterministic. The app must already be in the desired
-state (for example, an authenticated test account) before the plan is run.
-
-A typical plan extension looks like this:
-
-```json
-{
-  "action": "screenshot",
-  "name": "farm-detail"
-}
-```
+`.asc/screenshots.json` is the tracked five-image gallery plan. It expects an
+authenticated fixture account containing the seeded `Sassy` farm, then navigates
+through Farming, farm detail, Reports, Home, and AI Assistant. The plan records
+the approved screenshot names, captions, and layout roles alongside the
+executable steps. Supported plan actions are `launch`, `tap`, `type`, `wait`,
+`wait_for`, and `screenshot`; keep each screenshot step named and deterministic.
+Re-run `npm run screenshots:capture` to regenerate the complete gallery.
 
 Use the `asc screenshots run --help` output for the current plan schema and
 flags. Re-run `npm run screenshots:capture` after changing the plan; raw output
@@ -135,8 +136,9 @@ App Store Connect app ID and version string:
 APP_STORE_APP_ID="..." APP_STORE_VERSION="3.3.25" npm run screenshots:upload
 ```
 
-The default upload device type is `IPHONE_65`; override it with
-`SCREENSHOTS_DEVICE_TYPE` when the framed set targets another supported device.
+The default upload device type is `IPHONE_69` for the 6.9-inch gallery; override
+it with `SCREENSHOTS_DEVICE_TYPE` when the framed set targets another supported
+device.
 Use `asc localizations list --version VERSION_ID --output json` to resolve
 localization IDs and `asc screenshots sizes` to check Apple’s current size
 requirements before upload.
@@ -157,7 +159,7 @@ The following paths are generated and ignored by Git:
 - `screenshots/raw/` — simulator captures
 - `screenshots/framed/` — Koubou-framed output used for upload
 - `screenshots/review/` — review HTML, manifest, and approval state
-- `.build/screenshots/` — Xcode derived data
+- `.build/screenshots/` — Xcode-derived data
 - `ios/` — Expo-generated native project
 
 Review the generated artifacts before approving or uploading them. The local
