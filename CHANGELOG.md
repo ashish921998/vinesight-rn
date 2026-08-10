@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.1.0] - 2026-08-10
+
+### Changed
+- Activity rows on the farm detail screen now use long-press for delete instead of swipe gestures, matching the standard iOS interaction pattern. Tap to edit remains unchanged.
+
+### Removed
+- `SwipeableRow` component deleted entirely. `TimelineLogCard` simplified to a plain `Pressable` (the professional farm detail screen never used swipe actions). `SwipeableRecentActivityRow` wrapper removed; `RecentActivityRow` now accepts an `onLongPress` prop directly.
+
 ## [1.7.2] - 2026-08-10
 
 ### Added
