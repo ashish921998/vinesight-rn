@@ -1,7 +1,9 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
+import { RecentActivityRow } from '@/components/activity/recent-activity-row';
 import { RecentActivityList } from '@/components/screens/recent-activity';
 import type { RecentActivity } from '@/hooks';
+import type { LogPresentation } from '@/hooks/use-log-presentation';
 
 jest.mock('@/hooks', () => ({
   useLogPresentation: () => ({
@@ -19,6 +21,9 @@ jest.mock('react-i18next', () => ({
     t: (key: string, options?: Record<string, unknown>) => {
       if (key === 'dashboard.recentActivity.editActivity') {
         return `Edit ${String(options?.label ?? '')}`;
+      }
+      if (key === 'dashboard.a11y.deleteActivity') {
+        return `Delete activity: ${String(options?.type ?? '')}`;
       }
       if (key === 'dashboard.recentActivity.title') return 'Recent activity';
       if (key === 'simplifiedHome.viewAll') return 'View all';
@@ -71,6 +76,15 @@ const activity: RecentActivity = {
   farmName: 'North Farm',
 };
 
+const presentation: Record<RecentActivity['type'], LogPresentation> = {
+  irrigation: { icon: 'water', color: '#2563eb', label: 'Irrigation' },
+  spray: { icon: 'spraycan', color: '#16a34a', label: 'Spray' },
+  harvest: { icon: 'basket', color: '#ca8a04', label: 'Harvest' },
+  expense: { icon: 'receipt', color: '#dc2626', label: 'Expense' },
+  fertigation: { icon: 'fertigation', color: '#9333ea', label: 'Fertigation' },
+  note: { icon: 'document-text', color: '#64748b', label: 'Note' },
+};
+
 describe('RecentActivityList', () => {
   it('renders activity details and sends the full activity to the edit callback', () => {
     const onEditActivity = jest.fn();
@@ -94,6 +108,31 @@ describe('RecentActivityList', () => {
 
     expect(onEditActivity).toHaveBeenCalledTimes(1);
     expect(onEditActivity).toHaveBeenCalledWith(activity);
+  });
+
+  it('exposes and handles the localized delete accessibility action', () => {
+    const onLongPress = jest.fn();
+    const { getByLabelText } = render(
+      <RecentActivityRow
+        activity={activity}
+        showFarmName
+        presentation={presentation}
+        onPress={jest.fn()}
+        onLongPress={onLongPress}
+      />,
+    );
+
+    const row = getByLabelText('Edit Irrigation, 2h · North Farm, Today');
+    expect(row.props.accessibilityActions).toEqual([
+      { name: 'delete', label: 'Delete activity: Irrigation' },
+    ]);
+
+    fireEvent(row, 'accessibilityAction', {
+      nativeEvent: { actionName: 'delete' },
+    });
+
+    expect(onLongPress).toHaveBeenCalledTimes(1);
+    expect(onLongPress).toHaveBeenCalledWith(activity);
   });
 
   it('renders optional secondary details in the shared row', () => {

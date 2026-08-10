@@ -53,6 +53,23 @@ export const RecentActivityRow = React.memo(function RecentActivityRow({
     <Pressable
       onPress={() => onPress(activity)}
       onLongPress={onLongPress ? () => onLongPress(activity) : undefined}
+      onAccessibilityAction={
+        onLongPress
+          ? (event) => {
+              if (event.nativeEvent.actionName === 'delete') onLongPress(activity);
+            }
+          : undefined
+      }
+      accessibilityActions={
+        onLongPress
+          ? [
+              {
+                name: 'delete',
+                label: t('dashboard.a11y.deleteActivity', { type: p.label }),
+              },
+            ]
+          : undefined
+      }
       accessibilityRole="button"
       accessibilityLabel={t('dashboard.recentActivity.editActivity', {
         label: `${p.label}${detail ? `, ${detail}` : ''}, ${activityDate}`,

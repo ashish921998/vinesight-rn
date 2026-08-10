@@ -10,13 +10,12 @@ All notable changes to this project will be documented in this file.
 ### Removed
 - `SwipeableRow` component deleted entirely. `TimelineLogCard` simplified to a plain `Pressable` (the professional farm detail screen never used swipe actions). `SwipeableRecentActivityRow` wrapper removed; `RecentActivityRow` now accepts an `onLongPress` prop directly.
 
-## [1.7.2] - 2026-08-10
+## [1.7.0.2] - 2026-08-10
 
 ### Added
-- App Store and Google Play screenshot composition pipeline (`store/screenshots/compose.sh`): white-canvas layouts with approved two-line captions, generated from raw iPhone 17 Pro Max captures and flattened to opaque RGB for store format compliance. `upload-to-asc.sh` stages and uploads the 6.7" set to App Store Connect.
+- App Store and Google Play screenshot workflow now uses the supported `asc screenshots` CLI pipeline (capture, frame, review, and upload; see the `asc-shots-pipeline` skill). Generated assets are written to the ignored `screenshots/` directories and are not checked in.
 - Recent-activity rows now carry a `secondaryDetail` line (irrigation moisture status, spray weather, harvest buyer/notes, expense remarks) on both the home dashboard and the farm detail screen.
 - Delegated-professional attribution and a harvest-safety "unverified" advisory banner on the farm detail screen (Detailed mode, grape farms).
-- Swipe-to-edit and swipe-to-delete on farm-detail recent-activity rows.
 
 ### Changed
 - Explore farm and warehouse panes redesigned as dense compact rows with water status, day-count, stock, reorder, and price info. Filter chips removed in favor of the simplified layout.
@@ -24,7 +23,7 @@ All notable changes to this project will be documented in this file.
 - Farm activity presentation unified across the home dashboard and farm detail via a shared `RecentActivityRow` component and `useLogPresentation` hook (now exported).
 
 ### Fixed
-- Marketplace screenshot PNGs regenerated as opaque 8-bit RGB (no alpha channel) so the checked-in assets satisfy App Store (no transparency) and Google Play (24-bit, no alpha) requirements.
+- Marketplace screenshot PNGs prepared as opaque 8-bit RGB (no alpha channel) for App Store (no transparency) and Google Play (24-bit, no alpha) requirements.
 - Accessibility labels on explore rows now include the rendered metadata (crop variety, area, region, stage and day-count for farms; manufacturer, category, quantity, reorder, price, and expiry for warehouse items) while preserving the localized low-water and low-stock state.
 - Localized accessibility labels and stock interpolation across the explore panes.
 - `secondaryDetail` now populated on the home screen recent-activity list.
