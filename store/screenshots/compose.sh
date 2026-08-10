@@ -86,11 +86,11 @@ process() {
 echo "=== Clean White Minimal — App Store Screenshots ==="
 echo ""
 
-process "$RAW_DIR/01-farms-explore.png"  "01-vineyard-overview.png"  "Your Vineyard," "All in one place"
-process "$RAW_DIR/04-ai-assistant.png"   "02-ai-assistant.png"       "AI Farming" "Get instant advice"
-process "$RAW_DIR/03-farm-detail.png"    "03-farm-vitals.png"        "Live Farm Vitals" "Soil, water & weather"
-process "$RAW_DIR/05-reports.png"        "04-reports.png"            "Know Your" "Harvest & profit"
-process "$RAW_DIR/02-home-dashboard.png" "05-quick-log.png"          "Log Anything" "In just two taps"
+process "$RAW_DIR/01-farms-explore.png"  "01-vineyard-overview.png"  "See Your Entire Vineyard" "at a Glance"
+process "$RAW_DIR/04-ai-assistant.png"   "02-ai-assistant.png"       "Ask Your AI Farming" "Assistant Anything"
+process "$RAW_DIR/03-farm-detail.png"    "03-farm-vitals.png"        "Track Soil, Water & Weather" "in Real Time"
+process "$RAW_DIR/05-reports.png"        "04-reports.png"            "Know Your Harvest," "Revenue & Profit"
+process "$RAW_DIR/02-home-dashboard.png" "05-quick-log.png"          "Log Irrigation, Spray" "& Harvest in Seconds"
 
 echo ""
 echo "Done."

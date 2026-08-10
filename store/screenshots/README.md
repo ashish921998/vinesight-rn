@@ -34,8 +34,8 @@ store/screenshots/
 
 | Device Class | Dimensions (px) | Status |
 |-------------|-----------------|--------|
-| iPhone 6.7" (15 Pro Max / 17 Pro Max) | 1290 x 2796 | Ready in `ios-6.7-1290x2796/` |
-| iPhone 6.5" (11 Pro Max) | 1284 x 2778 | Ready in `ios-6.5-1284x2778/` |
+| iPhone 6.7" (15 Pro Max) | 1290 x 2796 | Ready in `appstore-6.7-1290x2796/` |
+| iPhone 6.5" (11 Pro Max) | 1284 x 2778 | Ready in `appstore-6.5-1284x2778/` |
 | iPhone 5.5" (8 Plus) | 1242 x 2208 | Optional — not generated |
 | iPad Pro 12.9" | 2048 x 2732 | Generate if iPad app |
 
@@ -71,29 +71,21 @@ All captions follow the skill's rules:
 | "Reports & Analytics" | "Know Your Harvest, Revenue & Profit" |
 | "Quick Log Actions" | "Log Irrigation, Spray & Harvest in Seconds" |
 
-## How to Add Captions
+## Regenerate Captioned Assets
 
-These are raw app screenshots without text overlays. To add captions for the App Store:
+`compose.sh` adds the approved two-line captions and writes the final assets to
+`appstore-6.7-1290x2796/`, `appstore-6.5-1284x2778/`, and `googleplay/`.
+The raw simulator captures remain in `ios/` and should only be used as inputs to
+the composition step.
 
-### Option A: Overlay with ImageMagick
+Run the generator from the repository root:
+
 ```bash
-# Example: add caption to hero screenshot
-convert ios-6.7-1290x2796/01-farms-explore.png \
-  -gravity North -background "#1E241F" -splice 0x200 \
-  -gravity North -fill "#FBF8F3" -font Helvetica-Bold -pointsize 72 \
-  -annotate +0+60 "See Your Entire Vineyard at a Glance" \
-  ios-6.7-1290x2796/01-farms-explore-captioned.png
+bash store/screenshots/compose.sh
 ```
 
-### Option B: Use design tool (Figma / Canva)
-1. Create a 1290x2796 canvas
-2. Add a header band with the benefit-focused caption
-3. Place the screenshot below
-4. Export as PNG
-
-### Option C: Submit without captions
-The screenshots are clean enough to submit as-is — the app UI is self-explanatory.
-
+Do not add a second caption overlay to the generated `appstore-*` files; they
+already contain the approved marketing copy.
 ## Screenshots Not Yet Captured
 
 These additional screens would round out a full 8-10 screenshot set:

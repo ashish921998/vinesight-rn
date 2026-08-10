@@ -127,11 +127,9 @@ jobs:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EXPO_APPLE_TEAM_ID: ${{ secrets.EXPO_APPLE_TEAM_ID }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          # Size-analysis builds use sdkVersion runtime policy instead of
-          # fingerprint to avoid mismatch between the local runner and EAS
-          # cloud (the runner lacks file-type secrets like GOOGLE_SERVICES_JSON
-          # and EXPO_APPLE_TEAM_ID, which change the fingerprint hash).
-          SIZE_ANALYSIS: 'true'
+          # Size-analysis builds use the same appVersion runtime policy as
+          # production builds. Native changes must bump expo.version before
+          # publishing an OTA update or shipping a new store build.
         run: |
           mkdir -p build
           eas build \
