@@ -47,6 +47,7 @@ export const TimelineLogCard = React.memo(function TimelineLogCard({
     : date;
   const secondaryDetail = getSecondaryDetail(log, t);
   const delegatedAttribution = getDelegatedAttribution(t, log.data);
+  const isInteractive = onPress !== undefined;
 
   const cardStyle: ViewStyle = {
     backgroundColor: m3.surface.surfaceContainer,
@@ -101,8 +102,12 @@ export const TimelineLogCard = React.memo(function TimelineLogCard({
   return (
     <Pressable
       onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${displayDescription || t(logType.labelKey)}${farmName ? `, ${farmName}` : ''}. ${displayDate}.`}
+      accessibilityRole={isInteractive ? 'button' : undefined}
+      accessibilityLabel={
+        isInteractive
+          ? `${displayDescription || t(logType.labelKey)}${farmName ? `, ${farmName}` : ''}. ${displayDate}.`
+          : undefined
+      }
       style={({ pressed }) => [
         cardStyle,
         {
