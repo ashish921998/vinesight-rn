@@ -115,12 +115,20 @@ export interface ProfessionalWorkspace {
   role: ProfessionalRole;
   clients: ProfessionalClient[];
 }
-export type DelegatedActivityRecord =
-  IrrigationRecord | SprayRecord | FertigationRecord | HarvestRecord | DailyNoteRecord;
-export interface DelegatedActivityItem {
-  record_type: DelegatedLogType;
-  record_data: DelegatedActivityRecord;
+export interface DelegatedActivityRecordByType {
+  irrigation: IrrigationRecord;
+  spray: SprayRecord;
+  fertigation: FertigationRecord;
+  harvest: HarvestRecord;
+  note: DailyNoteRecord;
 }
+export type DelegatedActivityRecord = DelegatedActivityRecordByType[DelegatedLogType];
+export type DelegatedActivityItem = {
+  [Type in DelegatedLogType]: {
+    record_type: Type;
+    record_data: DelegatedActivityRecordByType[Type];
+  };
+}[DelegatedLogType];
 
 /**
  * Application persistence port.

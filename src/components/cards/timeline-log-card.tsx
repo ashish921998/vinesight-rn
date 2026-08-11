@@ -6,49 +6,30 @@
 import React from 'react';
 import { View, Text, Pressable, type ViewStyle, type TextStyle } from 'react-native';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
-import { getLogType, type LogTypeId } from '../../constants';
+import { getLogType } from '../../constants';
 import { fromSupabaseDateString } from '../../types';
 import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '@/i18n/format';
-import { getDescriptionFromData } from '@/utils/log-description';
+import { getDescriptionFromData, type LogRecordInput } from '@/utils/log-description';
 import { getDelegatedAttribution, getSecondaryDetail } from '@/utils/activity-details';
 import { useCurrency } from '@/hooks/use-currency';
 import { useM3 } from '@/styles/use-theme';
 import { getExpenseIconName } from '@/utils/expense-icons';
-import type {
-  IrrigationRecord,
-  SprayRecord,
-  HarvestRecord,
-  ExpenseRecord,
-  FertigationRecord,
-  DailyNoteRecord,
-} from '../../types';
-
-type RecordData =
-  | IrrigationRecord
-  | SprayRecord
-  | HarvestRecord
-  | ExpenseRecord
-  | FertigationRecord
-  | DailyNoteRecord;
-
 interface TimelineLogCardProps {
-  type: LogTypeId;
+  log: LogRecordInput;
   date: string;
   description?: string;
-  data?: RecordData;
   farmName?: string;
   showDate?: boolean;
   onPress?: () => void;
 }
 
 export const TimelineLogCard = React.memo(function TimelineLogCard({
-  type,
+  log,
   date,
   description,
-  data,
   farmName,
   showDate = true,
   onPress,
@@ -56,18 +37,16 @@ export const TimelineLogCard = React.memo(function TimelineLogCard({
   const m3 = useM3();
   const { t } = useTranslation();
   const currency = useCurrency();
-  const logType = getLogType(type);
+  const logType = getLogType(log.type);
   const iconName =
-    type === 'expense'
-      ? getExpenseIconName((data as ExpenseRecord | undefined)?.type, logType.icon)
-      : logType.icon;
+    log.type === 'expense' ? getExpenseIconName(log.data?.type, logType.icon) : logType.icon;
   const parsedDate = fromSupabaseDateString(date);
-  const displayDescription = description || getDescriptionFromData(type, t, data, currency);
+  const displayDescription = description || getDescriptionFromData(log, t, currency);
   const displayDate = parsedDate
     ? formatDate(parsedDate, { month: 'short', day: 'numeric' })
     : date;
-  const secondaryDetail = getSecondaryDetail(type, data);
-  const delegatedAttribution = getDelegatedAttribution(t, data);
+  const secondaryDetail = getSecondaryDetail(log, t);
+  const delegatedAttribution = getDelegatedAttribution(t, log.data);
 
   const cardStyle: ViewStyle = {
     backgroundColor: m3.surface.surfaceContainer,

@@ -1187,10 +1187,10 @@ export default function FarmDetailScreen() {
             id: log.id,
             type: log.type,
             date: log.date,
-            description: getDescriptionFromData(log.type, t, log.data, currency),
+            description: getDescriptionFromData(log, t, currency),
             secondaryDetail:
               [
-                getSecondaryDetail(log.type, log.data, { showArea: false }),
+                getSecondaryDetail(log, t, { showArea: false }),
                 getDelegatedAttribution(t, log.data),
               ]
                 .filter((detail): detail is string => Boolean(detail))

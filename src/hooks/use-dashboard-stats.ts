@@ -346,7 +346,11 @@ export function useRecentActivities(limit: number = 5) {
           id: `fertigation_${r.id}`,
           type: 'fertigation',
           date: r.date,
-          description: getDescriptionFromData('fertigation', t, r, preferredCurrency),
+          description: getDescriptionFromData(
+            { type: 'fertigation', data: r },
+            t,
+            preferredCurrency,
+          ),
           secondaryDetail: r.area
             ? t('farmDetails.header.areaAcres', { value: formatNumber(r.area) })
             : undefined,
