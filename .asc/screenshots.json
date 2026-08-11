@@ -2,39 +2,34 @@
   "version": 1,
   "app": {
     "bundle_id": "com.vinesight.ios",
-    "udid": "55FFD765-28F0-434B-A873-9087E8A06C39",
+    "udid": "booted",
     "output_dir": "./screenshots/raw"
   },
   "gallery": [
     {
       "name": "01-vineyard-overview",
       "screen": "Farming tab",
-      "caption": { "title": "See Your Entire Vineyard", "subtitle": "at a Glance" },
-      "layout": "hero"
+      "caption": { "title": "See Your Entire Vineyard", "subtitle": "at a Glance" }
     },
     {
       "name": "02-ai-assistant",
       "screen": "AI Assistant conversation",
-      "caption": { "title": "Ask Your AI Farming", "subtitle": "Assistant Anything" },
-      "layout": "differentiator"
+      "caption": { "title": "Ask Your AI Farming", "subtitle": "Assistant Anything" }
     },
     {
       "name": "03-farm-vitals",
       "screen": "Farm detail workboard",
-      "caption": { "title": "Track Soil, Water & Weather", "subtitle": "in Real Time" },
-      "layout": "vitals"
+      "caption": { "title": "Track Soil, Water & Weather", "subtitle": "in Real Time" }
     },
     {
       "name": "04-reports",
       "screen": "Reports summary",
-      "caption": { "title": "Know Your Harvest,", "subtitle": "Revenue & Profit" },
-      "layout": "outcome"
+      "caption": { "title": "Know Your Harvest,", "subtitle": "Revenue & Profit" }
     },
     {
       "name": "05-quick-log",
       "screen": "Home quick-log and recent activity",
-      "caption": { "title": "Log Irrigation, Spray", "subtitle": "& Harvest in Seconds" },
-      "layout": "supporting"
+      "caption": { "title": "Log Irrigation, Spray", "subtitle": "& Harvest in Seconds" }
     }
   ],
   "steps": [

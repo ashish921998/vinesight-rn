@@ -1,47 +1,208 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && /bin/pwd -P)"
 cd "$ROOT_DIR"
-
-BUNDLE_ID="${APP_BUNDLE_ID:-com.vinesight.ios}"
-WORKSPACE="${IOS_WORKSPACE:-ios/Vinesight.xcworkspace}"
-SCHEME="${IOS_SCHEME:-Vinesight}"
-CONFIGURATION="${IOS_CONFIGURATION:-Release}"
-DERIVED_DATA="${IOS_DERIVED_DATA:-.build/screenshots/DerivedData}"
-RAW_DIR="${SCREENSHOTS_RAW_DIR:-screenshots/raw}"
-FRAMED_DIR="${SCREENSHOTS_FRAMED_DIR:-screenshots/framed}"
-REVIEW_DIR="${SCREENSHOTS_REVIEW_DIR:-screenshots/review}"
-FRAME_DEVICE="${SCREENSHOTS_FRAME_DEVICE:-iphone-17-pro-max}"
-FRAME_BACKGROUND="${SCREENSHOTS_FRAME_BACKGROUND:-#FFFFFF}"
-DEVICE_TYPE="${SCREENSHOTS_DEVICE_TYPE:-IPHONE_69}"
-REQUESTED_UDID="${IOS_SIMULATOR_UDID:-55FFD765-28F0-434B-A873-9087E8A06C39}"
 
 log() { printf '\n[screenshots] %s\n' "$*"; }
 die() { printf '\n[screenshots] error: %s\n' "$*" >&2; exit 1; }
 require_command() { command -v "$1" >/dev/null 2>&1 || die "'$1' is required; see docs/store-screenshots.md"; }
 
-# Create (or recreate empty) a working directory, clearing stale output from
-# previous runs. Contents are deleted, never the directory itself, and the
-# repository root is refused to guard against a bad env override.
-reset_dir() {
-  local dir="$1" resolved
-  [[ -n "$dir" ]] || die 'reset_dir: empty directory path'
-  mkdir -p "$dir"
-  resolved="$(cd "$dir" && pwd)"
-  [[ "$resolved" != "$ROOT_DIR" ]] || die "refusing to clear repository root as $dir"
-  find "$dir" -mindepth 1 -delete
+require_command node
+
+SETTINGS_FILE="${SCREENSHOTS_SETTINGS_FILE:-.asc/shots.settings.json}"
+[[ -f "$SETTINGS_FILE" ]] || die "screenshot settings not found: $SETTINGS_FILE"
+
+setting() {
+  local path="$1" fallback="$2"
+  node -e '
+    const fs = require("node:fs");
+    const [file, settingPath, fallback] = process.argv.slice(1);
+    const settings = JSON.parse(fs.readFileSync(file, "utf8"));
+    const value = settingPath.split(".").reduce((current, key) => current?.[key], settings);
+    process.stdout.write(value == null || value === "" ? fallback : String(value));
+  ' "$SETTINGS_FILE" "$path" "$fallback"
+}
+
+BUNDLE_ID="${APP_BUNDLE_ID:-$(setting app.bundle_id com.vinesight.ios)}"
+WORKSPACE="${IOS_WORKSPACE:-$(setting app.project ios/Vinesight.xcworkspace)}"
+SCHEME="${IOS_SCHEME:-$(setting app.scheme Vinesight)}"
+CONFIGURATION="${IOS_CONFIGURATION:-Release}"
+DERIVED_DATA="${IOS_DERIVED_DATA:-.build/screenshots/DerivedData}"
+PLAN_FILE="${SCREENSHOTS_PLAN:-$(setting paths.plan .asc/screenshots.json)}"
+PLAN_FILE="$(node -e 'const path = require("node:path"); process.stdout.write(path.resolve(process.argv[1]));' "$PLAN_FILE")"
+[[ -f "$PLAN_FILE" ]] || die "screenshot plan not found: $PLAN_FILE"
+RAW_DIR="${SCREENSHOTS_RAW_DIR:-$(setting paths.raw_dir ./screenshots/raw)}"
+FRAMED_DIR="${SCREENSHOTS_FRAMED_DIR:-$(setting paths.framed_dir ./screenshots/framed)}"
+REVIEW_DIR="${SCREENSHOTS_REVIEW_DIR:-$(setting paths.review_dir ./screenshots/review)}"
+FRAME_DEVICE="${SCREENSHOTS_FRAME_DEVICE:-$(setting pipeline.frame_device iphone-17-pro-max)}"
+FRAME_BACKGROUND="${SCREENSHOTS_FRAME_BACKGROUND:-$(setting pipeline.frame_background '#FFFFFF')}"
+CAPTION_COLOR="${SCREENSHOTS_CAPTION_COLOR:-$(setting pipeline.caption_color '#173D2D')}"
+CAPTION_FONT="${SCREENSHOTS_CAPTION_FONT:-$(setting pipeline.caption_font /System/Library/Fonts/SFNS.ttf)}"
+DEVICE_TYPE="${SCREENSHOTS_DEVICE_TYPE:-$(setting upload.device_type IPHONE_69)}"
+LOCALE="${SCREENSHOTS_LOCALE:-$(setting pipeline.locale en-US)}"
+REQUESTED_UDID="${IOS_SIMULATOR_UDID:-$(setting app.simulator_udid booted)}"
+SIMULATOR_NAME="${IOS_SIMULATOR_NAME:-$(setting app.simulator_name 'iPhone 17 Pro Max')}"
+GENERATED_ROOT_PATH="$ROOT_DIR/screenshots"
+[[ ! -L "$GENERATED_ROOT_PATH" ]] || die "generated root cannot be a symbolic link: $GENERATED_ROOT_PATH"
+mkdir -p "$GENERATED_ROOT_PATH"
+GENERATED_ROOT="$(node -e 'const fs = require("node:fs"); process.stdout.write(fs.realpathSync(process.argv[1]));' "$GENERATED_ROOT_PATH")"
+ACTIVE_STAGE=""
+ACTIVE_TARGET=""
+ACTIVE_BACKUP=""
+
+cleanup_stage() {
+  if [[ -n "$ACTIVE_BACKUP" && -e "$ACTIVE_BACKUP" ]]; then
+    if [[ -n "$ACTIVE_TARGET" && ! -e "$ACTIVE_TARGET" ]]; then
+      mv "$ACTIVE_BACKUP" "$ACTIVE_TARGET"
+    else
+      rm -rf -- "$ACTIVE_BACKUP"
+    fi
+  fi
+  if [[ -n "$ACTIVE_STAGE" && -d "$ACTIVE_STAGE" ]]; then
+    rm -rf -- "$ACTIVE_STAGE"
+  fi
+}
+trap cleanup_stage EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+validate_locale() {
+  [[ "$LOCALE" =~ ^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$ ]] || die "invalid screenshot locale: $LOCALE"
+}
+
+resolve_generated_target() {
+  local candidate="$1" resolved
+  [[ -n "$candidate" ]] || die 'generated directory path cannot be empty'
+  resolved="$(node -e '
+    const fs = require("node:fs");
+    const path = require("node:path");
+    const [candidate, root] = process.argv.slice(1);
+    const target = path.resolve(candidate);
+    const relative = path.relative(root, target);
+    if (!relative || relative.startsWith(`..${path.sep}`) || relative === ".." || path.isAbsolute(relative)) {
+      process.exit(2);
+    }
+
+    let current = root;
+    for (const component of relative.split(path.sep).slice(0, -1)) {
+      current = path.join(current, component);
+      if (!fs.existsSync(current)) break;
+      if (fs.lstatSync(current).isSymbolicLink()) process.exit(3);
+    }
+
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    const realParent = fs.realpathSync(path.dirname(target));
+    const realRelative = path.relative(root, realParent);
+    if (realRelative.startsWith(`..${path.sep}`) || realRelative === ".." || path.isAbsolute(realRelative)) {
+      process.exit(4);
+    }
+    process.stdout.write(path.join(realParent, path.basename(target)));
+  ' "$candidate" "$GENERATED_ROOT")" || die "generated paths must be non-symlinked descendants of $GENERATED_ROOT: $candidate"
+  [[ ! -L "$resolved" ]] || die "generated path cannot be a symbolic link: $candidate"
+  printf '%s\n' "$resolved"
+}
+
+RAW_DIR="$(resolve_generated_target "$RAW_DIR")"
+FRAMED_DIR="$(resolve_generated_target "$FRAMED_DIR")"
+REVIEW_DIR="$(resolve_generated_target "$REVIEW_DIR")"
+[[ "$RAW_DIR" != "$FRAMED_DIR" && "$RAW_DIR" != "$REVIEW_DIR" && "$FRAMED_DIR" != "$REVIEW_DIR" ]] || die 'raw, framed, and review directories must be distinct'
+
+create_stage() {
+  local target="$1" parent base
+  parent="$(dirname "$target")"
+  base="$(basename "$target")"
+  mkdir -p "$parent"
+  ACTIVE_STAGE="$(mktemp -d "$parent/.${base}.staging.XXXXXX")"
+}
+
+publish_stage() {
+  local target stage backup
+  target="$1"
+  stage="$ACTIVE_STAGE"
+  backup="${target}.backup.$$"
+  [[ -n "$stage" && -d "$stage" ]] || die "no staged output available for $target"
+  [[ ! -e "$backup" ]] || die "backup path already exists: $backup"
+  ACTIVE_TARGET="$target"
+  ACTIVE_BACKUP="$backup"
+
+  if [[ -e "$target" ]]; then
+    mv "$target" "$backup"
+  fi
+
+  if mv "$stage" "$target"; then
+    ACTIVE_STAGE=""
+    rm -rf -- "$backup"
+    ACTIVE_TARGET=""
+    ACTIVE_BACKUP=""
+    return
+  fi
+
+  if [[ -e "$backup" ]]; then
+    mv "$backup" "$target"
+  fi
+  ACTIVE_TARGET=""
+  ACTIVE_BACKUP=""
+  die "could not publish staged output to $target"
+}
+
+validate_gallery_set() {
+  local directory="$1"
+  node -e '
+    const fs = require("node:fs");
+    const path = require("node:path");
+    const [planPath, directory] = process.argv.slice(1);
+    const plan = JSON.parse(fs.readFileSync(planPath, "utf8"));
+    const expected = (plan.gallery ?? []).map((entry) => entry.name).sort();
+    if (expected.length === 0 || new Set(expected).size !== expected.length) {
+      console.error("screenshot gallery names must be non-empty and unique");
+      process.exit(1);
+    }
+    const collect = (current) => fs.readdirSync(current, { withFileTypes: true }).flatMap((entry) => {
+      const child = path.join(current, entry.name);
+      if (entry.isDirectory()) return collect(child);
+      return entry.isFile() && entry.name.toLowerCase().endsWith(".png")
+        ? [path.basename(entry.name, path.extname(entry.name))]
+        : [];
+    });
+    const actual = collect(directory).sort();
+    if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+      console.error(`screenshot set mismatch\nexpected: ${expected.join(", ")}\nactual:   ${actual.join(", ")}`);
+      process.exit(1);
+    }
+  ' "$PLAN_FILE" "$directory" || die "screenshot output does not match the gallery in $PLAN_FILE"
 }
 
 resolve_udid() {
-  local device_line
-  device_line="$(xcrun simctl list devices available | grep -F "($REQUESTED_UDID)" || true)"
-  [[ -n "$device_line" ]] || die "iPhone 17 Pro Max simulator $REQUESTED_UDID was not found; set IOS_SIMULATOR_UDID to its UDID"
+  require_command xcrun
+  local devices_json udid state
+  devices_json="$(xcrun simctl list devices available -j)"
+  read -r udid state < <(printf '%s' "$devices_json" | node -e '
+    let input = "";
+    process.stdin.on("data", (chunk) => { input += chunk; });
+    process.stdin.on("end", () => {
+      const [requested, preferredName] = process.argv.slice(1);
+      const values = Object.values(JSON.parse(input).devices ?? {}).flat();
+      const available = values.filter((device) => device.isAvailable !== false);
+      let selected;
+      if (requested !== "booted") {
+        selected = available.find((device) => device.udid === requested);
+      } else {
+        selected = available.find((device) => device.name === preferredName && device.state === "Booted")
+          ?? available.find((device) => device.name?.startsWith("iPhone") && device.state === "Booted")
+          ?? available.find((device) => device.name === preferredName);
+      }
+      if (!selected) process.exit(1);
+      process.stdout.write(`${selected.udid} ${selected.state}\n`);
+    });
+  ' "$REQUESTED_UDID" "$SIMULATOR_NAME") || die "no available '$SIMULATOR_NAME' simulator found; set IOS_SIMULATOR_UDID or IOS_SIMULATOR_NAME"
 
-  if [[ "$device_line" != *'(Booted)'* ]]; then
-    xcrun simctl boot "$REQUESTED_UDID" >/dev/null 2>&1 || true
+  if [[ "$state" != 'Booted' ]]; then
+    xcrun simctl boot "$udid" >/dev/null 2>&1 || true
   fi
-  printf '%s\n' "$REQUESTED_UDID"
+  xcrun simctl bootstatus "$udid" -b >/dev/null
+  printf '%s\n' "$udid"
 }
 
 ensure_ios_project() {
@@ -50,9 +211,8 @@ ensure_ios_project() {
   fi
 
   require_command npx
-  log "Generating the ignored iOS project with Expo prebuild"
+  log 'Generating the ignored iOS project with Expo prebuild'
   npx expo prebuild --platform ios --no-install
-
   [[ -d "$WORKSPACE" ]] || die "Expo prebuild did not create $WORKSPACE"
 }
 
@@ -67,13 +227,11 @@ install_pods() {
 
 build() {
   require_command xcodebuild
-  require_command xcrun
   ensure_ios_project
   install_pods
 
   local udid app_path
   udid="$(resolve_udid)"
-  xcrun simctl boot "$udid" >/dev/null 2>&1 || true
 
   log "Building $SCHEME for simulator $udid"
   xcodebuild \
@@ -94,126 +252,211 @@ build() {
 
 capture() {
   require_command asc
-  reset_dir "$RAW_DIR"
-  log "Capturing the plan in .asc/screenshots.json"
-  local udid
+  local udid stage
   udid="$(resolve_udid)"
+  create_stage "$RAW_DIR"
+  stage="$ACTIVE_STAGE"
+
+  log "Capturing the plan in $PLAN_FILE"
   asc screenshots run \
-    --plan .asc/screenshots.json \
+    --plan "$PLAN_FILE" \
     --bundle-id "$BUNDLE_ID" \
     --udid "$udid" \
-    --output-dir "$RAW_DIR" \
+    --output-dir "$stage" \
     --output json \
     --pretty
+
+  validate_gallery_set "$stage"
+  publish_stage "$RAW_DIR"
 }
 
-flatten_png() {
-  local input="$1"
-  local temporary
+compose_caption() {
+  local input="$1" screenshot_id title subtitle width height device_width device_height
+  local title_size subtitle_size title_offset subtitle_offset device_offset temporary
+  screenshot_id="$(basename "$input" .png)"
+  title="$(node -e '
+    const plan = require(process.argv[1]);
+    const item = plan.gallery?.find((entry) => entry.name === process.argv[2]);
+    if (!item?.caption?.title) process.exit(1);
+    process.stdout.write(item.caption.title);
+  ' "$PLAN_FILE" "$screenshot_id")" || die "missing title for $screenshot_id in $PLAN_FILE"
+  subtitle="$(node -e '
+    const plan = require(process.argv[1]);
+    const item = plan.gallery?.find((entry) => entry.name === process.argv[2]);
+    if (!item?.caption?.subtitle) process.exit(1);
+    process.stdout.write(item.caption.subtitle);
+  ' "$PLAN_FILE" "$screenshot_id")" || die "missing subtitle for $screenshot_id in $PLAN_FILE"
+
+  width="$(magick identify -format '%w' "$input")"
+  height="$(magick identify -format '%h' "$input")"
+  device_width=$((width * 86 / 100))
+  device_height=$((height * 76 / 100))
+  title_size=$((width * 5 / 100))
+  subtitle_size=$((width * 5 / 100))
+  title_offset=$((height * 5 / 100))
+  subtitle_offset=$((title_offset + title_size * 13 / 10))
+  device_offset=$((height * 2 / 100))
   temporary="$(mktemp "${input}.XXXXXX")"
 
-  if ! magick "$input" \
-    -background "$FRAME_BACKGROUND" \
-    -alpha remove \
-    -alpha off \
-    -depth 8 \
-    -type TrueColor \
-    "PNG24:$temporary"; then
+  if ! magick \
+    -size "${width}x${height}" "xc:$FRAME_BACKGROUND" \
+    -font "$CAPTION_FONT" -fill "$CAPTION_COLOR" -gravity north \
+    -pointsize "$title_size" -annotate "+0+$title_offset" "$title" \
+    -pointsize "$subtitle_size" -annotate "+0+$subtitle_offset" "$subtitle" \
+    \( "$input" -resize "${device_width}x${device_height}>" \) \
+    -gravity south -geometry "+0+$device_offset" -composite \
+    -alpha off -depth 8 -type TrueColor "PNG24:$temporary"; then
     rm -f "$temporary"
-    die "could not flatten framed PNG $input"
+    die "could not compose captioned screenshot $input"
   fi
 
   mv -f "$temporary" "$input"
 }
 
 validate_opaque_pngs() {
-  local found=0 input channels depth lower_channels
+  local directory="$1" found=0 input channels depth lower_channels
   while IFS= read -r -d '' input; do
     found=1
     channels="$(magick identify -format '%[channels]' "$input")" || die "could not inspect framed PNG $input"
     depth="$(magick identify -format '%[depth]' "$input")" || die "could not inspect framed PNG $input"
     lower_channels="$(printf '%s' "$channels" | tr '[:upper:]' '[:lower:]')"
-    if [[ "$lower_channels" == *a* ]]; then
-      die "framed PNG still has an alpha channel: $input"
-    fi
-    if [[ "$lower_channels" != *rgb* || "$depth" != '8' ]]; then
-      die "framed PNG is not an opaque 24-bit RGB PNG: $input"
-    fi
-  done < <(find "$FRAMED_DIR" -type f -name '*.png' -print0 | sort -z)
+    [[ "$lower_channels" != *a* ]] || die "framed PNG still has an alpha channel: $input"
+    [[ "$lower_channels" == *rgb* && "$depth" == '8' ]] || die "framed PNG is not an opaque 24-bit RGB PNG: $input"
+  done < <(find "$directory" -type f -name '*.png' -print0 | sort -z)
 
-  (( found == 1 )) || die "no framed PNGs found in $FRAMED_DIR; run frame first"
+  (( found == 1 )) || die "no framed PNGs found in $directory; run frame first"
 }
 
 frame() {
   require_command asc
   require_command magick
+  validate_locale
   command -v kou >/dev/null 2>&1 || die "'kou' is required; install koubou==0.18.1 as documented in docs/store-screenshots.md"
-  find "$RAW_DIR" -type f -name '*.png' -print -quit | grep -q . || die "no raw PNGs found in $RAW_DIR; run capture first"
-  reset_dir "$FRAMED_DIR"
+  [[ -f "$CAPTION_FONT" ]] || die "caption font not found: $CAPTION_FONT"
+  [[ -d "$RAW_DIR" ]] || die "no raw screenshots found in $RAW_DIR; run capture first"
+  validate_gallery_set "$RAW_DIR"
+
+  local stage output
+  create_stage "$FRAMED_DIR"
+  stage="$ACTIVE_STAGE"
+  mkdir -p "$stage/$LOCALE"
 
   while IFS= read -r -d '' input; do
-    local output="$FRAMED_DIR/$(basename "$input")"
+    output="$stage/$LOCALE/$(basename "$input")"
     log "Framing $input"
     asc screenshots frame \
       --input "$input" \
       --output-path "$output" \
       --device "$FRAME_DEVICE" \
       --output json
-    flatten_png "$output"
+    compose_caption "$output"
   done < <(find "$RAW_DIR" -type f -name '*.png' -print0 | sort -z)
 
-  validate_opaque_pngs
+  validate_gallery_set "$stage"
+  validate_opaque_pngs "$stage"
+  publish_stage "$FRAMED_DIR"
 }
 
 review() {
   require_command asc
   require_command magick
+  [[ -d "$RAW_DIR" ]] || die "no raw screenshots found in $RAW_DIR; run capture first"
   [[ -d "$FRAMED_DIR" ]] || die "no framed screenshots found in $FRAMED_DIR; run frame first"
-  validate_opaque_pngs
-  mkdir -p "$REVIEW_DIR"
+  validate_gallery_set "$RAW_DIR"
+  validate_gallery_set "$FRAMED_DIR"
+  validate_opaque_pngs "$FRAMED_DIR"
+
+  local stage
+  create_stage "$REVIEW_DIR"
+  stage="$ACTIVE_STAGE"
   asc screenshots review-generate \
+    --raw-dir "$RAW_DIR" \
     --framed-dir "$FRAMED_DIR" \
-    --output-dir "$REVIEW_DIR"
+    --output-dir "$stage"
+  publish_stage "$REVIEW_DIR"
+
   printf '\nReview generated at %s/index.html\n' "$REVIEW_DIR"
   if [[ "${OPEN_REVIEW:-0}" == '1' ]]; then
     asc screenshots review-open --output-dir "$REVIEW_DIR"
   fi
 }
 
+validate_review_approval() {
+  local manifest="$REVIEW_DIR/manifest.json" approvals="$REVIEW_DIR/approved.json"
+  [[ -f "$manifest" && -f "$approvals" ]] || die 'review approval missing; run screenshots:review and screenshots:approve first'
+
+  node -e '
+    const fs = require("node:fs");
+    const path = require("node:path");
+    const [manifestPath, approvalsPath, framedDir] = process.argv.slice(1);
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+    const approved = new Set(JSON.parse(fs.readFileSync(approvalsPath, "utf8")).approved ?? []);
+    const pending = (manifest.entries ?? []).filter((entry) => entry.status !== "ready" || !approved.has(entry.key));
+    if (pending.length > 0 || !manifest.entries?.length) process.exit(1);
+
+    const collectPngs = (directory) => fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+      const child = path.join(directory, entry.name);
+      return entry.isDirectory() ? collectPngs(child) : entry.isFile() && entry.name.endsWith(".png") ? [fs.realpathSync(child)] : [];
+    });
+    const actual = collectPngs(framedDir).sort();
+    const reviewed = manifest.entries.map((entry) => fs.realpathSync(entry.framed_path)).sort();
+    if (JSON.stringify(actual) !== JSON.stringify(reviewed)) process.exit(1);
+
+    const manifestAt = fs.statSync(manifestPath).mtimeMs;
+    const approvedAt = fs.statSync(approvalsPath).mtimeMs;
+    if (manifestAt > approvedAt || reviewed.some((entry) => fs.statSync(entry).mtimeMs > manifestAt)) process.exit(1);
+  ' "$manifest" "$approvals" "$FRAMED_DIR" || die 'review is incomplete or framed files changed after review; review and approve again'
+}
+
 upload() {
   require_command asc
   require_command magick
+  validate_locale
   [[ -d "$FRAMED_DIR" ]] || die "no framed screenshots found in $FRAMED_DIR; run frame first"
-  validate_opaque_pngs
+  validate_gallery_set "$FRAMED_DIR"
+  validate_opaque_pngs "$FRAMED_DIR"
+  validate_review_approval
 
-  local target_args=()
   if [[ -n "${VERSION_LOCALIZATION_ID:-}" ]]; then
-    target_args=(--version-localization "$VERSION_LOCALIZATION_ID")
+    local dry_run=()
+    if [[ "${UPLOAD_DRY_RUN:-0}" == '1' ]]; then
+      dry_run=(--dry-run)
+    fi
+    asc screenshots upload \
+      --version-localization "$VERSION_LOCALIZATION_ID" \
+      --path "$FRAMED_DIR/$LOCALE" \
+      --device-type "$DEVICE_TYPE" \
+      "${dry_run[@]}" \
+      --output json \
+      --pretty
   elif [[ -n "${APP_STORE_APP_ID:-}" && -n "${APP_STORE_VERSION:-}" ]]; then
-    target_args=(--app "$APP_STORE_APP_ID" --version "$APP_STORE_VERSION")
+    if [[ "${UPLOAD_DRY_RUN:-0}" == '1' ]]; then
+      asc screenshots plan \
+        --app "$APP_STORE_APP_ID" \
+        --version "$APP_STORE_VERSION" \
+        --review-output-dir "$REVIEW_DIR" \
+        --output json \
+        --pretty
+    else
+      asc screenshots apply \
+        --app "$APP_STORE_APP_ID" \
+        --version "$APP_STORE_VERSION" \
+        --review-output-dir "$REVIEW_DIR" \
+        --confirm \
+        --output json \
+        --pretty
+    fi
   else
     die 'set VERSION_LOCALIZATION_ID, or set APP_STORE_APP_ID and APP_STORE_VERSION, before upload'
   fi
-
-  local dry_run=()
-  if [[ "${UPLOAD_DRY_RUN:-0}" == '1' ]]; then
-    dry_run=(--dry-run)
-  fi
-
-  asc screenshots upload \
-    "${target_args[@]}" \
-    --path "$FRAMED_DIR" \
-    --device-type "$DEVICE_TYPE" \
-    "${dry_run[@]}" \
-    --output json \
-    --pretty
 }
 
 approve() {
   require_command asc
   require_command magick
   [[ -d "$FRAMED_DIR" ]] || die "no framed screenshots found in $FRAMED_DIR; run frame first"
-  validate_opaque_pngs
+  validate_gallery_set "$FRAMED_DIR"
+  validate_opaque_pngs "$FRAMED_DIR"
   [[ -d "$REVIEW_DIR" ]] || die "no review found in $REVIEW_DIR; run review first"
   asc screenshots review-approve \
     --all-ready \
@@ -226,7 +469,7 @@ Usage: scripts/store-screenshots.sh <command>
 
 Commands:
   build    Generate iOS native files if needed, build, install, and launch
-  capture  Run .asc/screenshots.json into screenshots/raw
+  capture  Run the configured plan into screenshots/raw
   frame    Frame raw PNGs into screenshots/framed
   review   Generate the review report (set OPEN_REVIEW=1 to open it)
   approve  Mark all reviewed screenshots ready for upload

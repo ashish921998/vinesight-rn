@@ -4,7 +4,8 @@
     "bundle_id": "com.vinesight.ios",
     "project": "ios/Vinesight.xcworkspace",
     "scheme": "Vinesight",
-    "simulator_udid": "55FFD765-28F0-434B-A873-9087E8A06C39"
+    "simulator_udid": "booted",
+    "simulator_name": "iPhone 17 Pro Max"
   },
   "paths": {
     "plan": ".asc/screenshots.json",
@@ -14,7 +15,12 @@
   },
   "pipeline": {
     "frame_enabled": true,
-    "upload_enabled": false
+    "upload_enabled": false,
+    "frame_device": "iphone-17-pro-max",
+    "frame_background": "#FFFFFF",
+    "caption_color": "#173D2D",
+    "caption_font": "/System/Library/Fonts/SFNS.ttf",
+    "locale": "en-US"
   },
   "upload": {
     "version_localization_id": "",

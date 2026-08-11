@@ -64,30 +64,39 @@ The commands perform these steps:
 2. `capture` runs the tracked `.asc/screenshots.json` plan with
    `asc screenshots run`.
 3. `frame` converts every PNG in `screenshots/raw/` into a device-framed PNG in
-   `screenshots/framed/` using the pinned Koubou version, then composites each
-   output onto the configured opaque background.
+   `screenshots/framed/` using the pinned Koubou version, then composites the
+   gallery caption and device onto the configured opaque background.
 4. `review` writes an HTML review and manifest to `screenshots/review/`.
    Set `OPEN_REVIEW=1` to open the report automatically.
 5. `approve` records the reviewed files as ready for upload.
-6. `upload` sends the framed files to App Store Connect. Use
-   `UPLOAD_DRY_RUN=1` to validate the upload without changing App Store Connect.
+6. `upload` requires the current framed files to be approved, then sends them to
+   App Store Connect. Use `UPLOAD_DRY_RUN=1` to plan the upload without changing
+   App Store Connect.
 
-The default simulator is the iPhone 17 Pro Max with UDID
-`55FFD765-28F0-434B-A873-9087E8A06C39`. Override it with an explicit UDID
-when using another simulator:
+The default simulator is the first booted iPhone, falling back to an available
+iPhone 17 Pro Max. Override discovery with an explicit UDID or device name:
 
 ```bash
 IOS_SIMULATOR_UDID="SIMULATOR-UDID" npm run screenshots:build
-IOS_SIMULATOR_UDID="SIMULATOR-UDID" npm run screenshots:capture
+IOS_SIMULATOR_NAME="iPhone 16 Pro Max" npm run screenshots:capture
 ```
 
-The native project, bundle ID, paths, device type, and upload defaults are
-tracked in `.asc/shots.settings.json`. The shell entrypoint also accepts these
-environment overrides: `APP_BUNDLE_ID`, `IOS_WORKSPACE`, `IOS_SCHEME`,
+The native project, bundle ID, simulator preference, paths, framing, locale,
+device type, and upload defaults are tracked in `.asc/shots.settings.json`. The
+shell entrypoint reads that file and also accepts these environment overrides:
+`SCREENSHOTS_SETTINGS_FILE`, `SCREENSHOTS_PLAN`, `APP_BUNDLE_ID`,
+`IOS_WORKSPACE`, `IOS_SCHEME`, `IOS_SIMULATOR_UDID`, `IOS_SIMULATOR_NAME`,
 `IOS_CONFIGURATION`, `IOS_DERIVED_DATA`, `SCREENSHOTS_RAW_DIR`,
 `SCREENSHOTS_FRAMED_DIR`, `SCREENSHOTS_REVIEW_DIR`,
 `SCREENSHOTS_FRAME_DEVICE`, `SCREENSHOTS_FRAME_BACKGROUND`, and
-`SCREENSHOTS_DEVICE_TYPE`. Framing composites each output onto the configured
+`SCREENSHOTS_DEVICE_TYPE`. `SCREENSHOTS_CAPTION_COLOR` and
+`SCREENSHOTS_CAPTION_FONT` customize the caption. `SCREENSHOTS_LOCALE` selects
+the App Store localization directory (default `en-US`). Generated-directory
+overrides must be strict descendants of `screenshots/`; source directories,
+`.git`, the repository root, and `screenshots/` itself are rejected. Capture,
+framing, and review write to temporary staging directories, validate the complete
+five-image gallery, and replace the previous successful output only after the
+stage succeeds. Framing composites each captioned output onto the configured
 background (default `#FFFFFF`) and writes an opaque 8-bit RGB PNG. Review,
 approval, and upload stop if any framed PNG is transparent or is not an 8-bit
 RGB PNG.
@@ -97,8 +106,9 @@ RGB PNG.
 `.asc/screenshots.json` is the tracked five-image gallery plan. It expects an
 authenticated fixture account containing the seeded `Sassy` farm, then navigates
 through Farming, farm detail, Reports, Home, and AI Assistant. The plan records
-the approved screenshot names, captions, and layout roles alongside the
-executable steps. Supported plan actions are `launch`, `tap`, `type`, `wait`,
+the approved screenshot names and captions alongside the executable steps; the
+frame command renders those captions onto the final white canvas. Supported plan
+actions are `launch`, `tap`, `type`, `wait`,
 `wait_for`, and `screenshot`; keep each screenshot step named and deterministic.
 Re-run `npm run screenshots:capture` to regenerate the complete gallery.
 
@@ -129,8 +139,8 @@ ID (not a locale code):
 VERSION_LOCALIZATION_ID="..." npm run screenshots:upload
 ```
 
-Alternatively, let `asc` resolve the version and localization fan-out from the
-App Store Connect app ID and version string:
+Alternatively, let the approval-aware ASC plan/apply flow resolve the version
+and localization fan-out from the App Store Connect app ID and version string:
 
 ```bash
 APP_STORE_APP_ID="..." APP_STORE_VERSION="3.3.25" npm run screenshots:upload
@@ -157,7 +167,7 @@ PNG set outside Git if it must be reused for a later release.
 The following paths are generated and ignored by Git:
 
 - `screenshots/raw/` — simulator captures
-- `screenshots/framed/` — Koubou-framed output used for upload
+- `screenshots/framed/<locale>/` — captioned Koubou output used for upload
 - `screenshots/review/` — review HTML, manifest, and approval state
 - `.build/screenshots/` — Xcode-derived data
 - `ios/` — Expo-generated native project
