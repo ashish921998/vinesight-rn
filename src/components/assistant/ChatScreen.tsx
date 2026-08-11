@@ -33,7 +33,6 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useM3 } from '@/styles/use-theme';
@@ -143,7 +142,7 @@ function AssistantHomeLanding({
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
-      {/* Centered greeting — single, friendly, ChatGPT/Claude style */}
+      {/* Centered, friendly greeting */}
       <View style={styles.homeGreetingBlock}>
         <AIAvatar size={48} iconSize={22} />
         <Text
@@ -362,48 +361,6 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
     void retryLastMessage();
   }, [retryLastMessage]);
 
-  const handlePickImage = useCallback(async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsMultipleSelection: false,
-        quality: 0.7,
-        base64: true,
-      });
-
-      if (result.canceled || result.assets.length === 0) return;
-
-      const asset = result.assets[0];
-      if (!asset) return;
-
-      const mimeType = asset.mimeType ?? 'image/jpeg';
-
-      if (asset.base64 && asset.base64.length > 13_000_000) {
-        Alert.alert(t('assistant.attachments.imageTooLarge'));
-        return;
-      }
-
-      if (!asset.base64) {
-        Alert.alert(t('assistant.attachments.imageReadError'));
-        return;
-      }
-
-      const attachment: AIMessageAttachmentInput = {
-        kind: 'image',
-        name: asset.fileName ?? 'image.jpg',
-        mimeType,
-        dataUrl: `data:${mimeType};base64,${asset.base64}`,
-      };
-
-      addAttachment(attachment);
-    } catch (error) {
-      if (__DEV__) {
-        console.warn('Image picker failed:', getSafeErrorMessage(error));
-      }
-      Alert.alert(t('assistant.attachments.imageReadError'));
-    }
-  }, [addAttachment, t]);
-
   const handlePickDocument = useCallback(async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
@@ -481,11 +438,6 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
   const handleAttachPress = useCallback(() => {
     setAttachModalVisible(true);
   }, []);
-
-  const handleAttachImage = useCallback(() => {
-    setAttachModalVisible(false);
-    void handlePickImage();
-  }, [handlePickImage]);
 
   const handleAttachDocument = useCallback(() => {
     setAttachModalVisible(false);
@@ -886,25 +838,23 @@ export function ChatScreen({ initialFarmId }: ChatScreenProps = {}) {
               {t('assistant.attachments.title')}
             </Text>
             <View style={styles.attachModalOptions}>
-              <TouchableOpacity
+              <View
                 style={[
                   styles.attachModalOption,
-                  { backgroundColor: m3.colorScheme.primaryContainer },
+                  { backgroundColor: m3.colorScheme.surfaceVariant },
                 ]}
-                onPress={handleAttachImage}
-                accessibilityLabel={t('assistant.attachments.image')}
-                accessibilityRole="button"
+                accessibilityLabel={t('assistant.attachments.imageQuestionsUnsupported')}
               >
-                <SymbolIcon name="photo" size={28} color={m3.colorScheme.onPrimaryContainer} />
+                <SymbolIcon name="photo" size={28} color={m3.colorScheme.onSurfaceVariant} />
                 <Text
                   style={[
                     styles.attachModalOptionLabel,
-                    { color: m3.colorScheme.onPrimaryContainer, ...m3.typography.labelLarge },
+                    { color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelLarge },
                   ]}
                 >
-                  {t('assistant.attachments.image')}
+                  {t('assistant.attachments.imageQuestionsUnsupported')}
                 </Text>
-              </TouchableOpacity>
+              </View>
 
               <TouchableOpacity
                 style={[

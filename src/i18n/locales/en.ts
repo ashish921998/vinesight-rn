@@ -477,6 +477,9 @@ export const en = {
       acres: '{{value}} acres',
       unknownAcres: '— acres',
     },
+    details: {
+      noDetails: 'Farm details',
+    },
     waterBalance: {
       label: 'Water balance',
       value: '{{value}} mm',
@@ -495,6 +498,7 @@ export const en = {
       bloom: 'Bloom',
       veraison: 'Véraison',
       harvest: 'Harvest',
+      progress: 'Season progress',
       sincePruning: 'since pruning',
     },
   },
@@ -785,7 +789,7 @@ export const en = {
       heroValueLow: '{{count}} LOW',
       heroValueOk: 'All OK',
       reorderFlag: '⚠ REORDER · {{count}}',
-      reorderAt: 'Reorder ≤ ',
+      reorderAt: 'Reorder ≤ {{quantity}}',
       legendLow: '{{count}} low',
       stockOk: 'OK',
       stockLow: 'Low',
@@ -1307,9 +1311,6 @@ export const en = {
     },
     template: {
       title: 'Widget Template',
-      testWidget: {
-        label: 'Test Widget',
-      },
     },
   },
 
@@ -1767,6 +1768,7 @@ export const en = {
       title: 'Attach',
       choosePrompt: 'Choose what to attach',
       image: 'Image',
+      imageQuestionsUnsupported: 'Image questions are not supported yet',
       file: 'File',
       imageTooLarge: 'Image exceeds the 10MB limit. Please choose a smaller file.',
       imageReadError: 'Could not read image data. Please try again.',
@@ -2250,7 +2252,7 @@ export const en = {
       'Your personal farming assistant. Ask me anything about grape farming, irrigation, diseases, or harvest!',
     suggestedQuestions: 'Suggested questions:',
     apiKeyRequiredTitle: 'API Key Required',
-    apiKeyRequiredBody: 'Please configure your OpenAI API key in the environment settings.',
+    apiKeyRequiredBody: 'Please configure your Sarvam API key in the environment settings.',
     input: {
       placeholder: 'Ask about farming…',
     },

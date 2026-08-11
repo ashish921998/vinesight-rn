@@ -51,11 +51,15 @@ export type DashboardCounts = {
 };
 export type DashboardActivityRows = {
   farms: Array<Pick<Farm, 'id' | 'name'>>;
-  irrigation: Array<Pick<IrrigationRecord, 'id' | 'farm_id' | 'date' | 'duration'>>;
-  spray: Array<Pick<SprayRecord, 'id' | 'farm_id' | 'date' | 'chemical'>>;
-  harvest: Array<Pick<HarvestRecord, 'id' | 'farm_id' | 'date' | 'quantity' | 'grade'>>;
-  expense: Array<Pick<ExpenseRecord, 'id' | 'farm_id' | 'date' | 'type' | 'cost'>>;
-  fertigation: Array<Pick<FertigationRecord, 'id' | 'farm_id' | 'date'>>;
+  irrigation: Array<
+    Pick<IrrigationRecord, 'id' | 'farm_id' | 'date' | 'duration' | 'moisture_status'>
+  >;
+  spray: Array<Pick<SprayRecord, 'id' | 'farm_id' | 'date' | 'chemical' | 'weather'>>;
+  harvest: Array<
+    Pick<HarvestRecord, 'id' | 'farm_id' | 'date' | 'quantity' | 'grade' | 'buyer' | 'notes'>
+  >;
+  expense: Array<Pick<ExpenseRecord, 'id' | 'farm_id' | 'date' | 'type' | 'cost' | 'remarks'>>;
+  fertigation: Array<Pick<FertigationRecord, 'id' | 'farm_id' | 'date' | 'fertilizers' | 'area'>>;
   dailyNotes: Array<Pick<DailyNoteRecord, 'id' | 'farm_id' | 'date' | 'notes'>>;
 };
 export type ChemicalClaims = {
@@ -111,12 +115,20 @@ export interface ProfessionalWorkspace {
   role: ProfessionalRole;
   clients: ProfessionalClient[];
 }
-export type DelegatedActivityRecord =
-  IrrigationRecord | SprayRecord | FertigationRecord | HarvestRecord | DailyNoteRecord;
-export interface DelegatedActivityItem {
-  record_type: DelegatedLogType;
-  record_data: DelegatedActivityRecord;
+export interface DelegatedActivityRecordByType {
+  irrigation: IrrigationRecord;
+  spray: SprayRecord;
+  fertigation: FertigationRecord;
+  harvest: HarvestRecord;
+  note: DailyNoteRecord;
 }
+export type DelegatedActivityRecord = DelegatedActivityRecordByType[DelegatedLogType];
+export type DelegatedActivityItem = {
+  [Type in DelegatedLogType]: {
+    record_type: Type;
+    record_data: DelegatedActivityRecordByType[Type];
+  };
+}[DelegatedLogType];
 
 /**
  * Application persistence port.

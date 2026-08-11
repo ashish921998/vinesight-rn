@@ -2,7 +2,6 @@ import React from 'react';
 import { Redirect, Stack, useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, View, Text, Platform, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { TestWidget } from '@widgets/foundation/TestWidget';
 import { WidgetTemplate } from '@widgets/templates/WidgetTemplate';
 import { WeatherWidget } from '@widgets/dashboard/WeatherWidget';
 import { VineyardHealthWidget } from '@widgets/dashboard/VineyardHealthWidget';
@@ -193,9 +192,6 @@ export default function WidgetsShowcaseScreen() {
             Scaffolding
           </Text>
           <View style={{ gap: spacing[3] }}>
-            <ScaffoldingCard title="TestWidget">
-              <TestWidget testID="showcase-test-widget" />
-            </ScaffoldingCard>
             <ScaffoldingCard title="WidgetTemplate">
               <WidgetTemplate />
             </ScaffoldingCard>

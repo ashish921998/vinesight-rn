@@ -15,7 +15,7 @@ interface UseTypewriterResult {
 }
 
 /**
- * Progressively reveals already-received text to create a ChatGPT/Claude-style
+ * Progressively reveals already-received text to create a conversational
  * "streaming" feel without any server changes. When `enabled` is false (e.g. for
  * messages loaded from history) the full text is shown immediately.
  *

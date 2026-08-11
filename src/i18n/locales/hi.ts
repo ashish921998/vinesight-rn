@@ -465,6 +465,9 @@ export const hi = {
       acres: '{{value}} एकड़',
       unknownAcres: '— एकड़',
     },
+    details: {
+      noDetails: 'खेत का विवरण',
+    },
     waterBalance: {
       label: 'पानी का संतुलन',
       value: '{{value}} मिमी',
@@ -483,6 +486,7 @@ export const hi = {
       bloom: 'फूल',
       veraison: 'वेरेसन',
       harvest: 'फसल',
+      progress: 'सीज़न की प्रगति',
       sincePruning: 'छंटाई से',
     },
   },
@@ -771,7 +775,7 @@ export const hi = {
       heroValueLow: '{{count}} कम',
       heroValueOk: 'सब ठीक',
       reorderFlag: '⚠ पुनः ऑर्डर · {{count}}',
-      reorderAt: 'पुनः ऑर्डर ≤ ',
+      reorderAt: 'पुनः ऑर्डर ≤ {{quantity}}',
       legendLow: '{{count}} कम',
       stockOk: 'ठीक',
       stockLow: 'कम',
@@ -1291,9 +1295,6 @@ export const hi = {
     },
     template: {
       title: 'विजेट टेम्पलेट',
-      testWidget: {
-        label: 'टेस्ट विजेट',
-      },
     },
   },
 
@@ -1749,6 +1750,7 @@ export const hi = {
       title: 'जोड़ें',
       choosePrompt: 'क्या जोड़ना है चुनें',
       image: 'इमेज',
+      imageQuestionsUnsupported: 'इमेज से सवाल अभी समर्थित नहीं हैं',
       file: 'फ़ाइल',
       imageTooLarge: 'इमेज 10MB सीमा से अधिक है। कृपया छोटी फ़ाइल चुनें।',
       unsupportedImageType: 'असमर्थित इमेज प्रकार। JPG, PNG, WEBP या HEIC उपयोग करें।',
@@ -2239,7 +2241,7 @@ export const hi = {
       'आपका व्यक्तिगत खेती सहायक। मुझसे अंगूर की खेती, सिंचाई, रोगों या कटाई के बारे में कुछ भी पूछें!',
     suggestedQuestions: 'सुझाए गए प्रश्न:',
     apiKeyRequiredTitle: 'API कुंजी आवश्यक',
-    apiKeyRequiredBody: 'कृपया पर्यावरण सेटिंग्स में अपनी OpenAI API कुंजी कॉन्फ़िगर करें।',
+    apiKeyRequiredBody: 'कृपया पर्यावरण सेटिंग्स में अपनी Sarvam API कुंजी कॉन्फ़िगर करें।',
     input: {
       placeholder: 'खेती के बारे में पूछें…',
     },

@@ -8,7 +8,7 @@ import type { VoiceLogDraft, VoiceLogFormPrefill, VoiceLogMissingField } from '.
 export type AssistantInputMode = 'text' | 'audio';
 
 export interface AssistantAudio {
-  provider?: 'sarvam' | 'openai' | 'local_fallback' | string;
+  provider?: 'sarvam' | 'local_fallback' | string;
   mimeType?: string | null;
   base64?: string | null;
   url?: string | null;
@@ -41,11 +41,7 @@ export interface AssistantToolEvent {
 }
 
 export type AssistantRouteDecision =
-  | 'voice_log'
-  | 'farm_query'
-  | 'advisory'
-  | 'clarify_route'
-  | 'fallback_llm';
+  'voice_log' | 'farm_query' | 'advisory' | 'clarify_route' | 'fallback_llm';
 
 export interface AssistantVoiceLogAction {
   kind: 'none' | 'cancelled' | 'clarify' | 'ready';

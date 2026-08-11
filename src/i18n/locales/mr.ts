@@ -467,6 +467,9 @@ export const mr = {
       acres: '{{value}} एकर',
       unknownAcres: '— एकर',
     },
+    details: {
+      noDetails: 'शेत तपशील',
+    },
     waterBalance: {
       label: 'पाणी शिल्लक',
       value: '{{value}} mm',
@@ -485,6 +488,7 @@ export const mr = {
       bloom: 'फुलणे',
       veraison: 'व्हेरेसन',
       harvest: 'काढणी',
+      progress: 'हंगामाची प्रगती',
       sincePruning: '$t(glossary.pruning)पासून',
     },
   },
@@ -774,7 +778,7 @@ export const mr = {
       heroValueLow: '{{count}} कमी',
       heroValueOk: 'सर्व ठीक',
       reorderFlag: '⚠ पुनःऑर्डर · {{count}}',
-      reorderAt: 'पुनःऑर्डर ≤ ',
+      reorderAt: 'पुनःऑर्डर ≤ {{quantity}}',
       legendLow: '{{count}} कमी',
       stockOk: 'ठीक',
       stockLow: 'कमी',
@@ -1300,9 +1304,6 @@ export const mr = {
     },
     template: {
       title: 'विजेट टेम्पलेट',
-      testWidget: {
-        label: 'टेस्ट विजेट',
-      },
     },
   },
 
@@ -1762,6 +1763,7 @@ export const mr = {
       title: 'जोडा',
       choosePrompt: 'काय जोडायचे ते निवडा',
       image: 'इमेज',
+      imageQuestionsUnsupported: 'इमेजवरील प्रश्न अजून समर्थित नाहीत',
       file: 'फाइल',
       imageTooLarge: 'इमेज 10MB मर्यादेपेक्षा मोठी आहे. कृपया लहान फाइल निवडा.',
       imageReadError: 'इमेज डेटा वाचता आला नाही. कृपया पुन्हा प्रयत्न करा.',
@@ -2254,7 +2256,7 @@ export const mr = {
       'आपला वैयक्तिक शेती सहाय्यक. द्राक्ष लागवड, $t(glossary.irrigation), $t(glossary.disease) किंवा $t(glossary.harvest)बद्दल काहीही विचारा!',
     suggestedQuestions: 'सूचित प्रश्न:',
     apiKeyRequiredTitle: 'API की आवश्यक',
-    apiKeyRequiredBody: 'कृपया पर्यावरण सेटिंग्जमध्ये आपली OpenAI API की सेट करा.',
+    apiKeyRequiredBody: 'कृपया पर्यावरण सेटिंग्जमध्ये आपली Sarvam API की सेट करा.',
     input: {
       placeholder: 'शेतीबद्दल विचारा…',
     },

@@ -14,8 +14,7 @@
         "components/**/*.{ts,tsx}",
         "app/**/*.{ts,tsx}",
         "scripts/**/*.{ts,tsx}",
-        "jest-setup/**/*.{ts,tsx}",
-        ".rnstorybook/**/*.{ts,tsx}"
+        "jest-setup/**/*.{ts,tsx}"
       ],
       "ignoreBinaries": ["eas"],
       "ignoreDependencies": [

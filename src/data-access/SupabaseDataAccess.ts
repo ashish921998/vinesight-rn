@@ -33,6 +33,30 @@ export function isMissingDisplayOrderColumnError(
   );
 }
 
+/**
+ * Runs the dashboard activity select for a single table and returns typed rows.
+ * Generic in the full row-array type so each call site binds its column string
+ * to its result type in one place. The supabase client has no Database schema
+ * generic — `data` comes back as an opaque fallback row type — so the cast to
+ * `Rows` lives here, the single owner of the query. Call sites stay cast-free
+ * and type-preserving, and there is no positional `results[i]` mapping.
+ */
+async function queryActivityRows<Rows>(
+  table: string,
+  columns: string,
+  farmIds: Array<number>,
+  limit: number,
+): Promise<Rows> {
+  const { data, error } = await supabase
+    .from(table)
+    .select(columns)
+    .in('farm_id', farmIds)
+    .order('date', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []) as Rows;
+}
+
 export class SupabaseDataAccess implements DataAccess {
   readonly isConfigured = isSupabaseConfigured;
   readonly from: DataAccess['from'] = (...args) => supabase.from(...args);
@@ -360,7 +384,11 @@ export class SupabaseDataAccess implements DataAccess {
       return data ?? [];
     },
     getRecentActivities: async ({ userId, limit }): Promise<DashboardActivityRows> => {
-      const { data: farms } = await supabase.from('farms').select('id, name').eq('user_id', userId);
+      const { data: farms, error: farmsError } = await supabase
+        .from('farms')
+        .select('id, name')
+        .eq('user_id', userId);
+      if (farmsError) throw farmsError;
       if (!farms?.length)
         return {
           farms: [],
@@ -372,33 +400,52 @@ export class SupabaseDataAccess implements DataAccess {
           dailyNotes: [],
         };
       const farmIds = farms.map((farm) => farm.id);
-      const tables = [
-        ['irrigation_records', 'id, farm_id, date, duration'],
-        ['spray_records', 'id, farm_id, date, chemical'],
-        ['harvest_records', 'id, farm_id, date, quantity, grade'],
-        ['expense_records', 'id, farm_id, date, type, cost'],
-        ['fertigation_records', 'id, farm_id, date'],
-        ['daily_notes', 'id, farm_id, date, notes'],
-      ] as const;
-      const results = await Promise.all(
-        tables.map(([table, columns]) =>
-          supabase
-            .from(table)
-            .select(columns)
-            .in('farm_id', farmIds)
-            .order('date', { ascending: false })
-            .limit(limit),
+
+      // Explicit, per-table typed queries. Each query binds its column string
+      // to its typed result next to the assignment, so reordering a column list
+      // or swapping a table can no longer compile while the positional mapping
+      // is silently wrong. Replaces the previous `results[i]?.data` +
+      // `as unknown as DashboardActivityRows` pattern.
+      const [irrigation, spray, harvest, expense, fertigation, dailyNotes] = await Promise.all([
+        queryActivityRows<DashboardActivityRows['irrigation']>(
+          'irrigation_records',
+          'id, farm_id, date, duration, moisture_status',
+          farmIds,
+          limit,
         ),
-      );
-      return {
-        farms,
-        irrigation: results[0]?.data ?? [],
-        spray: results[1]?.data ?? [],
-        harvest: results[2]?.data ?? [],
-        expense: results[3]?.data ?? [],
-        fertigation: results[4]?.data ?? [],
-        dailyNotes: results[5]?.data ?? [],
-      } as unknown as DashboardActivityRows;
+        queryActivityRows<DashboardActivityRows['spray']>(
+          'spray_records',
+          'id, farm_id, date, chemical, weather',
+          farmIds,
+          limit,
+        ),
+        queryActivityRows<DashboardActivityRows['harvest']>(
+          'harvest_records',
+          'id, farm_id, date, quantity, grade, buyer, notes',
+          farmIds,
+          limit,
+        ),
+        queryActivityRows<DashboardActivityRows['expense']>(
+          'expense_records',
+          'id, farm_id, date, type, cost, remarks',
+          farmIds,
+          limit,
+        ),
+        queryActivityRows<DashboardActivityRows['fertigation']>(
+          'fertigation_records',
+          'id, farm_id, date, fertilizers, area',
+          farmIds,
+          limit,
+        ),
+        queryActivityRows<DashboardActivityRows['dailyNotes']>(
+          'daily_notes',
+          'id, farm_id, date, notes',
+          farmIds,
+          limit,
+        ),
+      ]);
+
+      return { farms, irrigation, spray, harvest, expense, fertigation, dailyNotes };
     },
   };
   readonly reports: DataAccess['reports'] = {

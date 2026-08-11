@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.1.0] - 2026-08-10
+
+### Changed
+- Activity rows on the farm detail screen now use long-press for delete instead of swipe gestures, matching the standard iOS interaction pattern. Tap to edit remains unchanged.
+
+### Removed
+- `SwipeableRow` component deleted entirely. `TimelineLogCard` simplified to a plain `Pressable` (the professional farm detail screen never used swipe actions). `SwipeableRecentActivityRow` wrapper removed; `RecentActivityRow` now accepts an `onLongPress` prop directly.
+
+## [1.7.0.2] - 2026-08-10
+
+### Added
+- Recent-activity rows now carry a `secondaryDetail` line (irrigation moisture status, spray weather, harvest buyer/notes, expense remarks) on both the home dashboard and the farm detail screen.
+- Delegated-professional attribution and a harvest-safety "unverified" advisory banner on the farm detail screen (Detailed mode, grape farms).
+
+### Changed
+- Explore farm and warehouse panes redesigned as dense compact rows with water status, day-count, stock, reorder, and price info. Filter chips removed in favor of the simplified layout.
+- OTA `runtimeVersion` switched from the fingerprint policy to the appVersion policy, so native runtime changes require bumping `expo.version` and shipping a compatible binary before publishing OTA updates. Size-analysis builds use the same policy as production.
+- Farm activity presentation unified across the home dashboard and farm detail via a shared `RecentActivityRow` component and `useLogPresentation` hook (now exported).
+
+### Fixed
+- Accessibility labels on explore rows now include the rendered metadata (crop variety, area, region, stage and day-count for farms; manufacturer, category, quantity, reorder, price, and expiry for warehouse items) while preserving the localized low-water and low-stock state.
+- Localized accessibility labels and stock interpolation across the explore panes.
+- `secondaryDetail` now populated on the home screen recent-activity list.
+
 ## [1.7.1] - 2026-07-10
 
 ### Added
