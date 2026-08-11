@@ -377,7 +377,7 @@ export class SupabaseDataAccess implements DataAccess {
         ['spray_records', 'id, farm_id, date, chemical, weather'],
         ['harvest_records', 'id, farm_id, date, quantity, grade, buyer, notes'],
         ['expense_records', 'id, farm_id, date, type, cost, remarks'],
-        ['fertigation_records', 'id, farm_id, date'],
+        ['fertigation_records', 'id, farm_id, date, fertilizers, area'],
         ['daily_notes', 'id, farm_id, date, notes'],
       ] as const;
       const results = await Promise.all(

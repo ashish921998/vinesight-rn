@@ -59,7 +59,7 @@ export type DashboardActivityRows = {
     Pick<HarvestRecord, 'id' | 'farm_id' | 'date' | 'quantity' | 'grade' | 'buyer' | 'notes'>
   >;
   expense: Array<Pick<ExpenseRecord, 'id' | 'farm_id' | 'date' | 'type' | 'cost' | 'remarks'>>;
-  fertigation: Array<Pick<FertigationRecord, 'id' | 'farm_id' | 'date'>>;
+  fertigation: Array<Pick<FertigationRecord, 'id' | 'farm_id' | 'date' | 'fertilizers' | 'area'>>;
   dailyNotes: Array<Pick<DailyNoteRecord, 'id' | 'farm_id' | 'date' | 'notes'>>;
 };
 export type ChemicalClaims = {

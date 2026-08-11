@@ -2245,7 +2245,7 @@ export default function FarmDetailScreen() {
                 {workboardActions.map((action) => (
                   <Pressable
                     key={action.id}
-                    style={{ flex: 1, alignItems: 'center', paddingVertical: spacing[2] }}
+                    style={{ flex: 1, alignItems: 'center', paddingVertical: spacing[3] }}
                     onPress={() => handleWorkboardAction(action)}
                     accessibilityRole="button"
                     accessibilityLabel={t(action.titleKey)}
@@ -2265,21 +2265,21 @@ export default function FarmDetailScreen() {
                             borderRadius: radius.xl,
                             alignItems: 'center',
                             justifyContent: 'center',
-                            marginBottom: spacing[1] + 1,
-                            width: 40,
-                            height: 40,
+                            marginBottom: spacing[2],
+                            width: 56,
+                            height: 56,
                             backgroundColor: colorWithOpacity(action.color, 0.12),
                           }}
                         >
-                          <UiSymbol name={action.icon} size={18} color={action.color} />
+                          <UiSymbol name={action.icon} size={24} color={action.color} />
                         </View>
                         <Text
                           style={{
                             color: m3.surface.s500,
-                            fontSize: fontSize.xs,
+                            fontSize: fontSize.sm,
                             fontWeight: fontWeight.medium,
                             textAlign: 'center',
-                            lineHeight: 14,
+                            lineHeight: 18,
                           }}
                         >
                           {t(action.titleKey)}

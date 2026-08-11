@@ -11,9 +11,11 @@ import { useAppModeStore } from '../stores/app-mode-store';
 import type { Farm } from '../types';
 import { isLowWater } from '../types';
 import type { LogTypeId } from '../constants';
-import { formatCurrency } from '@/i18n/format';
+import { formatCurrency, formatNumber } from '@/i18n/format';
 import { useCurrency } from './use-currency';
 import { formatLocalDate } from '@/utils/date';
+import { useTranslation } from 'react-i18next';
+import { getDescriptionFromData } from '@/utils/log-description';
 
 // ============================================================
 // MARK: - Types
@@ -257,9 +259,11 @@ export function useFarmsNeedingAttention() {
 
 export function useRecentActivities(limit: number = 5) {
   const preferredCurrency = useCurrency();
+  const { t, i18n } = useTranslation();
+  const language = i18n.resolvedLanguage ?? i18n.language;
 
   return useQuery({
-    queryKey: [...queryKeys.dashboard.recentActivities(limit), preferredCurrency],
+    queryKey: [...queryKeys.dashboard.recentActivities(limit), preferredCurrency, language],
     queryFn: async (): Promise<RecentActivity[]> => {
       const userId = await getUserId();
       if (!userId) return [];
@@ -342,7 +346,10 @@ export function useRecentActivities(limit: number = 5) {
           id: `fertigation_${r.id}`,
           type: 'fertigation',
           date: r.date,
-          description: '',
+          description: getDescriptionFromData('fertigation', t, r, preferredCurrency),
+          secondaryDetail: r.area
+            ? t('farmDetails.header.areaAcres', { value: formatNumber(r.area) })
+            : undefined,
           farmId: r.farm_id,
           farmName: farmMap.get(r.farm_id) ?? '',
         });
