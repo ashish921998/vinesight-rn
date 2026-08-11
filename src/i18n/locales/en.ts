@@ -1768,6 +1768,7 @@ export const en = {
       title: 'Attach',
       choosePrompt: 'Choose what to attach',
       image: 'Image',
+      imageQuestionsUnsupported: 'Image questions are not supported yet',
       file: 'File',
       imageTooLarge: 'Image exceeds the 10MB limit. Please choose a smaller file.',
       imageReadError: 'Could not read image data. Please try again.',

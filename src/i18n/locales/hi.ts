@@ -1750,6 +1750,7 @@ export const hi = {
       title: 'जोड़ें',
       choosePrompt: 'क्या जोड़ना है चुनें',
       image: 'इमेज',
+      imageQuestionsUnsupported: 'इमेज से सवाल अभी समर्थित नहीं हैं',
       file: 'फ़ाइल',
       imageTooLarge: 'इमेज 10MB सीमा से अधिक है। कृपया छोटी फ़ाइल चुनें।',
       unsupportedImageType: 'असमर्थित इमेज प्रकार। JPG, PNG, WEBP या HEIC उपयोग करें।',

@@ -15,6 +15,7 @@
 // Tests that need a custom value set process.env in their own beforeEach before
 // the module is required.
 process.env.SARVAM_API_KEY = 'test-sarvam-key';
+process.env.OPENAI_API_KEY = 'test-openai-key';
 process.env.ASSISTANT_SARVAM_CHAT_MODEL = 'sarvam-105b';
 process.env.SUPABASE_URL = 'https://test.supabase.co';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';

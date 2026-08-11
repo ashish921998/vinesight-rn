@@ -1763,6 +1763,7 @@ export const mr = {
       title: 'जोडा',
       choosePrompt: 'काय जोडायचे ते निवडा',
       image: 'इमेज',
+      imageQuestionsUnsupported: 'इमेजवरील प्रश्न अजून समर्थित नाहीत',
       file: 'फाइल',
       imageTooLarge: 'इमेज 10MB मर्यादेपेक्षा मोठी आहे. कृपया लहान फाइल निवडा.',
       imageReadError: 'इमेज डेटा वाचता आला नाही. कृपया पुन्हा प्रयत्न करा.',

@@ -264,10 +264,21 @@ describe('Sarvam-only providers', () => {
     expect(providerUtils.recordProviderFailure).toHaveBeenCalledWith('sarvam_tts');
   });
 
-  it('does not call an external embeddings provider', async () => {
-    global.fetch = jest.fn();
-    await expect(generateEmbedding('vineyard context')).resolves.toBeNull();
-    expect(getEmbeddingDimensions()).toBe(0);
-    expect(global.fetch).not.toHaveBeenCalled();
+  it('uses OpenAI embeddings for semantic context', async () => {
+    const embedding = Array.from({ length: 1536 }, (_, index) => index / 1536);
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: [{ embedding }] }),
+    });
+
+    await expect(generateEmbedding('vineyard context')).resolves.toEqual(embedding);
+    expect(getEmbeddingDimensions()).toBe(1536);
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://api.openai.com/v1/embeddings',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({ Authorization: 'Bearer test-openai-key' }),
+      }),
+    );
   });
 });
