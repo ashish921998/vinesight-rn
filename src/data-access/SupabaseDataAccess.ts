@@ -360,7 +360,11 @@ export class SupabaseDataAccess implements DataAccess {
       return data ?? [];
     },
     getRecentActivities: async ({ userId, limit }): Promise<DashboardActivityRows> => {
-      const { data: farms } = await supabase.from('farms').select('id, name').eq('user_id', userId);
+      const { data: farms, error: farmsError } = await supabase
+        .from('farms')
+        .select('id, name')
+        .eq('user_id', userId);
+      if (farmsError) throw farmsError;
       if (!farms?.length)
         return {
           farms: [],
@@ -390,6 +394,9 @@ export class SupabaseDataAccess implements DataAccess {
             .limit(limit),
         ),
       );
+      const failedQuery = results.find((result) => result.error);
+      if (failedQuery?.error) throw failedQuery.error;
+
       return {
         farms,
         irrigation: results[0]?.data ?? [],
