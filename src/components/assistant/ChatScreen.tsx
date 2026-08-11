@@ -143,7 +143,7 @@ function AssistantHomeLanding({
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
-      {/* Centered greeting — single, friendly, ChatGPT/Claude style */}
+      {/* Centered, friendly greeting */}
       <View style={styles.homeGreetingBlock}>
         <AIAvatar size={48} iconSize={22} />
         <Text

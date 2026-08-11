@@ -1295,9 +1295,6 @@ export const hi = {
     },
     template: {
       title: 'विजेट टेम्पलेट',
-      testWidget: {
-        label: 'टेस्ट विजेट',
-      },
     },
   },
 
@@ -2243,7 +2240,7 @@ export const hi = {
       'आपका व्यक्तिगत खेती सहायक। मुझसे अंगूर की खेती, सिंचाई, रोगों या कटाई के बारे में कुछ भी पूछें!',
     suggestedQuestions: 'सुझाए गए प्रश्न:',
     apiKeyRequiredTitle: 'API कुंजी आवश्यक',
-    apiKeyRequiredBody: 'कृपया पर्यावरण सेटिंग्स में अपनी OpenAI API कुंजी कॉन्फ़िगर करें।',
+    apiKeyRequiredBody: 'कृपया पर्यावरण सेटिंग्स में अपनी Sarvam API कुंजी कॉन्फ़िगर करें।',
     input: {
       placeholder: 'खेती के बारे में पूछें…',
     },

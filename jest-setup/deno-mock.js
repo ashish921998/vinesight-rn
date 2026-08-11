@@ -12,13 +12,10 @@
 //
 // These are assigned unconditionally (not `|| fallback`) on purpose: a test
 // suite must be hermetic and never inherit real secrets from the host shell.
-// The `||` pattern previously let a real OPENAI_API_KEY exported in the
-// developer's shell (e.g. a PostHog AI-gateway `pha_…` key) leak into tests,
-// breaking the `Bearer test-openai-key` assertions and surfacing a live secret
-// in test output. Tests that need a custom value set process.env in their own
-// beforeEach before the module is required.
-process.env.OPENAI_API_KEY = 'test-openai-key';
+// Tests that need a custom value set process.env in their own beforeEach before
+// the module is required.
 process.env.SARVAM_API_KEY = 'test-sarvam-key';
+process.env.ASSISTANT_SARVAM_CHAT_MODEL = 'sarvam-105b';
 process.env.SUPABASE_URL = 'https://test.supabase.co';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
 process.env.ASSISTANT_USE_SARVAM_VOICE = 'true';

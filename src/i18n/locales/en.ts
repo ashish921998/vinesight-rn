@@ -1311,9 +1311,6 @@ export const en = {
     },
     template: {
       title: 'Widget Template',
-      testWidget: {
-        label: 'Test Widget',
-      },
     },
   },
 
@@ -2254,7 +2251,7 @@ export const en = {
       'Your personal farming assistant. Ask me anything about grape farming, irrigation, diseases, or harvest!',
     suggestedQuestions: 'Suggested questions:',
     apiKeyRequiredTitle: 'API Key Required',
-    apiKeyRequiredBody: 'Please configure your OpenAI API key in the environment settings.',
+    apiKeyRequiredBody: 'Please configure your Sarvam API key in the environment settings.',
     input: {
       placeholder: 'Ask about farming…',
     },

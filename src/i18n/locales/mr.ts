@@ -1304,9 +1304,6 @@ export const mr = {
     },
     template: {
       title: 'विजेट टेम्पलेट',
-      testWidget: {
-        label: 'टेस्ट विजेट',
-      },
     },
   },
 
@@ -2258,7 +2255,7 @@ export const mr = {
       'आपला वैयक्तिक शेती सहाय्यक. द्राक्ष लागवड, $t(glossary.irrigation), $t(glossary.disease) किंवा $t(glossary.harvest)बद्दल काहीही विचारा!',
     suggestedQuestions: 'सूचित प्रश्न:',
     apiKeyRequiredTitle: 'API की आवश्यक',
-    apiKeyRequiredBody: 'कृपया पर्यावरण सेटिंग्जमध्ये आपली OpenAI API की सेट करा.',
+    apiKeyRequiredBody: 'कृपया पर्यावरण सेटिंग्जमध्ये आपली Sarvam API की सेट करा.',
     input: {
       placeholder: 'शेतीबद्दल विचारा…',
     },

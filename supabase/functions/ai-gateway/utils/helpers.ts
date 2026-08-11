@@ -78,7 +78,7 @@ const DEVANAGARI_RE = /[\u0900-\u097F]/gu;
 /**
  * Detect locale from transcript text using Devanagari script analysis.
  * Used as a fallback when the STT provider doesn't return a language code
- * (e.g., OpenAI Whisper fallback).
+ * when speech recognition does not provide one.
  *
  * Returns 'hi' as a conservative default for Devanagari text — both Hindi and
  * Marathi use Devanagari, and we cannot distinguish them from script alone.

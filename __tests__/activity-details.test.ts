@@ -1,4 +1,5 @@
 import { getDelegatedAttribution, getSecondaryDetail } from '@/utils/activity-details';
+import { getDescriptionFromData } from '@/utils/log-description';
 import type {
   ExpenseRecord,
   FertigationRecord,
@@ -148,5 +149,35 @@ describe('activity details', () => {
     expect(getSecondaryDetail({ type: 'spray', data: spray }, t, { showArea: false })).toBe(
       '2 acres • Calm',
     );
+  });
+
+  it('trims user-entered descriptions and uses fallbacks for whitespace-only values', () => {
+    const describe = (key: string) =>
+      ({
+        'logs.sprayApplication': 'Spray application',
+        'logs.types.note': 'Note',
+      })[key] ?? key;
+
+    expect(
+      getDescriptionFromData({ type: 'spray', data: { chemical: '  Copper  ' } }, describe),
+    ).toBe('Copper');
+    expect(getDescriptionFromData({ type: 'spray', data: { chemical: '   ' } }, describe)).toBe(
+      'Spray application',
+    );
+    expect(getDescriptionFromData({ type: 'note', data: { notes: '   ' } }, describe)).toBe('Note');
+  });
+
+  it('trims secondary details and ignores whitespace-only values', () => {
+    expect(
+      getSecondaryDetail(
+        { type: 'harvest', data: { buyer: '   ', notes: '  Packed at dawn  ' } },
+        t,
+      ),
+    ).toBe('Packed at dawn');
+    expect(
+      getSecondaryDetail({ type: 'irrigation', data: { moisture_status: '   ' } }, t, {
+        showArea: false,
+      }),
+    ).toBeNull();
   });
 });

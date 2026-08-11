@@ -63,8 +63,8 @@ import { formatCurrency, formatDate } from '@/i18n/format';
 import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
 import { isGrapeCrop } from '@/utils/crop';
 import { shouldShowHarvestUnverifiedBanner } from '@/utils/harvest-safety-visibility';
-import { getDescriptionFromData } from '@/utils/log-description';
-import { getDelegatedAttribution, getSecondaryDetail } from '@/utils/activity-details';
+import { activityRowId } from '@/utils/log-description';
+import { getActivityRowPresentation } from '@/utils/activity-details';
 
 import { useModalStore, useAppModeStore } from '@/stores';
 import { useM3 } from '@/styles/use-theme';
@@ -1111,7 +1111,7 @@ export default function FarmDetailScreen() {
 
     irrigationRecords?.forEach((r) =>
       logs.push({
-        id: `irrigation-${r.id}`,
+        id: activityRowId('irrigation', r.id),
         type: 'irrigation',
         date: r.date,
         data: r,
@@ -1119,7 +1119,7 @@ export default function FarmDetailScreen() {
     );
     sprayRecords?.forEach((r) =>
       logs.push({
-        id: `spray-${r.id}`,
+        id: activityRowId('spray', r.id),
         type: 'spray',
         date: r.date,
         data: r,
@@ -1127,7 +1127,7 @@ export default function FarmDetailScreen() {
     );
     harvestRecords?.forEach((r) =>
       logs.push({
-        id: `harvest-${r.id}`,
+        id: activityRowId('harvest', r.id),
         type: 'harvest',
         date: r.date,
         data: r,
@@ -1135,7 +1135,7 @@ export default function FarmDetailScreen() {
     );
     expenseRecords?.forEach((r) =>
       logs.push({
-        id: `expense-${r.id}`,
+        id: activityRowId('expense', r.id),
         type: 'expense',
         date: r.date,
         data: r,
@@ -1143,7 +1143,7 @@ export default function FarmDetailScreen() {
     );
     fertigationRecords?.forEach((r) =>
       logs.push({
-        id: `fertigation-${r.id}`,
+        id: activityRowId('fertigation', r.id),
         type: 'fertigation',
         date: r.date,
         data: r,
@@ -1151,7 +1151,7 @@ export default function FarmDetailScreen() {
     );
     dailyNotes?.forEach((r) =>
       logs.push({
-        id: `note-${r.id}`,
+        id: activityRowId('note', r.id),
         type: 'note',
         date: r.date,
         data: r,
@@ -1180,23 +1180,29 @@ export default function FarmDetailScreen() {
     return filteredLogs.slice(0, RECENT_ACTIVITY_LIMIT);
   }, [filteredLogs]);
 
-  const recentActivities = useMemo<ActivityRowModel[]>(
+  // Pair each presentation row with its source log so edit/delete callbacks can
+  // close over the log directly — no projection-and-recovery by id.
+  const recentActivityRows = useMemo<Array<{ activity: ActivityRowModel; log: FarmActivityLog }>>(
     () =>
       farm
-        ? recentLogs.map((log) => ({
-            id: log.id,
-            type: log.type,
-            date: log.date,
-            description: getDescriptionFromData(log, t, currency),
-            secondaryDetail:
-              [
-                getSecondaryDetail(log, t, { showArea: false }),
-                getDelegatedAttribution(t, log.data),
-              ]
-                .filter((detail): detail is string => Boolean(detail))
-                .join(' • ') || undefined,
-            farmName: farm.name,
-          }))
+        ? recentLogs.map((log) => {
+            const presentation = getActivityRowPresentation(log, t, {
+              currency,
+              showArea: false,
+              includeAttribution: true,
+            });
+            return {
+              activity: {
+                id: log.id,
+                type: log.type,
+                date: log.date,
+                description: presentation.description,
+                secondaryDetail: presentation.secondaryDetail,
+                farmName: farm.name,
+              },
+              log,
+            };
+          })
         : [],
     [currency, farm, recentLogs, t],
   );
@@ -1380,27 +1386,6 @@ export default function FarmDetailScreen() {
       );
     },
     [deleteExpense, deleteFertigation, deleteHarvest, deleteIrrigation, deleteSpray, t],
-  );
-
-  const findRecentActivityLog = React.useCallback(
-    (activityId: string) => recentLogs.find((log) => log.id === activityId),
-    [recentLogs],
-  );
-
-  const handleEditRecentActivity = React.useCallback(
-    (activity: ActivityRowModel) => {
-      const log = findRecentActivityLog(activity.id);
-      if (log) handleEditActivity(log);
-    },
-    [findRecentActivityLog, handleEditActivity],
-  );
-
-  const handleDeleteRecentActivity = React.useCallback(
-    (activity: ActivityRowModel) => {
-      const log = findRecentActivityLog(activity.id);
-      if (log && log.type !== 'note') handleDeleteActivity(log);
-    },
-    [findRecentActivityLog, handleDeleteActivity],
   );
 
   const handleDeleteFarm = () => {
@@ -2514,16 +2499,16 @@ export default function FarmDetailScreen() {
             </View>
 
             {/* Log rows */}
-            {recentActivities.length > 0 ? (
+            {recentActivityRows.length > 0 ? (
               <View style={{ gap: spacing[1] }}>
-                {recentActivities.map((activity) => (
+                {recentActivityRows.map(({ activity, log }) => (
                   <RecentActivityRow
                     key={activity.id}
                     activity={activity}
                     showFarmName={false}
                     presentation={activityPresentation}
-                    onPress={handleEditRecentActivity}
-                    onLongPress={activity.type === 'note' ? undefined : handleDeleteRecentActivity}
+                    onPress={() => handleEditActivity(log)}
+                    onLongPress={log.type === 'note' ? undefined : () => handleDeleteActivity(log)}
                   />
                 ))}
               </View>

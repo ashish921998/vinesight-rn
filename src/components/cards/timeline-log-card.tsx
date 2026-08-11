@@ -39,7 +39,7 @@ export const TimelineLogCard = React.memo(function TimelineLogCard({
   const currency = useCurrency();
   const logType = getLogType(log.type);
   const iconName =
-    log.type === 'expense' ? getExpenseIconName(log.data?.type, logType.icon) : logType.icon;
+    log.type === 'expense' ? getExpenseIconName(log.data.type, logType.icon) : logType.icon;
   const parsedDate = fromSupabaseDateString(date);
   const displayDescription = description || getDescriptionFromData(log, t, currency);
   const displayDate = parsedDate

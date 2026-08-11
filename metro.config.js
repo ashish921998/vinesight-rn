@@ -1,5 +1,4 @@
 const { getSentryExpoConfig } = require('@sentry/react-native/metro');
-const { withStorybook } = require('@storybook/react-native/metro/withStorybook');
 
 const config = getSentryExpoConfig(__dirname, {
   // These are web-only packages (DOM session replay + feedback widget) re-exported
@@ -15,5 +14,4 @@ const config = getSentryExpoConfig(__dirname, {
 // Metro must treat .xml as an asset rather than source.
 config.resolver.assetExts.push('xml');
 
-module.exports =
-  process.env.EXPO_PUBLIC_STORYBOOK_ENABLED === 'true' ? withStorybook(config) : config;
+module.exports = config;

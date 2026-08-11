@@ -11,11 +11,11 @@ import { useAppModeStore } from '../stores/app-mode-store';
 import type { Farm } from '../types';
 import { isLowWater } from '../types';
 import type { LogTypeId } from '../constants';
-import { formatCurrency, formatNumber } from '@/i18n/format';
 import { useCurrency } from './use-currency';
 import { formatLocalDate } from '@/utils/date';
 import { useTranslation } from 'react-i18next';
-import { getDescriptionFromData } from '@/utils/log-description';
+import { activityRowId, type LogRecordInput } from '@/utils/log-description';
+import { getActivityRowPresentation } from '@/utils/activity-details';
 
 // ============================================================
 // MARK: - Types
@@ -278,97 +278,72 @@ export function useRecentActivities(limit: number = 5) {
 
       const farmMap = new Map(farms.map((f) => [f.id, f.name]));
 
-      const activities: RecentActivity[] = [];
-
-      // Map irrigation
-      irrigation.forEach((r) => {
-        const duration = r.duration ?? 0;
-        const displayDuration = Number.isInteger(duration) ? duration : duration.toFixed(1);
-        activities.push({
-          id: `irrigation_${r.id}`,
-          type: 'irrigation',
+      // Build { type, data } envelopes carrying the row metadata the canonical
+      // presentation layer doesn't need (id/date/farmId), then route every log
+      // type through the single canonical mapper so dashboard formatting never
+      // drifts from farm-detail / timeline surfaces.
+      const envelopes: Array<
+        LogRecordInput & { rowId: number | undefined; date: string; farmId: number }
+      > = [
+        ...irrigation.map((r) => ({
+          type: 'irrigation' as const,
+          data: r,
+          rowId: r.id,
           date: r.date,
-          description: `${displayDuration}h`,
-          secondaryDetail: r.moisture_status?.trim() || undefined,
           farmId: r.farm_id,
-          farmName: farmMap.get(r.farm_id) ?? 'Unknown',
-        });
-      });
-
-      // Map spray
-      spray.forEach((r) => {
-        activities.push({
-          id: `spray_${r.id}`,
-          type: 'spray',
+        })),
+        ...spray.map((r) => ({
+          type: 'spray' as const,
+          data: r,
+          rowId: r.id,
           date: r.date,
-          description: r.chemical?.trim() ?? '',
-          secondaryDetail: r.weather?.trim() || undefined,
           farmId: r.farm_id,
-          farmName: farmMap.get(r.farm_id) ?? '',
-        });
-      });
-
-      // Map harvest
-      harvest.forEach((r) => {
-        const grade = r.grade?.trim();
-        const quantity = `${r.quantity?.toFixed(0) ?? 0} kg`;
-        activities.push({
-          id: `harvest_${r.id}`,
-          type: 'harvest',
+        })),
+        ...harvest.map((r) => ({
+          type: 'harvest' as const,
+          data: r,
+          rowId: r.id,
           date: r.date,
-          description: grade ? `${quantity} · ${grade}` : quantity,
-          secondaryDetail: r.buyer?.trim() || r.notes?.trim() || undefined,
           farmId: r.farm_id,
-          farmName: farmMap.get(r.farm_id) ?? '',
-        });
-      });
-
-      // Map expense
-      expense.forEach((r) => {
-        const formattedCost = formatCurrency(r.cost ?? 0, preferredCurrency, {
-          minimumFractionDigits: 0,
-        });
-        const expenseType = r.type?.trim();
-        activities.push({
-          id: `expense_${r.id}`,
-          type: 'expense',
+        })),
+        ...expense.map((r) => ({
+          type: 'expense' as const,
+          data: r,
+          rowId: r.id,
           date: r.date,
-          description: expenseType ? `${formattedCost} · ${expenseType}` : formattedCost,
-          secondaryDetail: r.remarks?.trim() || undefined,
           farmId: r.farm_id,
-          farmName: farmMap.get(r.farm_id) ?? '',
-        });
-      });
-
-      // Map fertigation
-      fertigation.forEach((r) => {
-        activities.push({
-          id: `fertigation_${r.id}`,
-          type: 'fertigation',
+        })),
+        ...fertigation.map((r) => ({
+          type: 'fertigation' as const,
+          data: r,
+          rowId: r.id,
           date: r.date,
-          description: getDescriptionFromData(
-            { type: 'fertigation', data: r },
-            t,
-            preferredCurrency,
-          ),
-          secondaryDetail: r.area
-            ? t('farmDetails.header.areaAcres', { value: formatNumber(r.area) })
-            : undefined,
           farmId: r.farm_id,
-          farmName: farmMap.get(r.farm_id) ?? '',
-        });
-      });
-
-      // Map notes
-      dailyNotes.forEach((r) => {
-        activities.push({
-          id: `note_${r.id}`,
-          type: 'note',
+        })),
+        ...dailyNotes.map((r) => ({
+          type: 'note' as const,
+          data: r,
+          rowId: r.id,
           date: r.date,
-          description: r.notes?.trim() ?? '',
           farmId: r.farm_id,
-          farmName: farmMap.get(r.farm_id) ?? '',
+        })),
+      ];
+
+      // Pass each envelope directly (not a destructured {type, data} literal) so
+      // the discriminated-union correlation is preserved for the mapper.
+      const activities: RecentActivity[] = envelopes.map((envelope) => {
+        const { description, secondaryDetail } = getActivityRowPresentation(envelope, t, {
+          currency: preferredCurrency,
         });
+        return {
+          id: activityRowId(envelope.type, envelope.rowId),
+          type: envelope.type,
+          date: envelope.date,
+          description,
+          secondaryDetail,
+          farmId: envelope.farmId,
+          farmName: farmMap.get(envelope.farmId) ?? '',
+        };
       });
 
       // Sort by date and take limit

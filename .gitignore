@@ -60,10 +60,6 @@ lint-results.json
 # RNRepo pre-built artifact cache (downloaded at build time; not source)
 **/.rnrepo-cache/
 
-# Storybook
-*storybook.log
-storybook-static
-
 # local IDE/agent files
 .idea/
 .claude/
