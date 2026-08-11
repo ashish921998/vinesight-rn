@@ -13,7 +13,6 @@ All notable changes to this project will be documented in this file.
 ## [1.7.0.2] - 2026-08-10
 
 ### Added
-- Store screenshot workflow now uses the repository-backed `scripts/store-screenshots.sh` entrypoint and tracked `.asc` plan (capture, frame, review, approve, and App Store Connect upload). See `docs/store-screenshots.md` for prerequisites, credentials, commands, Google Play handoff, and generated output paths; generated assets are ignored and are not checked in.
 - Recent-activity rows now carry a `secondaryDetail` line (irrigation moisture status, spray weather, harvest buyer/notes, expense remarks) on both the home dashboard and the farm detail screen.
 - Delegated-professional attribution and a harvest-safety "unverified" advisory banner on the farm detail screen (Detailed mode, grape farms).
 
@@ -23,7 +22,6 @@ All notable changes to this project will be documented in this file.
 - Farm activity presentation unified across the home dashboard and farm detail via a shared `RecentActivityRow` component and `useLogPresentation` hook (now exported).
 
 ### Fixed
-- Marketplace screenshot PNGs prepared as opaque 8-bit RGB (no alpha channel) for App Store (no transparency) and Google Play (24-bit, no alpha) requirements.
 - Accessibility labels on explore rows now include the rendered metadata (crop variety, area, region, stage and day-count for farms; manufacturer, category, quantity, reorder, price, and expiry for warehouse items) while preserving the localized low-water and low-stock state.
 - Localized accessibility labels and stock interpolation across the explore panes.
 - `secondaryDetail` now populated on the home screen recent-activity list.
