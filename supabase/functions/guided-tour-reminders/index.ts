@@ -243,7 +243,14 @@ Deno.serve(async (req) => {
     claimed = (claimRows ?? []) as ClaimedReminder[];
     if (claimed.length === 0) {
       return new Response(
-        JSON.stringify({ ok: true, claimed: 0, usersDelivered: 0, accepted: 0, rejected: 0 }),
+        JSON.stringify({
+          ok: true,
+          claimed: 0,
+          usersDelivered: 0,
+          accepted: 0,
+          rejected: 0,
+          skippedIneligible: 0,
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 },
       );
     }
