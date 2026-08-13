@@ -1,4 +1,4 @@
-import { assertEquals } from 'https://deno.land/std@0.224.0/assert/mod.ts';
+import { assertEquals, assertRejects } from 'https://deno.land/std@0.224.0/assert/mod.ts';
 
 import { beginDispatchAndBatch } from './dispatch-batches.ts';
 
@@ -54,4 +54,22 @@ Deno.test('does not begin dispatch for an empty push list', async () => {
   assertEquals(dispatchCalls, 0);
   assertEquals(result.batches, []);
   assertEquals(result.skippedUserIds.size, 0);
+});
+
+Deno.test('rejects invalid batch limits before beginning dispatch', async () => {
+  for (const batchLimit of [0, -1, 1.5, Number.MAX_SAFE_INTEGER + 1, NaN, Infinity]) {
+    let dispatchCalls = 0;
+
+    await assertRejects(
+      () =>
+        beginDispatchAndBatch([], batchLimit, async (candidates) => {
+          dispatchCalls += 1;
+          return candidates;
+        }),
+      RangeError,
+      'batchLimit must be a positive safe integer',
+    );
+
+    assertEquals(dispatchCalls, 0);
+  }
 });

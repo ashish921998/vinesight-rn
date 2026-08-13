@@ -7,6 +7,10 @@ export async function beginDispatchAndBatch<T extends UserScopedPush>(
   batchLimit: number,
   beginDispatch: (pushes: T[]) => Promise<T[]>,
 ): Promise<{ batches: T[][]; skippedUserIds: Set<string> }> {
+  if (!Number.isSafeInteger(batchLimit) || batchLimit <= 0) {
+    throw new RangeError('batchLimit must be a positive safe integer');
+  }
+
   if (pushes.length === 0) {
     return { batches: [], skippedUserIds: new Set() };
   }
