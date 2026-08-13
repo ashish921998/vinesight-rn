@@ -10,8 +10,10 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')?.tri
 const EXPO_ACCESS_TOKEN = Deno.env.get('EXPO_ACCESS_TOKEN')?.trim() ?? '';
 const REMINDER_JOB_SECRET = Deno.env.get('FARM_SETUP_REMINDERS_AUTH')?.trim() ?? '';
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required');
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !REMINDER_JOB_SECRET) {
+  throw new Error(
+    'SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and FARM_SETUP_REMINDERS_AUTH are required',
+  );
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
