@@ -1,0 +1,21 @@
+supabase/functions/guided-tour-reminders/index.ts
+  s_4e2f58deb4bc7d::t_9d4eea8b103b50 298,329
+supabase/migrations/20260813133000_farm_setup_durable_dispatch.sql
+  s_4e2f58deb4bc7d::t_9d4eea8b103b50 89-90,92-93,123-124
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "d61179d91a8d78bea3d3632cea77393d194dde43",
+  "prompts": {},
+  "sessions": {
+    "s_4e2f58deb4bc7d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffaaf-265f-7c33-9ecf-6ef7155753ad",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
