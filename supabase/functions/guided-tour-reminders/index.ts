@@ -102,28 +102,30 @@ function buildPushMessage(
   };
 }
 
-async function filterClaimedPushes(pushes: PendingPush[], claimId: string) {
+async function beginClaimedDispatch(pushes: PendingPush[], claimId: string) {
   const userIds = [...new Set(pushes.map((push) => push.userId))];
-  const [{ data: activeClaims, error: claimsError }, { data: farms, error: farmsError }] =
-    await Promise.all([
-      supabase
-        .from('farm_setup_reminder_state')
-        .select('user_id')
-        .eq('claim_id', claimId)
-        .is('completed_at', null)
-        .in('user_id', userIds),
-      supabase.from('farms').select('user_id').in('user_id', userIds),
-    ]);
+  const { data, error } = await supabase.rpc('begin_farm_setup_reminder_dispatch', {
+    p_claim_id: claimId,
+    p_user_ids: userIds,
+  });
+  if (error) throw error;
 
-  if (claimsError) throw claimsError;
-  if (farmsError) throw farmsError;
-
-  const activeUserIds = new Set((activeClaims ?? []).map((row) => row.user_id as string));
-  const usersWithFarms = new Set((farms ?? []).map((row) => row.user_id as string));
-
-  return pushes.filter(
-    (push) => activeUserIds.has(push.userId) && !usersWithFarms.has(push.userId),
+  const dispatchingUserIds = new Set(
+    ((data ?? []) as { user_id: string }[]).map((row) => row.user_id),
   );
+  return pushes.filter((push) => dispatchingUserIds.has(push.userId));
+}
+
+async function endClaimedDispatch(pushes: PendingPush[], claimId: string) {
+  const userIds = [...new Set(pushes.map((push) => push.userId))];
+  const { error } = await supabase
+    .from('farm_setup_reminder_state')
+    .update({ dispatching_until: null, updated_at: new Date().toISOString() })
+    .eq('claim_id', claimId)
+    .in('user_id', userIds);
+  if (error) {
+    console.error('Failed to clear farm reminder dispatch lease', { claimId, userIds, error });
+  }
 }
 
 async function sendExpoPushes(
@@ -149,9 +151,9 @@ async function sendExpoPushes(
 
   for (let offset = 0; offset < pushes.length; offset += EXPO_BATCH_LIMIT) {
     const chunk = pushes.slice(offset, offset + EXPO_BATCH_LIMIT);
-    // Farm creation clears the claim. Rechecking both the claim and farms as
-    // close as possible to the outbound request prevents stale in-memory sends.
-    const eligibleChunk = await filterClaimedPushes(chunk, claimId);
+    // The dispatch RPC and the farm-insert trigger serialize the final
+    // eligibility decision, so a farm cannot commit ahead of an authorized send.
+    const eligibleChunk = await beginClaimedDispatch(chunk, claimId);
     skippedIneligible += chunk.length - eligibleChunk.length;
     if (eligibleChunk.length === 0) continue;
 
@@ -195,6 +197,8 @@ async function sendExpoPushes(
     } catch (error) {
       rejected += eligibleChunk.length;
       console.error('Expo push batch threw', { offset, error: String(error) });
+    } finally {
+      await endClaimedDispatch(eligibleChunk, claimId);
     }
   }
 
