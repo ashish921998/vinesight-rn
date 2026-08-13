@@ -224,6 +224,10 @@ as $$
   from claimed;
 $$;
 
+-- Atomically choose farm cancellation or an at-most-once notification attempt.
+-- Campaign state advances before the external Expo request, so a database
+-- outage after acceptance cannot replay the same reminder sequence. An Expo
+-- failure therefore consumes the attempt instead of retrying it.
 create or replace function public.begin_farm_setup_reminder_dispatch(
   p_claim_id uuid,
   p_user_ids uuid[]
@@ -274,8 +278,7 @@ as $$
 $$;
 
 create or replace function public.finish_farm_setup_reminder_claim(
-  p_claim_id uuid,
-  p_delivered_user_ids uuid[] default '{}'::uuid[]
+  p_claim_id uuid
 )
 returns void
 language plpgsql
@@ -285,42 +288,23 @@ as $$
 begin
   update public.farm_setup_reminder_state s
   set
-    reminders_sent = case
-      when s.user_id = any(p_delivered_user_ids) then least(s.reminders_sent + 1, 3)
-      else s.reminders_sent
-    end,
-    last_sent_at = case
-      when s.user_id = any(p_delivered_user_ids) then now()
-      else s.last_sent_at
-    end,
     next_send_at = case
-      when s.user_id = any(p_delivered_user_ids) and s.reminders_sent + 1 >= 3 then null
-      when not (s.user_id = any(p_delivered_user_ids))
-        and s.started_at <= now() - interval '30 days' then null
-      when s.user_id = any(p_delivered_user_ids) then
-        public.farm_setup_local_send_at(
-          s.started_at,
-          s.timezone,
-          3 * (s.reminders_sent + 2)
-        )
+      when s.started_at <= now() - interval '30 days' then null
       else now() + interval '6 hours'
     end,
     completed_at = case
-      when s.user_id = any(p_delivered_user_ids) and s.reminders_sent + 1 >= 3 then now()
-      when not (s.user_id = any(p_delivered_user_ids))
-        and s.started_at <= now() - interval '30 days' then now()
+      when s.started_at <= now() - interval '30 days' then now()
       else s.completed_at
     end,
     completed_reason = case
-      when s.user_id = any(p_delivered_user_ids) and s.reminders_sent + 1 >= 3 then 'max_reminders'
-      when not (s.user_id = any(p_delivered_user_ids))
-        and s.started_at <= now() - interval '30 days' then 'undeliverable'
+      when s.started_at <= now() - interval '30 days' then 'undeliverable'
       else s.completed_reason
     end,
     claim_id = null,
     claim_expires_at = null,
     updated_at = now()
-  where s.claim_id = p_claim_id;
+  where s.claim_id = p_claim_id
+    and s.completed_at is null;
 end;
 $$;
 
@@ -328,10 +312,10 @@ revoke all on table public.farm_setup_reminder_state from anon, authenticated;
 revoke all on function public.farm_setup_local_send_at(timestamptz, text, integer) from public;
 revoke all on function public.claim_due_farm_setup_reminders(uuid, integer) from public;
 revoke all on function public.begin_farm_setup_reminder_dispatch(uuid, uuid[]) from public;
-revoke all on function public.finish_farm_setup_reminder_claim(uuid, uuid[]) from public;
+revoke all on function public.finish_farm_setup_reminder_claim(uuid) from public;
 grant execute on function public.claim_due_farm_setup_reminders(uuid, integer) to service_role;
 grant execute on function public.begin_farm_setup_reminder_dispatch(uuid, uuid[]) to service_role;
-grant execute on function public.finish_farm_setup_reminder_claim(uuid, uuid[]) to service_role;
+grant execute on function public.finish_farm_setup_reminder_claim(uuid) to service_role;
 
 -- Keep one hourly sender. The Edge Function checks exact per-user due times;
 -- pg_cron only provides the reliable wake-up.

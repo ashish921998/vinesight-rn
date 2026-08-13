@@ -1,6 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.2';
-import { authorizeDispatchBatches } from './dispatch-batches.ts';
+import { beginDispatchAndBatch } from './dispatch-batches.ts';
 import { isExpoPushToken, timingSafeSecretEqual } from './request-validation.ts';
+
+// TODO: Rename this deployed endpoint and its cron target together to farm-setup-reminders.
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -123,10 +125,10 @@ async function excludeFarmOwners(pushes: PendingPush[]) {
   const { data, error } = await supabase.from('farms').select('user_id').in('user_id', userIds);
   if (error) throw error;
 
-  const ineligibleUserIds = new Set((data ?? []).map((farm) => farm.user_id as string));
+  const farmOwnerUserIds = new Set((data ?? []).map((farm) => farm.user_id as string));
   return {
-    eligiblePushes: pushes.filter((push) => !ineligibleUserIds.has(push.userId)),
-    ineligibleUserIds,
+    eligiblePushes: pushes.filter((push) => !farmOwnerUserIds.has(push.userId)),
+    farmOwnerUserIds,
   };
 }
 
@@ -138,7 +140,8 @@ async function sendExpoPushes(
   invalidDeviceIds: Set<string>;
   accepted: number;
   rejected: number;
-  skippedIneligible: number;
+  skippedDispatch: number;
+  skippedFarmOwners: number;
 }> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (EXPO_ACCESS_TOKEN) {
@@ -147,12 +150,13 @@ async function sendExpoPushes(
 
   const deliveredUserIds = new Set<string>();
   const invalidDeviceIds = new Set<string>();
+  const skippedFarmOwnerUserIds = new Set<string>();
   let accepted = 0;
   let rejected = 0;
 
   // Advance campaign state before sending so accepted pushes cannot replay.
   // An Expo rejection therefore consumes the attempt.
-  const { batches, skippedUserIds } = await authorizeDispatchBatches(
+  const { batches, skippedUserIds } = await beginDispatchAndBatch(
     pushes,
     EXPO_BATCH_LIMIT,
     (candidates) => beginClaimedDispatch(candidates, claimId),
@@ -160,8 +164,10 @@ async function sendExpoPushes(
 
   for (const [batchIndex, chunk] of batches.entries()) {
     const offset = batchIndex * EXPO_BATCH_LIMIT;
-    const { eligiblePushes, ineligibleUserIds } = await excludeFarmOwners(chunk);
-    for (const userId of ineligibleUserIds) skippedUserIds.add(userId);
+    // A farm can be inserted after the atomic dispatch transition commits.
+    // Recheck immediately before each Expo request to suppress that stale prompt.
+    const { eligiblePushes, farmOwnerUserIds } = await excludeFarmOwners(chunk);
+    for (const userId of farmOwnerUserIds) skippedFarmOwnerUserIds.add(userId);
     if (eligiblePushes.length === 0) continue;
 
     try {
@@ -212,7 +218,8 @@ async function sendExpoPushes(
     invalidDeviceIds,
     accepted,
     rejected,
-    skippedIneligible: skippedUserIds.size,
+    skippedDispatch: skippedUserIds.size,
+    skippedFarmOwners: skippedFarmOwnerUserIds.size,
   };
 }
 
@@ -250,6 +257,8 @@ Deno.serve(async (req) => {
           accepted: 0,
           rejected: 0,
           skippedIneligible: 0,
+          skippedDispatch: 0,
+          skippedFarmOwners: 0,
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 },
       );
@@ -309,16 +318,20 @@ Deno.serve(async (req) => {
 
     const { error: finishError } = await supabase.rpc('finish_farm_setup_reminder_claim', {
       p_claim_id: claimId,
-      p_delivered_user_ids: [],
     });
     if (finishError) throw finishError;
+
+    const skippedFarmOwners = usersWithFarms.size + sendResult.skippedFarmOwners;
+    const skippedIneligible = skippedFarmOwners + sendResult.skippedDispatch;
 
     console.log('farm_setup_reminder_job_complete', {
       claimed: claimed.length,
       usersDelivered: sendResult.deliveredUserIds.size,
       accepted: sendResult.accepted,
       rejected: sendResult.rejected,
-      skippedIneligible: usersWithFarms.size + sendResult.skippedIneligible,
+      skippedIneligible,
+      skippedDispatch: sendResult.skippedDispatch,
+      skippedFarmOwners,
     });
 
     return new Response(
@@ -328,18 +341,19 @@ Deno.serve(async (req) => {
         usersDelivered: sendResult.deliveredUserIds.size,
         accepted: sendResult.accepted,
         rejected: sendResult.rejected,
-        skippedIneligible: usersWithFarms.size + sendResult.skippedIneligible,
+        skippedIneligible,
+        skippedDispatch: sendResult.skippedDispatch,
+        skippedFarmOwners,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 },
     );
   } catch (error) {
-    console.error('[guided-tour-reminders] farm setup reminder job failed', error);
+    console.error('[farm-setup-reminders] job failed', error);
 
     // Dispatch already advanced authorized users, so only untouched claims remain.
     if (claimed.length > 0) {
       const { error: releaseError } = await supabase.rpc('finish_farm_setup_reminder_claim', {
         p_claim_id: claimId,
-        p_delivered_user_ids: [],
       });
       if (releaseError) {
         console.error('Failed to release farm setup reminder claim', releaseError);

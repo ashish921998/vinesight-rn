@@ -1,22 +1,22 @@
 import { assertEquals } from 'https://deno.land/std@0.224.0/assert/mod.ts';
 
-import { authorizeDispatchBatches } from './dispatch-batches.ts';
+import { beginDispatchAndBatch } from './dispatch-batches.ts';
 
-Deno.test('authorizes a user once before batching all of their devices', async () => {
+Deno.test("begins dispatch once before batching all of a user's devices", async () => {
   const pushes = Array.from({ length: 150 }, (_, index) => ({
     userId: 'user-1',
     token: `token-${index}`,
   }));
-  let authorizationCalls = 0;
+  let dispatchCalls = 0;
 
-  const result = await authorizeDispatchBatches(pushes, 100, async (candidates) => {
-    authorizationCalls += 1;
+  const result = await beginDispatchAndBatch(pushes, 100, async (candidates) => {
+    dispatchCalls += 1;
     assertEquals(candidates.length, 150);
     assertEquals(new Set(candidates.map((push) => push.userId)).size, 1);
     return candidates;
   });
 
-  assertEquals(authorizationCalls, 1);
+  assertEquals(dispatchCalls, 1);
   assertEquals(
     result.batches.map((batch) => batch.length),
     [100, 50],
@@ -28,29 +28,30 @@ Deno.test('authorizes a user once before batching all of their devices', async (
   assertEquals(result.skippedUserIds.size, 0);
 });
 
-Deno.test('keeps every device for authorized users and counts rejected users once', async () => {
+Deno.test('keeps every device for dispatching users and counts rejected users once', async () => {
   const pushes = [
     { userId: 'authorized-user', token: 'authorized-token' },
+    { userId: 'authorized-user', token: 'authorized-token-2' },
     { userId: 'rejected-user', token: 'rejected-token-1' },
     { userId: 'rejected-user', token: 'rejected-token-2' },
   ];
 
-  const result = await authorizeDispatchBatches(pushes, 100, async (candidates) =>
+  const result = await beginDispatchAndBatch(pushes, 100, async (candidates) =>
     candidates.filter((push) => push.userId === 'authorized-user'),
   );
 
-  assertEquals(result.batches, [[pushes[0]]]);
+  assertEquals(result.batches, [[pushes[0], pushes[1]]]);
   assertEquals([...result.skippedUserIds], ['rejected-user']);
 });
 
-Deno.test('does not authorize an empty push list', async () => {
-  let authorizationCalls = 0;
-  const result = await authorizeDispatchBatches([], 100, async (candidates) => {
-    authorizationCalls += 1;
+Deno.test('does not begin dispatch for an empty push list', async () => {
+  let dispatchCalls = 0;
+  const result = await beginDispatchAndBatch([], 100, async (candidates) => {
+    dispatchCalls += 1;
     return candidates;
   });
 
-  assertEquals(authorizationCalls, 0);
+  assertEquals(dispatchCalls, 0);
   assertEquals(result.batches, []);
   assertEquals(result.skippedUserIds.size, 0);
 });

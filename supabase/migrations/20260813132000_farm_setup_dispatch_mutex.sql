@@ -1,3 +1,0 @@
--- Reserved migration. The temporary dispatch-mutex implementation was
--- superseded before merge by the durable at-most-once transition in
--- 20260813133000_farm_setup_durable_dispatch.sql.
