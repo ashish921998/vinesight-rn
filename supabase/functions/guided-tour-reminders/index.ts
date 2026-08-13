@@ -116,18 +116,6 @@ async function beginClaimedDispatch(pushes: PendingPush[], claimId: string) {
   return pushes.filter((push) => dispatchingUserIds.has(push.userId));
 }
 
-async function endClaimedDispatch(pushes: PendingPush[], claimId: string) {
-  const userIds = [...new Set(pushes.map((push) => push.userId))];
-  const { error } = await supabase
-    .from('farm_setup_reminder_state')
-    .update({ dispatching_until: null, updated_at: new Date().toISOString() })
-    .eq('claim_id', claimId)
-    .in('user_id', userIds);
-  if (error) {
-    console.error('Failed to clear farm reminder dispatch lease', { claimId, userIds, error });
-  }
-}
-
 async function sendExpoPushes(
   pushes: PendingPush[],
   claimId: string,
@@ -151,8 +139,8 @@ async function sendExpoPushes(
 
   for (let offset = 0; offset < pushes.length; offset += EXPO_BATCH_LIMIT) {
     const chunk = pushes.slice(offset, offset + EXPO_BATCH_LIMIT);
-    // The dispatch RPC and the farm-insert trigger serialize the final
-    // eligibility decision, so a farm cannot commit ahead of an authorized send.
+    // Persist the campaign attempt before the external side effect. This gives
+    // farm cancellation and dispatch a durable ordering and prevents replays.
     const eligibleChunk = await beginClaimedDispatch(chunk, claimId);
     skippedIneligible += chunk.length - eligibleChunk.length;
     if (eligibleChunk.length === 0) continue;
@@ -197,8 +185,6 @@ async function sendExpoPushes(
     } catch (error) {
       rejected += eligibleChunk.length;
       console.error('Expo push batch threw', { offset, error: String(error) });
-    } finally {
-      await endClaimedDispatch(eligibleChunk, claimId);
     }
   }
 
@@ -225,7 +211,6 @@ Deno.serve(async (req) => {
 
   const claimId = crypto.randomUUID();
   let claimed: ClaimedReminder[] = [];
-  let acceptedUserIds: string[] = [];
 
   try {
     const { data: claimRows, error: claimError } = await supabase.rpc(
@@ -279,7 +264,6 @@ Deno.serve(async (req) => {
     }
 
     const sendResult = await sendExpoPushes(pushes, claimId);
-    acceptedUserIds = [...sendResult.deliveredUserIds];
 
     if (sendResult.invalidDeviceIds.size > 0) {
       const { error: disableError } = await supabase
@@ -293,13 +277,13 @@ Deno.serve(async (req) => {
 
     const { error: finishError } = await supabase.rpc('finish_farm_setup_reminder_claim', {
       p_claim_id: claimId,
-      p_delivered_user_ids: acceptedUserIds,
+      p_delivered_user_ids: [],
     });
     if (finishError) throw finishError;
 
     console.log('farm_setup_reminder_job_complete', {
       claimed: claimed.length,
-      usersDelivered: acceptedUserIds.length,
+      usersDelivered: sendResult.deliveredUserIds.size,
       accepted: sendResult.accepted,
       rejected: sendResult.rejected,
       skippedIneligible: usersWithFarms.size + sendResult.skippedIneligible,
@@ -309,7 +293,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         ok: true,
         claimed: claimed.length,
-        usersDelivered: acceptedUserIds.length,
+        usersDelivered: sendResult.deliveredUserIds.size,
         accepted: sendResult.accepted,
         rejected: sendResult.rejected,
         skippedIneligible: usersWithFarms.size + sendResult.skippedIneligible,
@@ -319,12 +303,12 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('[guided-tour-reminders] farm setup reminder job failed', error);
 
-    // Preserve Expo-accepted users if normal finalization failed. Retrying the
-    // claim-scoped RPC is safe if the first call actually committed.
+    // Dispatched users were durably advanced before Expo. This only releases
+    // users that never reached that decision, so accepted pushes cannot replay.
     if (claimed.length > 0) {
       const { error: releaseError } = await supabase.rpc('finish_farm_setup_reminder_claim', {
         p_claim_id: claimId,
-        p_delivered_user_ids: acceptedUserIds,
+        p_delivered_user_ids: [],
       });
       if (releaseError) {
         console.error('Failed to release farm setup reminder claim', releaseError);

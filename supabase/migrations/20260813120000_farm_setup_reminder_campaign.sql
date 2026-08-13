@@ -11,7 +11,6 @@ create table if not exists public.farm_setup_reminder_state (
   ),
   claim_id uuid null,
   claim_expires_at timestamptz null,
-  dispatching_until timestamptz null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -134,48 +133,25 @@ language plpgsql
 security definer
 set search_path = ''
 as $$
-declare
-  v_completed boolean;
 begin
-  loop
-    v_completed := false;
+  update public.farm_setup_reminder_state
+  set
+    completed_at = now(),
+    completed_reason = 'farm_created',
+    next_send_at = null,
+    claim_id = null,
+    claim_expires_at = null,
+    updated_at = now()
+  where user_id = new.user_id
+    and completed_at is null;
 
-    update public.farm_setup_reminder_state
-    set
-      completed_at = now(),
-      completed_reason = 'farm_created',
-      next_send_at = null,
-      claim_id = null,
-      claim_expires_at = null,
-      dispatching_until = null,
-      updated_at = now()
-    where user_id = new.user_id
-      and completed_at is null
-      and (
-        dispatching_until is null
-        or dispatching_until <= clock_timestamp()
-      )
-    returning true into v_completed;
-
-    if v_completed or not exists (
-      select 1
-      from public.farm_setup_reminder_state
-      where user_id = new.user_id
-        and completed_at is null
-    ) then
-      return new;
-    end if;
-
-    -- A sender has already won the final dispatch decision. Delay this rare
-    -- concurrent insert until the request finishes or its short lease expires.
-    perform pg_catalog.pg_sleep(0.1);
-  end loop;
+  return new;
 end;
 $$;
 
 drop trigger if exists trg_complete_farm_setup_reminder on public.farms;
 create trigger trg_complete_farm_setup_reminder
-  before insert on public.farms
+  after insert on public.farms
   for each row
   execute function public.complete_farm_setup_reminder_on_farm_insert();
 
@@ -263,16 +239,27 @@ as $$
   ), dispatching as (
     update public.farm_setup_reminder_state s
     set
-      dispatching_until = clock_timestamp() + interval '20 seconds',
+      reminders_sent = least(s.reminders_sent + 1, 3),
+      last_sent_at = now(),
+      next_send_at = case
+        when s.reminders_sent + 1 >= 3 then null
+        else public.farm_setup_local_send_at(now(), s.timezone, 3)
+      end,
+      completed_at = case
+        when s.reminders_sent + 1 >= 3 then now()
+        else s.completed_at
+      end,
+      completed_reason = case
+        when s.reminders_sent + 1 >= 3 then 'max_reminders'
+        else s.completed_reason
+      end,
+      claim_id = null,
+      claim_expires_at = null,
       updated_at = now()
     from requested r
     where s.user_id = r.requested_user_id
       and s.claim_id = p_claim_id
       and s.completed_at is null
-      and (
-        s.dispatching_until is null
-        or s.dispatching_until <= clock_timestamp()
-      )
       and not exists (
         select 1 from public.farms f where f.user_id = s.user_id
       )
@@ -324,7 +311,6 @@ begin
     end,
     claim_id = null,
     claim_expires_at = null,
-    dispatching_until = null,
     updated_at = now()
   where s.claim_id = p_claim_id;
 end;

@@ -29,9 +29,6 @@ create trigger trg_complete_farm_setup_reminder
   for each row
   execute function public.complete_farm_setup_reminder_on_farm_insert();
 
--- Atomically choose farm cancellation or an at-most-once notification attempt.
--- Campaign state advances before the external Expo request, so a database
--- outage after acceptance cannot replay the same reminder sequence.
 create or replace function public.begin_farm_setup_reminder_dispatch(
   p_claim_id uuid,
   p_user_ids uuid[]
