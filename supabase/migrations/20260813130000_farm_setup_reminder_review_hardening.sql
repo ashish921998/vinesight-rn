@@ -96,7 +96,11 @@ begin
       when not (s.user_id = any(p_delivered_user_ids))
         and s.started_at <= now() - interval '30 days' then null
       when s.user_id = any(p_delivered_user_ids) then
-        public.farm_setup_local_send_at(now(), s.timezone, 3)
+        public.farm_setup_local_send_at(
+          s.started_at,
+          s.timezone,
+          3 * (s.reminders_sent + 2)
+        )
       else now() + interval '6 hours'
     end,
     completed_at = case
