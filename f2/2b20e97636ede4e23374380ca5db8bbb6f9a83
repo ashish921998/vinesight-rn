@@ -1,0 +1,19 @@
+supabase/functions/guided-tour-reminders/index.ts
+  s_4e2f58deb4bc7d::t_e321d6e8722c80 246-253
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "f22b20e97636ede4e23374380ca5db8bbb6f9a83",
+  "prompts": {},
+  "sessions": {
+    "s_4e2f58deb4bc7d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffaaf-265f-7c33-9ecf-6ef7155753ad",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
