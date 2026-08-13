@@ -8,6 +8,11 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')?.trim() ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')?.trim() ?? '';
 const EXPO_ACCESS_TOKEN = Deno.env.get('EXPO_ACCESS_TOKEN')?.trim() ?? '';
+const REMINDER_JOB_SECRET =
+  Deno.env.get('FARM_SETUP_REMINDERS_AUTH')?.trim() ||
+  Deno.env.get('GUIDED_TOUR_REMINDERS_AUTH')?.trim() ||
+  Deno.env.get('FEATURE_OVERVIEW_REMINDERS_AUTH')?.trim() ||
+  '';
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required');
@@ -16,62 +21,150 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 type Locale = 'en' | 'hi' | 'mr';
+type ReminderNumber = 1 | 2 | 3;
 
-const reminderCopy: Record<Locale, { title: string; body: string }> = {
-  en: { title: 'Your farm is waiting!', body: 'Tap to finish setting up.' },
-  hi: { title: 'आपका फार्म आपका इंतज़ार कर रहा है!', body: 'सेटअप पूरा करने के लिए टैप करें।' },
-  mr: { title: 'तुमचे शेत तुमची वाट पाहत आहे!', body: 'सेटअप पूर्ण करण्यासाठी टॅप करा.' },
+type ClaimedReminder = {
+  user_id: string;
+  reminder_number: ReminderNumber;
 };
 
-function hoursSince(ts: string | null): number {
-  if (!ts) return Number.POSITIVE_INFINITY;
-  const time = Date.parse(ts);
-  if (!Number.isFinite(time)) return Number.POSITIVE_INFINITY;
-  return (Date.now() - time) / (1000 * 60 * 60);
+type PushDevice = {
+  id: string;
+  user_id: string;
+  expo_push_token: string;
+  locale: string | null;
+};
+
+type ExpoPushMessage = {
+  to: string;
+  sound: 'default';
+  title: string;
+  body: string;
+  data: {
+    type: 'farm_setup_reminder';
+    campaign: 'first_farm_v1';
+    sequence: ReminderNumber;
+    route: '/farm/add';
+  };
+};
+
+type ExpoPushTicket = {
+  id?: string;
+  status: 'ok' | 'error';
+  message?: string;
+  details?: { error?: string };
+};
+
+type PendingPush = {
+  deviceId: string;
+  userId: string;
+  message: ExpoPushMessage;
+};
+
+const reminderCopy: Record<Locale, { title: string; body: string }> = {
+  en: {
+    title: 'Set up your first farm',
+    body: 'Add your farm to start tracking irrigation, sprays, expenses, and daily work.',
+  },
+  hi: {
+    title: 'अपना पहला फार्म सेट अप करें',
+    body: 'सिंचाई, स्प्रे, खर्च और रोज़ के काम ट्रैक करने के लिए अपना फार्म जोड़ें।',
+  },
+  mr: {
+    title: 'तुमचे पहिले शेत सेट अप करा',
+    body: 'सिंचन, फवारणी, खर्च आणि रोजची कामे नोंदवण्यासाठी तुमचे शेत जोडा.',
+  },
+};
+
+const EXPO_BATCH_LIMIT = 100;
+const CLAIM_LIMIT = 250;
+
+function normalizeLocale(locale: string | null): Locale {
+  return locale === 'hi' || locale === 'mr' ? locale : 'en';
 }
 
-async function sendExpoPush(token: string, locale: Locale, sequence: 1 | 2): Promise<boolean> {
-  const copy = reminderCopy[locale] ?? reminderCopy.en;
-  const message = {
+function buildPushMessage(
+  token: string,
+  locale: Locale,
+  sequence: ReminderNumber,
+): ExpoPushMessage {
+  const copy = reminderCopy[locale];
+  return {
     to: token,
     sound: 'default',
     title: copy.title,
     body: copy.body,
     data: {
-      type: 'guided_tour_reminder',
+      type: 'farm_setup_reminder',
+      campaign: 'first_farm_v1',
       sequence,
-      deeplink: '/(tabs)/index',
+      route: '/farm/add',
     },
   };
+}
 
+async function sendExpoPushes(pushes: PendingPush[]): Promise<{
+  deliveredUserIds: Set<string>;
+  invalidDeviceIds: Set<string>;
+  accepted: number;
+  rejected: number;
+}> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (EXPO_ACCESS_TOKEN) {
     headers.Authorization = `Bearer ${EXPO_ACCESS_TOKEN}`;
   }
 
-  const response = await fetch('https://exp.host/--/api/v2/push/send', {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(message),
-  });
+  const deliveredUserIds = new Set<string>();
+  const invalidDeviceIds = new Set<string>();
+  let accepted = 0;
+  let rejected = 0;
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Expo push send failed (${response.status}): ${text}`);
+  for (let offset = 0; offset < pushes.length; offset += EXPO_BATCH_LIMIT) {
+    const chunk = pushes.slice(offset, offset + EXPO_BATCH_LIMIT);
+
+    try {
+      const response = await fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(chunk.map((push) => push.message)),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        rejected += chunk.length;
+        console.error('Expo push batch failed', { status: response.status, text, offset });
+        continue;
+      }
+
+      const result = (await response.json()) as { data?: ExpoPushTicket[] };
+      const tickets = result.data ?? [];
+
+      chunk.forEach((push, index) => {
+        const ticket = tickets[index];
+        if (ticket?.status === 'ok') {
+          accepted += 1;
+          deliveredUserIds.add(push.userId);
+          return;
+        }
+
+        rejected += 1;
+        if (ticket?.details?.error === 'DeviceNotRegistered') {
+          invalidDeviceIds.add(push.deviceId);
+        }
+        console.error('Expo push ticket rejected', {
+          userId: push.userId,
+          deviceId: push.deviceId,
+          message: ticket?.message ?? 'Missing Expo push ticket',
+          error: ticket?.details?.error ?? null,
+        });
+      });
+    } catch (error) {
+      rejected += chunk.length;
+      console.error('Expo push batch threw', { offset, error: String(error) });
+    }
   }
 
-  const data = (await response.json()) as { data?: Array<{ status: string; details?: string }> };
-  const tickets = data.data ?? [];
-  const hasError = tickets.some((ticket) => ticket.status === 'error');
-  if (hasError) {
-    const errorMessages = tickets
-      .filter((t) => t.status === 'error')
-      .map((t) => t.details ?? 'Unknown error')
-      .join(', ');
-    throw new Error(`Expo push ticket errors: ${errorMessages}`);
-  }
-
-  return tickets.some((ticket) => ticket.status === 'ok');
+  return { deliveredUserIds, invalidDeviceIds, accepted, rejected };
 }
 
 Deno.serve(async (req) => {
@@ -80,7 +173,6 @@ Deno.serve(async (req) => {
   }
 
   const authHeader = req.headers.get('authorization');
-  const REMINDER_JOB_SECRET = Deno.env.get('GUIDED_TOUR_REMINDERS_AUTH')?.trim() ?? '';
   if (
     !REMINDER_JOB_SECRET ||
     !authHeader ||
@@ -93,176 +185,113 @@ Deno.serve(async (req) => {
     });
   }
 
+  const claimId = crypto.randomUUID();
+  let claimed: ClaimedReminder[] = [];
+
   try {
-    let offset = 0;
-    const batchSize = 500;
-    const allRows: {
-      user_id: string;
-      tour_status: string;
-      reminders_sent: number;
-      last_active_at: string | null;
-      locale: string | null;
-    }[] = [];
+    const { data: claimRows, error: claimError } = await supabase.rpc(
+      'claim_due_farm_setup_reminders',
+      { p_claim_id: claimId, p_limit: CLAIM_LIMIT },
+    );
+    if (claimError) throw claimError;
 
-    while (true) {
-      try {
-        const { data, error } = await supabase
-          .from('user_guided_tour_state')
-          .select('user_id,tour_status,reminders_sent,last_active_at,locale')
-          .eq('tour_status', 'in_progress')
-          .range(offset, offset + batchSize - 1);
+    claimed = (claimRows ?? []) as ClaimedReminder[];
+    if (claimed.length === 0) {
+      return new Response(
+        JSON.stringify({ ok: true, claimed: 0, usersDelivered: 0, accepted: 0, rejected: 0 }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 },
+      );
+    }
 
-        if (error) throw error;
-        if (!data || data.length === 0) break;
+    const claimedByUser = new Map(claimed.map((row) => [row.user_id, row]));
+    const userIds = [...claimedByUser.keys()];
 
-        allRows.push(...data);
-        if (data.length < batchSize) break;
-        offset += batchSize;
-      } catch (err) {
-        console.error('Pagination batch failed at offset', offset, err);
-        throw err;
+    // Recheck farms after claiming. The insert trigger normally cancels the
+    // campaign, while this read closes the remaining claim-to-send race window.
+    const [{ data: farms, error: farmsError }, { data: devices, error: devicesError }] =
+      await Promise.all([
+        supabase.from('farms').select('user_id').in('user_id', userIds),
+        supabase
+          .from('user_push_devices')
+          .select('id,user_id,expo_push_token,locale')
+          .in('user_id', userIds)
+          .eq('notifications_enabled', true),
+      ]);
+
+    if (farmsError) throw farmsError;
+    if (devicesError) throw devicesError;
+
+    const usersWithFarms = new Set((farms ?? []).map((farm) => farm.user_id as string));
+    const pushes: PendingPush[] = [];
+
+    for (const device of (devices ?? []) as PushDevice[]) {
+      const reminder = claimedByUser.get(device.user_id);
+      if (!reminder || usersWithFarms.has(device.user_id) || !device.expo_push_token) continue;
+
+      pushes.push({
+        deviceId: device.id,
+        userId: device.user_id,
+        message: buildPushMessage(
+          device.expo_push_token,
+          normalizeLocale(device.locale),
+          reminder.reminder_number,
+        ),
+      });
+    }
+
+    const sendResult = await sendExpoPushes(pushes);
+
+    if (sendResult.invalidDeviceIds.size > 0) {
+      const { error: disableError } = await supabase
+        .from('user_push_devices')
+        .update({ notifications_enabled: false, updated_at: new Date().toISOString() })
+        .in('id', [...sendResult.invalidDeviceIds]);
+      if (disableError) {
+        console.error('Failed to disable invalid Expo push tokens', disableError);
       }
     }
 
-    let processed = 0;
-    let sent = 0;
-    let expired = 0;
-
-    for (const row of allRows) {
-      processed += 1;
-      const inactivityHours = hoursSince(row.last_active_at ?? null);
-      const remindersSent = Number(row.reminders_sent ?? 0) as 0 | 1 | 2;
-      const locale = (row.locale === 'hi' || row.locale === 'mr' ? row.locale : 'en') as Locale;
-      const userId = row.user_id as string;
-
-      if (remindersSent === 0 && inactivityHours >= 24) {
-        const { data: devices, error: devicesError } = await supabase
-          .from('user_push_devices')
-          .select('expo_push_token')
-          .eq('user_id', userId)
-          .eq('notifications_enabled', true);
-
-        if (devicesError) {
-          console.error('Failed to fetch devices for seq1 reminder', {
-            userId,
-            error: devicesError,
-          });
-          continue;
-        }
-
-        let delivered = false;
-        for (const device of devices ?? []) {
-          const token = device.expo_push_token as string | undefined;
-          if (!token) continue;
-          try {
-            const pushDelivered = await sendExpoPush(token, locale, 1);
-            if (pushDelivered) {
-              delivered = true;
-            }
-          } catch (e) {
-            console.error('tour_reminder_sent failed seq1', { userId, error: String(e) });
-          }
-        }
-
-        if (delivered) {
-          sent += 1;
-          console.log('tour_reminder_sent', { userId, sequence: 1 });
-          const { data: updatedRows, error: updateError } = await supabase
-            .from('user_guided_tour_state')
-            .update({ reminders_sent: 1, updated_at: new Date().toISOString() })
-            .eq('user_id', userId)
-            .eq('tour_status', 'in_progress')
-            .eq('reminders_sent', 0)
-            .select();
-          if (updateError) {
-            console.error('Failed to update reminders_sent for seq1', {
-              userId,
-              error: updateError,
-            });
-          }
-          if (Array.isArray(updatedRows) && updatedRows.length === 0) {
-            console.warn('Seq-1 update lost race or already sent, skipping', { userId });
-          }
-        }
-        continue;
-      }
-
-      if (remindersSent === 1 && inactivityHours >= 72) {
-        const { data: devices, error: devicesError } = await supabase
-          .from('user_push_devices')
-          .select('expo_push_token')
-          .eq('user_id', userId)
-          .eq('notifications_enabled', true);
-
-        if (devicesError) {
-          console.error('Failed to fetch devices for seq2 reminder', {
-            userId,
-            error: devicesError,
-          });
-          continue;
-        }
-
-        let delivered = false;
-        for (const device of devices ?? []) {
-          const token = device.expo_push_token as string | undefined;
-          if (!token) continue;
-          try {
-            const pushDelivered = await sendExpoPush(token, locale, 2);
-            if (pushDelivered) {
-              delivered = true;
-            }
-          } catch (e) {
-            console.error('tour_reminder_sent failed seq2', { userId, error: String(e) });
-          }
-        }
-
-        if (delivered) {
-          sent += 1;
-          console.log('tour_reminder_sent', { userId, sequence: 2 });
-          const { data: updatedRows, error: updateError } = await supabase
-            .from('user_guided_tour_state')
-            .update({ reminders_sent: 2, updated_at: new Date().toISOString() })
-            .eq('user_id', userId)
-            .eq('tour_status', 'in_progress')
-            .eq('reminders_sent', 1)
-            .select();
-          if (updateError) {
-            console.error('Failed to update reminders_sent for seq2', {
-              userId,
-              error: updateError,
-            });
-          }
-          if (Array.isArray(updatedRows) && updatedRows.length === 0) {
-            console.warn('Seq-2 update lost race or already sent, skipping', { userId });
-          }
-        }
-        continue;
-      }
-
-      if (remindersSent === 2 && inactivityHours >= 144) {
-        const { error: updateError } = await supabase
-          .from('user_guided_tour_state')
-          .update({
-            tour_status: 'expired',
-            tour_expired_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-          .eq('user_id', userId)
-          .eq('tour_status', 'in_progress');
-        if (updateError) {
-          console.error('Failed to expire tour', { userId, error: updateError });
-        } else {
-          expired += 1;
-        }
-      }
-    }
-
-    return new Response(JSON.stringify({ ok: true, processed, sent, expired }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
+    const deliveredUserIds = [...sendResult.deliveredUserIds];
+    const { error: finishError } = await supabase.rpc('finish_farm_setup_reminder_claim', {
+      p_claim_id: claimId,
+      p_delivered_user_ids: deliveredUserIds,
     });
+    if (finishError) throw finishError;
+
+    console.log('farm_setup_reminder_job_complete', {
+      claimed: claimed.length,
+      usersDelivered: deliveredUserIds.length,
+      accepted: sendResult.accepted,
+      rejected: sendResult.rejected,
+      skippedBecauseFarmExists: usersWithFarms.size,
+    });
+
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        claimed: claimed.length,
+        usersDelivered: deliveredUserIds.length,
+        accepted: sendResult.accepted,
+        rejected: sendResult.rejected,
+        skippedBecauseFarmExists: usersWithFarms.size,
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 },
+    );
   } catch (error) {
-    console.error('[guided-tour-reminders] failed', error);
+    console.error('[guided-tour-reminders] farm setup reminder job failed', error);
+
+    // Release any claimed users with a bounded retry delay. Claim IDs make this
+    // safe even if the lease was already cleared by a farm insert.
+    if (claimed.length > 0) {
+      const { error: releaseError } = await supabase.rpc('finish_farm_setup_reminder_claim', {
+        p_claim_id: claimId,
+        p_delivered_user_ids: [],
+      });
+      if (releaseError) {
+        console.error('Failed to release farm setup reminder claim', releaseError);
+      }
+    }
+
     return new Response(JSON.stringify({ ok: false, error: 'Internal server error' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
