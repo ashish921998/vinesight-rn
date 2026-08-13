@@ -1,0 +1,23 @@
+supabase/functions/guided-tour-reminders/dispatch-batches.ts
+  s_ac150ecb4677f6::t_b5e0cebbabfb7e 10-13
+supabase/functions/guided-tour-reminders/dispatch-batches_test.ts
+  s_ac150ecb4677f6::t_ad5404c547f4da 1
+  s_ac150ecb4677f6::t_b5e0cebbabfb7e 58-74
+  s_ac150ecb4677f6::t_0a74d41d7dceb7 75
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "007d1eef0385ecef42421c3bec897b7c8a65660e",
+  "prompts": {},
+  "sessions": {
+    "s_ac150ecb4677f6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffc5a-69b1-7d22-8b46-52cab703fbb0",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
