@@ -1,0 +1,23 @@
+supabase/migrations/20260813132000_farm_setup_dispatch_mutex.sql
+  s_4e2f58deb4bc7d::t_56537f2dcbefc2 1-138
+supabase/functions/guided-tour-reminders/index.ts
+  s_4e2f58deb4bc7d::t_85f1b221f915b9 105,107-114,116-128,154-156,200-201
+supabase/migrations/20260813120000_farm_setup_reminder_campaign.sql
+  s_4e2f58deb4bc7d::t_c902df44e54057 14,137-138,140-141,143-172,178,251-284,327,336,339
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "5585ee0b34fac8affda5a5b94cf884f47df254e1",
+  "prompts": {},
+  "sessions": {
+    "s_4e2f58deb4bc7d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffaaf-265f-7c33-9ecf-6ef7155753ad",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
