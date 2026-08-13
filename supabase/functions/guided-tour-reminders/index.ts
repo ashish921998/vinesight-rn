@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.2';
+import { authorizeDispatchBatches } from './dispatch-batches.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -133,32 +134,32 @@ async function sendExpoPushes(
 
   const deliveredUserIds = new Set<string>();
   const invalidDeviceIds = new Set<string>();
-  const skippedUserIds = new Set<string>();
   let accepted = 0;
   let rejected = 0;
 
-  for (let offset = 0; offset < pushes.length; offset += EXPO_BATCH_LIMIT) {
-    const chunk = pushes.slice(offset, offset + EXPO_BATCH_LIMIT);
-    // Persist the campaign attempt before the external side effect. This gives
-    // farm cancellation and dispatch a durable ordering and prevents replays.
-    const eligibleChunk = await beginClaimedDispatch(chunk, claimId);
-    const eligibleUserIds = new Set(eligibleChunk.map((push) => push.userId));
-    for (const push of chunk) {
-      if (!eligibleUserIds.has(push.userId)) skippedUserIds.add(push.userId);
-    }
-    if (eligibleChunk.length === 0) continue;
+  // Persist each user's campaign attempt once before any external side effect.
+  // This gives farm cancellation and dispatch a durable ordering, prevents
+  // replays, and keeps all devices for an authorized user across Expo chunks.
+  const { batches, skippedUserIds } = await authorizeDispatchBatches(
+    pushes,
+    EXPO_BATCH_LIMIT,
+    (candidates) => beginClaimedDispatch(candidates, claimId),
+  );
+
+  for (const [batchIndex, chunk] of batches.entries()) {
+    const offset = batchIndex * EXPO_BATCH_LIMIT;
 
     try {
       const response = await fetch('https://exp.host/--/api/v2/push/send', {
         method: 'POST',
         headers,
-        body: JSON.stringify(eligibleChunk.map((push) => push.message)),
+        body: JSON.stringify(chunk.map((push) => push.message)),
         signal: AbortSignal.timeout(EXPO_REQUEST_TIMEOUT_MS),
       });
 
       if (!response.ok) {
         const text = await response.text();
-        rejected += eligibleChunk.length;
+        rejected += chunk.length;
         console.error('Expo push batch failed', { status: response.status, text, offset });
         continue;
       }
@@ -166,7 +167,7 @@ async function sendExpoPushes(
       const result = (await response.json()) as { data?: ExpoPushTicket[] };
       const tickets = result.data ?? [];
 
-      eligibleChunk.forEach((push, index) => {
+      chunk.forEach((push, index) => {
         const ticket = tickets[index];
         if (ticket?.status === 'ok') {
           accepted += 1;
@@ -186,7 +187,7 @@ async function sendExpoPushes(
         });
       });
     } catch (error) {
-      rejected += eligibleChunk.length;
+      rejected += chunk.length;
       console.error('Expo push batch threw', { offset, error: String(error) });
     }
   }
