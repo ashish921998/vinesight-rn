@@ -35,6 +35,27 @@ Deno.test('authorizes a user once before batching all of their devices', async (
   assert(result.skippedUserIds.size === 0, 'authorized users must not be counted as skipped');
 });
 
+Deno.test('keeps every device for authorized users and counts rejected users once', async () => {
+  const pushes = [
+    { userId: 'authorized-user', token: 'authorized-token' },
+    { userId: 'rejected-user', token: 'rejected-token-1' },
+    { userId: 'rejected-user', token: 'rejected-token-2' },
+  ];
+
+  const result = await authorizeDispatchBatches(pushes, 100, async (candidates) =>
+    candidates.filter((push) => push.userId === 'authorized-user'),
+  );
+
+  assert(result.batches.length === 1, 'authorized devices must produce one batch');
+  assert(result.batches[0].length === 1, 'rejected devices must not be included');
+  assert(
+    result.batches[0][0].token === 'authorized-token',
+    'the authorized device must be preserved',
+  );
+  assert(result.skippedUserIds.size === 1, 'a rejected user must be counted only once');
+  assert(result.skippedUserIds.has('rejected-user'), 'the rejected user must be reported');
+});
+
 Deno.test('does not authorize an empty push list', async () => {
   let authorizationCalls = 0;
   const result = await authorizeDispatchBatches([], 100, async (candidates) => {

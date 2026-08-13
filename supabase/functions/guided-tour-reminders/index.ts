@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.2';
 import { authorizeDispatchBatches } from './dispatch-batches.ts';
+import { isExpoPushToken, timingSafeSecretEqual } from './request-validation.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -140,6 +141,7 @@ async function sendExpoPushes(
   // Persist each user's campaign attempt once before any external side effect.
   // This gives farm cancellation and dispatch a durable ordering, prevents
   // replays, and keeps all devices for an authorized user across Expo chunks.
+  // An Expo rejection therefore consumes the attempt by design.
   const { batches, skippedUserIds } = await authorizeDispatchBatches(
     pushes,
     EXPO_BATCH_LIMIT,
@@ -207,11 +209,11 @@ Deno.serve(async (req) => {
   }
 
   const authHeader = req.headers.get('authorization');
+  const providedSecret = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : '';
   if (
     !REMINDER_JOB_SECRET ||
-    !authHeader ||
-    !authHeader.startsWith('Bearer ') ||
-    authHeader.slice(7) !== REMINDER_JOB_SECRET
+    !providedSecret ||
+    !(await timingSafeSecretEqual(providedSecret, REMINDER_JOB_SECRET))
   ) {
     return new Response(JSON.stringify({ ok: false, error: 'Unauthorized' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -257,10 +259,15 @@ Deno.serve(async (req) => {
 
     const usersWithFarms = new Set((farms ?? []).map((farm) => farm.user_id as string));
     const pushes: PendingPush[] = [];
+    const invalidDeviceIds = new Set<string>();
 
     for (const device of (devices ?? []) as PushDevice[]) {
       const reminder = claimedByUser.get(device.user_id);
       if (!reminder || usersWithFarms.has(device.user_id) || !device.expo_push_token) continue;
+      if (!isExpoPushToken(device.expo_push_token)) {
+        invalidDeviceIds.add(device.id);
+        continue;
+      }
 
       pushes.push({
         deviceId: device.id,
@@ -274,12 +281,13 @@ Deno.serve(async (req) => {
     }
 
     const sendResult = await sendExpoPushes(pushes, claimId);
+    for (const deviceId of sendResult.invalidDeviceIds) invalidDeviceIds.add(deviceId);
 
-    if (sendResult.invalidDeviceIds.size > 0) {
+    if (invalidDeviceIds.size > 0) {
       const { error: disableError } = await supabase
         .from('user_push_devices')
         .update({ notifications_enabled: false, updated_at: new Date().toISOString() })
-        .in('id', [...sendResult.invalidDeviceIds]);
+        .in('id', [...invalidDeviceIds]);
       if (disableError) {
         console.error('Failed to disable invalid Expo push tokens', disableError);
       }
@@ -287,7 +295,6 @@ Deno.serve(async (req) => {
 
     const { error: finishError } = await supabase.rpc('finish_farm_setup_reminder_claim', {
       p_claim_id: claimId,
-      p_delivered_user_ids: [],
     });
     if (finishError) throw finishError;
 
@@ -318,7 +325,6 @@ Deno.serve(async (req) => {
     if (claimed.length > 0) {
       const { error: releaseError } = await supabase.rpc('finish_farm_setup_reminder_claim', {
         p_claim_id: claimId,
-        p_delivered_user_ids: [],
       });
       if (releaseError) {
         console.error('Failed to release farm setup reminder claim', releaseError);
