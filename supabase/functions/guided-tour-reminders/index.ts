@@ -295,6 +295,7 @@ Deno.serve(async (req) => {
 
     const { error: finishError } = await supabase.rpc('finish_farm_setup_reminder_claim', {
       p_claim_id: claimId,
+      p_delivered_user_ids: [],
     });
     if (finishError) throw finishError;
 
@@ -325,6 +326,7 @@ Deno.serve(async (req) => {
     if (claimed.length > 0) {
       const { error: releaseError } = await supabase.rpc('finish_farm_setup_reminder_claim', {
         p_claim_id: claimId,
+        p_delivered_user_ids: [],
       });
       if (releaseError) {
         console.error('Failed to release farm setup reminder claim', releaseError);

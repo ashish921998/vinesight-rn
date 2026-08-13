@@ -86,11 +86,11 @@ revoke all on function public.begin_farm_setup_reminder_dispatch(uuid, uuid[]) f
 grant execute on function public.begin_farm_setup_reminder_dispatch(uuid, uuid[]) to service_role;
 
 -- Dispatch authorization is the sole campaign state transition. This finalizer
--- only releases users that never reached that transition.
-drop function if exists public.finish_farm_setup_reminder_claim(uuid, uuid[]);
-
+-- only releases users that never reached that transition. Keep the second
+-- parameter for compatibility with already-deployed callers and migrations.
 create or replace function public.finish_farm_setup_reminder_claim(
-  p_claim_id uuid
+  p_claim_id uuid,
+  p_delivered_user_ids uuid[] default '{}'::uuid[]
 )
 returns void
 language plpgsql
@@ -120,5 +120,5 @@ begin
 end;
 $$;
 
-revoke all on function public.finish_farm_setup_reminder_claim(uuid) from public;
-grant execute on function public.finish_farm_setup_reminder_claim(uuid) to service_role;
+revoke all on function public.finish_farm_setup_reminder_claim(uuid, uuid[]) from public;
+grant execute on function public.finish_farm_setup_reminder_claim(uuid, uuid[]) to service_role;
