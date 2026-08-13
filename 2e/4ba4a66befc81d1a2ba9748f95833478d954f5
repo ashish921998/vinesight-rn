@@ -1,0 +1,32 @@
+src/services/farm-setup-notifications.ts
+  s_4e2f58deb4bc7d::t_b3cd31dd9246e4 20
+  s_4e2f58deb4bc7d::t_9113ac59bde9b8 17-19
+app/_layout.tsx
+  s_4e2f58deb4bc7d::t_9113ac59bde9b8 564
+supabase/functions/guided-tour-reminders/dispatch-batches_test.ts
+  s_4e2f58deb4bc7d::t_019323acbce134 1,3,14-15,43
+  s_4e2f58deb4bc7d::t_9113ac59bde9b8 19-22,24-28,42,53-55
+supabase/functions/guided-tour-reminders/request-validation_test.ts
+  s_4e2f58deb4bc7d::t_019323acbce134 1,3,5-7,11-13,17-21
+supabase/functions/guided-tour-reminders/request-validation.ts
+  s_4e2f58deb4bc7d::t_9113ac59bde9b8 3,25,27-28
+supabase/functions/guided-tour-reminders/index.ts
+  s_4e2f58deb4bc7d::t_9113ac59bde9b8 141-142,316
+  s_4e2f58deb4bc7d::t_019323acbce134 211
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "2e4ba4a66befc81d1a2ba9748f95833478d954f5",
+  "prompts": {},
+  "sessions": {
+    "s_4e2f58deb4bc7d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffaaf-265f-7c33-9ecf-6ef7155753ad",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
