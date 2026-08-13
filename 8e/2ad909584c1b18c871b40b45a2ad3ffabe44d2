@@ -1,0 +1,21 @@
+supabase/migrations/20260813130000_farm_setup_reminder_review_hardening.sql
+  s_4e2f58deb4bc7d::t_8e33c2718aa83c 99-103
+supabase/migrations/20260813120000_farm_setup_reminder_campaign.sql
+  s_4e2f58deb4bc7d::t_8e33c2718aa83c 246-250,301-305
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "8e2ad909584c1b18c871b40b45a2ad3ffabe44d2",
+  "prompts": {},
+  "sessions": {
+    "s_4e2f58deb4bc7d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffaaf-265f-7c33-9ecf-6ef7155753ad",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
