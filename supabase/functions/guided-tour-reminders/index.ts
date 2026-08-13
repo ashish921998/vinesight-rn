@@ -133,16 +133,19 @@ async function sendExpoPushes(
 
   const deliveredUserIds = new Set<string>();
   const invalidDeviceIds = new Set<string>();
+  const skippedUserIds = new Set<string>();
   let accepted = 0;
   let rejected = 0;
-  let skippedIneligible = 0;
 
   for (let offset = 0; offset < pushes.length; offset += EXPO_BATCH_LIMIT) {
     const chunk = pushes.slice(offset, offset + EXPO_BATCH_LIMIT);
     // Persist the campaign attempt before the external side effect. This gives
     // farm cancellation and dispatch a durable ordering and prevents replays.
     const eligibleChunk = await beginClaimedDispatch(chunk, claimId);
-    skippedIneligible += chunk.length - eligibleChunk.length;
+    const eligibleUserIds = new Set(eligibleChunk.map((push) => push.userId));
+    for (const push of chunk) {
+      if (!eligibleUserIds.has(push.userId)) skippedUserIds.add(push.userId);
+    }
     if (eligibleChunk.length === 0) continue;
 
     try {
@@ -188,7 +191,13 @@ async function sendExpoPushes(
     }
   }
 
-  return { deliveredUserIds, invalidDeviceIds, accepted, rejected, skippedIneligible };
+  return {
+    deliveredUserIds,
+    invalidDeviceIds,
+    accepted,
+    rejected,
+    skippedIneligible: skippedUserIds.size,
+  };
 }
 
 Deno.serve(async (req) => {
