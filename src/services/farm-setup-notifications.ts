@@ -14,12 +14,10 @@ export function resolveFarmSetupNotificationRoute(
   if (data.campaign !== FARM_SETUP_NOTIFICATION_CAMPAIGN) return null;
 
   const sequence =
-    typeof data.sequence === 'number'
-      ? data.sequence
-      : typeof data.sequence === 'string' && /^[1-3]$/.test(data.sequence)
-        ? Number(data.sequence)
-        : Number.NaN;
-  if (!Number.isInteger(sequence) || sequence < 1 || sequence > 3) {
+    typeof data.sequence === 'string' && /^[1-3]$/.test(data.sequence)
+      ? Number(data.sequence)
+      : data.sequence;
+  if (typeof sequence !== 'number' || !Number.isInteger(sequence) || sequence < 1 || sequence > 3) {
     return null;
   }
 

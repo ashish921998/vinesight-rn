@@ -1,8 +1,6 @@
-import { authorizeDispatchBatches } from './dispatch-batches.ts';
+import { assertEquals } from 'https://deno.land/std@0.224.0/assert/mod.ts';
 
-function assert(condition: boolean, message: string) {
-  if (!condition) throw new Error(message);
-}
+import { authorizeDispatchBatches } from './dispatch-batches.ts';
 
 Deno.test('authorizes a user once before batching all of their devices', async () => {
   const pushes = Array.from({ length: 150 }, (_, index) => ({
@@ -13,26 +11,21 @@ Deno.test('authorizes a user once before batching all of their devices', async (
 
   const result = await authorizeDispatchBatches(pushes, 100, async (candidates) => {
     authorizationCalls += 1;
-    assert(candidates.length === 150, 'authorization must receive every device');
-    assert(
-      new Set(candidates.map((push) => push.userId)).size === 1,
-      'authorization must receive unique user ownership',
-    );
+    assertEquals(candidates.length, 150);
+    assertEquals(new Set(candidates.map((push) => push.userId)).size, 1);
     return candidates;
   });
 
-  assert(authorizationCalls === 1, 'authorization must run once');
-  assert(result.batches.length === 2, '150 devices must produce two Expo batches');
-  assert(result.batches[0].length === 100, 'the first Expo batch must contain 100 devices');
-  assert(result.batches[1].length === 50, 'the second Expo batch must contain 50 devices');
-  assert(
-    result.batches
-      .flat()
-      .map((push) => push.token)
-      .join(',') === pushes.map((push) => push.token).join(','),
-    'every authorized device must be preserved in order',
+  assertEquals(authorizationCalls, 1);
+  assertEquals(
+    result.batches.map((batch) => batch.length),
+    [100, 50],
   );
-  assert(result.skippedUserIds.size === 0, 'authorized users must not be counted as skipped');
+  assertEquals(
+    result.batches.flat().map((push) => push.token),
+    pushes.map((push) => push.token),
+  );
+  assertEquals(result.skippedUserIds.size, 0);
 });
 
 Deno.test('keeps every device for authorized users and counts rejected users once', async () => {
@@ -46,14 +39,8 @@ Deno.test('keeps every device for authorized users and counts rejected users onc
     candidates.filter((push) => push.userId === 'authorized-user'),
   );
 
-  assert(result.batches.length === 1, 'authorized devices must produce one batch');
-  assert(result.batches[0].length === 1, 'rejected devices must not be included');
-  assert(
-    result.batches[0][0].token === 'authorized-token',
-    'the authorized device must be preserved',
-  );
-  assert(result.skippedUserIds.size === 1, 'a rejected user must be counted only once');
-  assert(result.skippedUserIds.has('rejected-user'), 'the rejected user must be reported');
+  assertEquals(result.batches, [[pushes[0]]]);
+  assertEquals([...result.skippedUserIds], ['rejected-user']);
 });
 
 Deno.test('does not authorize an empty push list', async () => {
@@ -63,7 +50,7 @@ Deno.test('does not authorize an empty push list', async () => {
     return candidates;
   });
 
-  assert(authorizationCalls === 0, 'empty input must not call authorization');
-  assert(result.batches.length === 0, 'empty input must not create Expo batches');
-  assert(result.skippedUserIds.size === 0, 'empty input must not count skipped users');
+  assertEquals(authorizationCalls, 0);
+  assertEquals(result.batches, []);
+  assertEquals(result.skippedUserIds.size, 0);
 });

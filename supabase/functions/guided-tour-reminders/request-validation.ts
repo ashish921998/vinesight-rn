@@ -1,5 +1,6 @@
 const MAX_SECRET_LENGTH = 4_096;
 const MAX_EXPO_PUSH_TOKEN_LENGTH = 512;
+const EXPO_PUSH_TOKEN = /^(?:ExponentPushToken|ExpoPushToken)\[[\w-]+\]$/;
 const EXPO_PUSH_TOKEN_UUID = /^[a-z\d]{8}-[a-z\d]{4}-[a-z\d]{4}-[a-z\d]{4}-[a-z\d]{12}$/i;
 
 export async function timingSafeSecretEqual(provided: string, expected: string): Promise<boolean> {
@@ -21,13 +22,9 @@ export async function timingSafeSecretEqual(provided: string, expected: string):
   return difference === 0;
 }
 
-export function isExpoPushToken(token: unknown): token is string {
-  if (typeof token !== 'string' || token.length > MAX_EXPO_PUSH_TOKEN_LENGTH) return false;
-
+export function isExpoPushToken(token: string): boolean {
   return (
-    (((token.startsWith('ExponentPushToken[') || token.startsWith('ExpoPushToken[')) &&
-      token.endsWith(']')) ||
-      EXPO_PUSH_TOKEN_UUID.test(token)) &&
-    !/\s/.test(token)
+    token.length <= MAX_EXPO_PUSH_TOKEN_LENGTH &&
+    (EXPO_PUSH_TOKEN.test(token) || EXPO_PUSH_TOKEN_UUID.test(token))
   );
 }

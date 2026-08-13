@@ -561,7 +561,7 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
     }) => {
       const data = response.notification.request.content.data as {
         type?: string;
-        sequence?: number;
+        sequence?: number | string;
         route?: string;
         campaign?: string;
         day?: number;

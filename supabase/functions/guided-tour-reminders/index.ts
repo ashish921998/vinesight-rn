@@ -138,10 +138,8 @@ async function sendExpoPushes(
   let accepted = 0;
   let rejected = 0;
 
-  // Persist each user's campaign attempt once before any external side effect.
-  // This gives farm cancellation and dispatch a durable ordering, prevents
-  // replays, and keeps all devices for an authorized user across Expo chunks.
-  // An Expo rejection therefore consumes the attempt by design.
+  // Advance campaign state before sending so accepted pushes cannot replay.
+  // An Expo rejection therefore consumes the attempt.
   const { batches, skippedUserIds } = await authorizeDispatchBatches(
     pushes,
     EXPO_BATCH_LIMIT,
@@ -210,11 +208,7 @@ Deno.serve(async (req) => {
 
   const authHeader = req.headers.get('authorization');
   const providedSecret = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : '';
-  if (
-    !REMINDER_JOB_SECRET ||
-    !providedSecret ||
-    !(await timingSafeSecretEqual(providedSecret, REMINDER_JOB_SECRET))
-  ) {
+  if (!providedSecret || !(await timingSafeSecretEqual(providedSecret, REMINDER_JOB_SECRET))) {
     return new Response(JSON.stringify({ ok: false, error: 'Unauthorized' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 401,
@@ -242,8 +236,6 @@ Deno.serve(async (req) => {
     const claimedByUser = new Map(claimed.map((row) => [row.user_id, row]));
     const userIds = [...claimedByUser.keys()];
 
-    // Recheck farms after claiming. The insert trigger normally cancels the
-    // campaign, while this read closes the remaining claim-to-send race window.
     const [{ data: farms, error: farmsError }, { data: devices, error: devicesError }] =
       await Promise.all([
         supabase.from('farms').select('user_id').in('user_id', userIds),
@@ -321,8 +313,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('[guided-tour-reminders] farm setup reminder job failed', error);
 
-    // Dispatched users were durably advanced before Expo. This only releases
-    // users that never reached that decision, so accepted pushes cannot replay.
+    // Dispatch already advanced authorized users, so only untouched claims remain.
     if (claimed.length > 0) {
       const { error: releaseError } = await supabase.rpc('finish_farm_setup_reminder_claim', {
         p_claim_id: claimId,

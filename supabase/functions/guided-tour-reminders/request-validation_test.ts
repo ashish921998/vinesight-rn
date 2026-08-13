@@ -1,26 +1,22 @@
+import { assertEquals } from 'https://deno.land/std@0.224.0/assert/mod.ts';
+
 import { isExpoPushToken, timingSafeSecretEqual } from './request-validation.ts';
 
-function assert(condition: boolean, message: string) {
-  if (!condition) throw new Error(message);
-}
-
-Deno.test('compares reminder job secrets without direct string equality', async () => {
-  assert(await timingSafeSecretEqual('same-secret', 'same-secret'), 'equal secrets must match');
-  assert(
-    !(await timingSafeSecretEqual('wrong-secret', 'same-secret')),
-    'different secrets must not match',
-  );
+Deno.test('compares reminder job secrets', async () => {
+  assertEquals(await timingSafeSecretEqual('same-secret', 'same-secret'), true);
+  assertEquals(await timingSafeSecretEqual('wrong-secret', 'same-secret'), false);
 });
 
 Deno.test('accepts Expo push token formats supported by the Expo server SDK', () => {
-  assert(isExpoPushToken('ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]'), 'legacy token must pass');
-  assert(isExpoPushToken('ExpoPushToken[xxxxxxxxxxxxxxxxxxxxxx]'), 'current token must pass');
-  assert(isExpoPushToken('12345678-1234-1234-1234-123456789abc'), 'UUID token must pass');
+  assertEquals(isExpoPushToken('ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]'), true);
+  assertEquals(isExpoPushToken('ExpoPushToken[xxxxxxxxxxxxxxxxxxxxxx]'), true);
+  assertEquals(isExpoPushToken('12345678-1234-1234-1234-123456789abc'), true);
 });
 
 Deno.test('rejects malformed or oversized Expo push tokens', () => {
-  assert(!isExpoPushToken(''), 'empty token must fail');
-  assert(!isExpoPushToken('not-a-push-token'), 'malformed token must fail');
-  assert(!isExpoPushToken('ExpoPushToken[token with spaces]'), 'whitespace must fail');
-  assert(!isExpoPushToken(`ExpoPushToken[${'x'.repeat(512)}]`), 'oversized token must fail');
+  assertEquals(isExpoPushToken(''), false);
+  assertEquals(isExpoPushToken('not-a-push-token'), false);
+  assertEquals(isExpoPushToken('ExpoPushToken[token with spaces]'), false);
+  assertEquals(isExpoPushToken('ExpoPushToken[invalid!]'), false);
+  assertEquals(isExpoPushToken(`ExpoPushToken[${'x'.repeat(512)}]`), false);
 });
