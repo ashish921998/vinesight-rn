@@ -1,0 +1,25 @@
+supabase/functions/guided-tour-reminders/dispatch-batches.ts
+  s_4e2f58deb4bc7d::t_0a51ed5f852ffe 1-27
+supabase/functions/guided-tour-reminders/dispatch-batches_test.ts
+  s_4e2f58deb4bc7d::t_0a51ed5f852ffe 1-28,33-48
+  s_4e2f58deb4bc7d::t_5cd690a0037256 29-32
+supabase/functions/guided-tour-reminders/index.ts
+  s_4e2f58deb4bc7d::t_5a051b77c44c63 140-142,156,162,170,190
+  s_4e2f58deb4bc7d::t_0a51ed5f852ffe 2,143-150
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "aa81a210ab43cccec9a6f28f3fb86ed079825465",
+  "prompts": {},
+  "sessions": {
+    "s_4e2f58deb4bc7d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffaaf-265f-7c33-9ecf-6ef7155753ad",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>"
+    }
+  }
+}
