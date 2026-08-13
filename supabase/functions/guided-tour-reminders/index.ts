@@ -8,11 +8,7 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')?.trim() ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')?.trim() ?? '';
 const EXPO_ACCESS_TOKEN = Deno.env.get('EXPO_ACCESS_TOKEN')?.trim() ?? '';
-const REMINDER_JOB_SECRET =
-  Deno.env.get('FARM_SETUP_REMINDERS_AUTH')?.trim() ||
-  Deno.env.get('GUIDED_TOUR_REMINDERS_AUTH')?.trim() ||
-  Deno.env.get('FEATURE_OVERVIEW_REMINDERS_AUTH')?.trim() ||
-  '';
+const REMINDER_JOB_SECRET = Deno.env.get('FARM_SETUP_REMINDERS_AUTH')?.trim() ?? '';
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required');
@@ -77,6 +73,7 @@ const reminderCopy: Record<Locale, { title: string; body: string }> = {
 };
 
 const EXPO_BATCH_LIMIT = 100;
+const EXPO_REQUEST_TIMEOUT_MS = 15_000;
 const CLAIM_LIMIT = 250;
 
 function normalizeLocale(locale: string | null): Locale {
@@ -103,11 +100,39 @@ function buildPushMessage(
   };
 }
 
-async function sendExpoPushes(pushes: PendingPush[]): Promise<{
+async function filterClaimedPushes(pushes: PendingPush[], claimId: string) {
+  const userIds = [...new Set(pushes.map((push) => push.userId))];
+  const [{ data: activeClaims, error: claimsError }, { data: farms, error: farmsError }] =
+    await Promise.all([
+      supabase
+        .from('farm_setup_reminder_state')
+        .select('user_id')
+        .eq('claim_id', claimId)
+        .is('completed_at', null)
+        .in('user_id', userIds),
+      supabase.from('farms').select('user_id').in('user_id', userIds),
+    ]);
+
+  if (claimsError) throw claimsError;
+  if (farmsError) throw farmsError;
+
+  const activeUserIds = new Set((activeClaims ?? []).map((row) => row.user_id as string));
+  const usersWithFarms = new Set((farms ?? []).map((row) => row.user_id as string));
+
+  return pushes.filter(
+    (push) => activeUserIds.has(push.userId) && !usersWithFarms.has(push.userId),
+  );
+}
+
+async function sendExpoPushes(
+  pushes: PendingPush[],
+  claimId: string,
+): Promise<{
   deliveredUserIds: Set<string>;
   invalidDeviceIds: Set<string>;
   accepted: number;
   rejected: number;
+  skippedIneligible: number;
 }> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (EXPO_ACCESS_TOKEN) {
@@ -118,20 +143,27 @@ async function sendExpoPushes(pushes: PendingPush[]): Promise<{
   const invalidDeviceIds = new Set<string>();
   let accepted = 0;
   let rejected = 0;
+  let skippedIneligible = 0;
 
   for (let offset = 0; offset < pushes.length; offset += EXPO_BATCH_LIMIT) {
     const chunk = pushes.slice(offset, offset + EXPO_BATCH_LIMIT);
+    // Farm creation clears the claim. Rechecking both the claim and farms as
+    // close as possible to the outbound request prevents stale in-memory sends.
+    const eligibleChunk = await filterClaimedPushes(chunk, claimId);
+    skippedIneligible += chunk.length - eligibleChunk.length;
+    if (eligibleChunk.length === 0) continue;
 
     try {
       const response = await fetch('https://exp.host/--/api/v2/push/send', {
         method: 'POST',
         headers,
-        body: JSON.stringify(chunk.map((push) => push.message)),
+        body: JSON.stringify(eligibleChunk.map((push) => push.message)),
+        signal: AbortSignal.timeout(EXPO_REQUEST_TIMEOUT_MS),
       });
 
       if (!response.ok) {
         const text = await response.text();
-        rejected += chunk.length;
+        rejected += eligibleChunk.length;
         console.error('Expo push batch failed', { status: response.status, text, offset });
         continue;
       }
@@ -139,7 +171,7 @@ async function sendExpoPushes(pushes: PendingPush[]): Promise<{
       const result = (await response.json()) as { data?: ExpoPushTicket[] };
       const tickets = result.data ?? [];
 
-      chunk.forEach((push, index) => {
+      eligibleChunk.forEach((push, index) => {
         const ticket = tickets[index];
         if (ticket?.status === 'ok') {
           accepted += 1;
@@ -159,12 +191,12 @@ async function sendExpoPushes(pushes: PendingPush[]): Promise<{
         });
       });
     } catch (error) {
-      rejected += chunk.length;
+      rejected += eligibleChunk.length;
       console.error('Expo push batch threw', { offset, error: String(error) });
     }
   }
 
-  return { deliveredUserIds, invalidDeviceIds, accepted, rejected };
+  return { deliveredUserIds, invalidDeviceIds, accepted, rejected, skippedIneligible };
 }
 
 Deno.serve(async (req) => {
@@ -187,6 +219,7 @@ Deno.serve(async (req) => {
 
   const claimId = crypto.randomUUID();
   let claimed: ClaimedReminder[] = [];
+  let acceptedUserIds: string[] = [];
 
   try {
     const { data: claimRows, error: claimError } = await supabase.rpc(
@@ -239,7 +272,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const sendResult = await sendExpoPushes(pushes);
+    const sendResult = await sendExpoPushes(pushes, claimId);
+    acceptedUserIds = [...sendResult.deliveredUserIds];
 
     if (sendResult.invalidDeviceIds.size > 0) {
       const { error: disableError } = await supabase
@@ -251,41 +285,40 @@ Deno.serve(async (req) => {
       }
     }
 
-    const deliveredUserIds = [...sendResult.deliveredUserIds];
     const { error: finishError } = await supabase.rpc('finish_farm_setup_reminder_claim', {
       p_claim_id: claimId,
-      p_delivered_user_ids: deliveredUserIds,
+      p_delivered_user_ids: acceptedUserIds,
     });
     if (finishError) throw finishError;
 
     console.log('farm_setup_reminder_job_complete', {
       claimed: claimed.length,
-      usersDelivered: deliveredUserIds.length,
+      usersDelivered: acceptedUserIds.length,
       accepted: sendResult.accepted,
       rejected: sendResult.rejected,
-      skippedBecauseFarmExists: usersWithFarms.size,
+      skippedIneligible: usersWithFarms.size + sendResult.skippedIneligible,
     });
 
     return new Response(
       JSON.stringify({
         ok: true,
         claimed: claimed.length,
-        usersDelivered: deliveredUserIds.length,
+        usersDelivered: acceptedUserIds.length,
         accepted: sendResult.accepted,
         rejected: sendResult.rejected,
-        skippedBecauseFarmExists: usersWithFarms.size,
+        skippedIneligible: usersWithFarms.size + sendResult.skippedIneligible,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 },
     );
   } catch (error) {
     console.error('[guided-tour-reminders] farm setup reminder job failed', error);
 
-    // Release any claimed users with a bounded retry delay. Claim IDs make this
-    // safe even if the lease was already cleared by a farm insert.
+    // Preserve Expo-accepted users if normal finalization failed. Retrying the
+    // claim-scoped RPC is safe if the first call actually committed.
     if (claimed.length > 0) {
       const { error: releaseError } = await supabase.rpc('finish_farm_setup_reminder_claim', {
         p_claim_id: claimId,
-        p_delivered_user_ids: [],
+        p_delivered_user_ids: acceptedUserIds,
       });
       if (releaseError) {
         console.error('Failed to release farm setup reminder claim', releaseError);

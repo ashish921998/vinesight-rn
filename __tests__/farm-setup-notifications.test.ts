@@ -14,6 +14,16 @@ describe('resolveFarmSetupNotificationRoute', () => {
     ).toBe(FARM_SETUP_NOTIFICATION_ROUTE);
   });
 
+  it.each(['1', '2', '3'])('accepts Android string reminder sequence %s', (sequence) => {
+    expect(
+      resolveFarmSetupNotificationRoute({
+        type: 'farm_setup_reminder',
+        campaign: 'first_farm_v1',
+        sequence,
+      }),
+    ).toBe(FARM_SETUP_NOTIFICATION_ROUTE);
+  });
+
   it.each([
     undefined,
     {},
@@ -21,7 +31,8 @@ describe('resolveFarmSetupNotificationRoute', () => {
     { type: 'farm_setup_reminder', campaign: 'stale_campaign', sequence: 1 },
     { type: 'farm_setup_reminder', campaign: 'first_farm_v1', sequence: 0 },
     { type: 'farm_setup_reminder', campaign: 'first_farm_v1', sequence: 4 },
-    { type: 'farm_setup_reminder', campaign: 'first_farm_v1', sequence: '1' },
+    { type: 'farm_setup_reminder', campaign: 'first_farm_v1', sequence: '01' },
+    { type: 'farm_setup_reminder', campaign: 'first_farm_v1', sequence: '1.5' },
   ])('rejects invalid or stale notification data %#', (data) => {
     expect(resolveFarmSetupNotificationRoute(data)).toBeNull();
   });

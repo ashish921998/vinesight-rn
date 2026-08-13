@@ -8,6 +8,14 @@ begin
   if not exists (
     select 1
     from vault.decrypted_secrets
+    where name = 'supabase_url'
+  ) then
+    raise exception 'supabase_url is missing from Vault';
+  end if;
+
+  if not exists (
+    select 1
+    from vault.decrypted_secrets
     where name = 'FARM_SETUP_REMINDERS_AUTH'
   ) then
     raise exception 'FARM_SETUP_REMINDERS_AUTH is missing from Vault';

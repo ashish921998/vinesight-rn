@@ -6,7 +6,9 @@ create table if not exists public.farm_setup_reminder_state (
   reminders_sent smallint not null default 0 check (reminders_sent between 0 and 3),
   last_sent_at timestamptz null,
   completed_at timestamptz null,
-  completed_reason text null check (completed_reason in ('farm_created', 'max_reminders')),
+  completed_reason text null check (
+    completed_reason in ('farm_created', 'max_reminders', 'undeliverable')
+  ),
   claim_id uuid null,
   claim_expires_at timestamptz null,
   created_at timestamptz not null default now(),
@@ -64,6 +66,14 @@ begin
     return new;
   end if;
 
+  if not exists (
+    select 1
+    from pg_catalog.pg_timezone_names
+    where name = v_timezone
+  ) then
+    v_timezone := 'UTC';
+  end if;
+
   if exists (
     select 1 from public.farms f where f.user_id = new.user_id
   ) then
@@ -77,7 +87,7 @@ begin
 
   v_started_at := coalesce(v_started_at, now());
 
-  insert into public.farm_setup_reminder_state (
+  insert into public.farm_setup_reminder_state as state (
     user_id,
     started_at,
     timezone,
@@ -89,7 +99,22 @@ begin
     v_timezone,
     public.farm_setup_local_send_at(v_started_at, v_timezone, 3)
   )
-  on conflict (user_id) do nothing;
+  on conflict (user_id) do update
+  set
+    timezone = excluded.timezone,
+    next_send_at = case
+      when state.completed_at is null
+        and state.claim_id is null
+        and state.next_send_at is not null
+      then (
+        (
+          state.next_send_at at time zone state.timezone
+        )::date + time '10:00'
+      ) at time zone excluded.timezone
+      else state.next_send_at
+    end,
+    updated_at = now()
+  where state.timezone is distinct from excluded.timezone;
 
   return new;
 end;
@@ -221,16 +246,22 @@ begin
     end,
     next_send_at = case
       when s.user_id = any(p_delivered_user_ids) and s.reminders_sent + 1 >= 3 then null
+      when not (s.user_id = any(p_delivered_user_ids))
+        and s.started_at <= now() - interval '30 days' then null
       when s.user_id = any(p_delivered_user_ids) then
         public.farm_setup_local_send_at(now(), s.timezone, 3)
       else now() + interval '6 hours'
     end,
     completed_at = case
       when s.user_id = any(p_delivered_user_ids) and s.reminders_sent + 1 >= 3 then now()
+      when not (s.user_id = any(p_delivered_user_ids))
+        and s.started_at <= now() - interval '30 days' then now()
       else s.completed_at
     end,
     completed_reason = case
       when s.user_id = any(p_delivered_user_ids) and s.reminders_sent + 1 >= 3 then 'max_reminders'
+      when not (s.user_id = any(p_delivered_user_ids))
+        and s.started_at <= now() - interval '30 days' then 'undeliverable'
       else s.completed_reason
     end,
     claim_id = null,
@@ -253,6 +284,22 @@ do $$
 declare
   v_job_id bigint;
 begin
+  if not exists (
+    select 1
+    from vault.decrypted_secrets
+    where name = 'supabase_url'
+  ) then
+    raise exception 'supabase_url is missing from Vault';
+  end if;
+
+  if not exists (
+    select 1
+    from vault.decrypted_secrets
+    where name = 'FARM_SETUP_REMINDERS_AUTH'
+  ) then
+    raise exception 'FARM_SETUP_REMINDERS_AUTH is missing from Vault';
+  end if;
+
   for v_job_id in
     select jobid from cron.job where jobname = 'guided-tour-reminders-hourly'
   loop
@@ -269,9 +316,7 @@ select cron.schedule(
     url := (select decrypted_secret from vault.decrypted_secrets where name = 'supabase_url' limit 1)
            || '/functions/v1/guided-tour-reminders',
     headers := jsonb_build_object(
-      -- Reuse the existing internal reminder-job credential. The Edge Function
-      -- accepts this as a fallback while supporting a future dedicated secret.
-      'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'FEATURE_OVERVIEW_REMINDERS_AUTH' limit 1),
+      'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'FARM_SETUP_REMINDERS_AUTH' limit 1),
       'Content-Type', 'application/json'
     ),
     body := '{}'::jsonb

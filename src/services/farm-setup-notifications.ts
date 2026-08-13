@@ -12,12 +12,14 @@ export function resolveFarmSetupNotificationRoute(
 ): typeof FARM_SETUP_NOTIFICATION_ROUTE | null {
   if (!data || data.type !== 'farm_setup_reminder') return null;
   if (data.campaign !== FARM_SETUP_NOTIFICATION_CAMPAIGN) return null;
-  if (
-    typeof data.sequence !== 'number' ||
-    !Number.isInteger(data.sequence) ||
-    data.sequence < 1 ||
-    data.sequence > 3
-  ) {
+
+  const sequence =
+    typeof data.sequence === 'number'
+      ? data.sequence
+      : typeof data.sequence === 'string' && /^[1-3]$/.test(data.sequence)
+        ? Number(data.sequence)
+        : Number.NaN;
+  if (!Number.isInteger(sequence) || sequence < 1 || sequence > 3) {
     return null;
   }
 
