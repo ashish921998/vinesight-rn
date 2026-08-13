@@ -118,6 +118,18 @@ async function beginClaimedDispatch(pushes: PendingPush[], claimId: string) {
   return pushes.filter((push) => dispatchingUserIds.has(push.userId));
 }
 
+async function excludeFarmOwners(pushes: PendingPush[]) {
+  const userIds = [...new Set(pushes.map((push) => push.userId))];
+  const { data, error } = await supabase.from('farms').select('user_id').in('user_id', userIds);
+  if (error) throw error;
+
+  const ineligibleUserIds = new Set((data ?? []).map((farm) => farm.user_id as string));
+  return {
+    eligiblePushes: pushes.filter((push) => !ineligibleUserIds.has(push.userId)),
+    ineligibleUserIds,
+  };
+}
+
 async function sendExpoPushes(
   pushes: PendingPush[],
   claimId: string,
@@ -148,18 +160,21 @@ async function sendExpoPushes(
 
   for (const [batchIndex, chunk] of batches.entries()) {
     const offset = batchIndex * EXPO_BATCH_LIMIT;
+    const { eligiblePushes, ineligibleUserIds } = await excludeFarmOwners(chunk);
+    for (const userId of ineligibleUserIds) skippedUserIds.add(userId);
+    if (eligiblePushes.length === 0) continue;
 
     try {
       const response = await fetch('https://exp.host/--/api/v2/push/send', {
         method: 'POST',
         headers,
-        body: JSON.stringify(chunk.map((push) => push.message)),
+        body: JSON.stringify(eligiblePushes.map((push) => push.message)),
         signal: AbortSignal.timeout(EXPO_REQUEST_TIMEOUT_MS),
       });
 
       if (!response.ok) {
         const text = await response.text();
-        rejected += chunk.length;
+        rejected += eligiblePushes.length;
         console.error('Expo push batch failed', { status: response.status, text, offset });
         continue;
       }
@@ -167,7 +182,7 @@ async function sendExpoPushes(
       const result = (await response.json()) as { data?: ExpoPushTicket[] };
       const tickets = result.data ?? [];
 
-      chunk.forEach((push, index) => {
+      eligiblePushes.forEach((push, index) => {
         const ticket = tickets[index];
         if (ticket?.status === 'ok') {
           accepted += 1;
@@ -187,7 +202,7 @@ async function sendExpoPushes(
         });
       });
     } catch (error) {
-      rejected += chunk.length;
+      rejected += eligiblePushes.length;
       console.error('Expo push batch threw', { offset, error: String(error) });
     }
   }

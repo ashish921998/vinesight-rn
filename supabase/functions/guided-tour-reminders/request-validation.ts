@@ -1,7 +1,7 @@
 const MAX_SECRET_LENGTH = 4_096;
 const MAX_EXPO_PUSH_TOKEN_LENGTH = 512;
 const EXPO_PUSH_TOKEN = /^(?:ExponentPushToken|ExpoPushToken)\[[\w-]+\]$/;
-const EXPO_PUSH_TOKEN_UUID = /^[a-z\d]{8}-[a-z\d]{4}-[a-z\d]{4}-[a-z\d]{4}-[a-z\d]{12}$/i;
+const EXPO_PUSH_TOKEN_UUID = /^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i;
 
 export async function timingSafeSecretEqual(provided: string, expected: string): Promise<boolean> {
   if (provided.length > MAX_SECRET_LENGTH || expected.length > MAX_SECRET_LENGTH) return false;

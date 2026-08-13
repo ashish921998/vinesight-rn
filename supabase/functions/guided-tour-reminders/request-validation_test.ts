@@ -16,7 +16,9 @@ Deno.test('accepts Expo push token formats supported by the Expo server SDK', ()
 Deno.test('rejects malformed or oversized Expo push tokens', () => {
   assertEquals(isExpoPushToken(''), false);
   assertEquals(isExpoPushToken('not-a-push-token'), false);
+  assertEquals(isExpoPushToken('ExpoPushToken[]'), false);
   assertEquals(isExpoPushToken('ExpoPushToken[token with spaces]'), false);
   assertEquals(isExpoPushToken('ExpoPushToken[invalid!]'), false);
+  assertEquals(isExpoPushToken('zzzzzzzz-zzzz-zzzz-zzzz-zzzzzzzzzzzz'), false);
   assertEquals(isExpoPushToken(`ExpoPushToken[${'x'.repeat(512)}]`), false);
 });
