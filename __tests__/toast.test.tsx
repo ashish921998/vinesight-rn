@@ -20,6 +20,10 @@ jest.mock('react-native-reanimated', () => {
   };
 });
 
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}));
+
 jest.mock('@/styles/use-theme', () => ({
   useM3: () => ({
     colorScheme: {
@@ -91,7 +95,7 @@ describe('spring toast host', () => {
     });
     withTimingMock.mockClear();
 
-    const dismissButtons = screen.getAllByRole('button', { name: 'Dismiss notification' });
+    const dismissButtons = screen.getAllByRole('button', { name: 'common.close' });
     await act(async () => {
       fireEvent.press(dismissButtons[dismissButtons.length - 1]);
       await Promise.resolve();

@@ -3,12 +3,14 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
+  runOnJS,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 import { Symbol } from '@/components/ui/symbol';
@@ -89,6 +91,7 @@ interface ToastCardProps {
 }
 
 function ToastCard({ item, index, onDismissStart, onDismissed }: ToastCardProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const m3 = useM3();
   const reducedMotion = useReducedMotion();
@@ -117,9 +120,11 @@ function ToastCard({ item, index, onDismissStart, onDismissed }: ToastCardProps)
       clearTimer();
       onDismissStart(item.id);
 
+      // runOnJS (not scheduleOnRN) here: scheduling from an animation callback
+      // trips the Reanimated JSI use-after-free on Android New Architecture.
       opacity.set(
         withTiming(0, { duration: EXIT_DURATION }, (finished) => {
-          if (finished) scheduleOnRN(finishDismiss);
+          if (finished) runOnJS(finishDismiss)();
         }),
       );
 
@@ -262,7 +267,7 @@ function ToastCard({ item, index, onDismissStart, onDismissed }: ToastCardProps)
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Dismiss notification"
+            accessibilityLabel={t('common.close')}
             hitSlop={spacing[2]}
             onPress={() => dismiss('close')}
             style={styles.closeButton}
