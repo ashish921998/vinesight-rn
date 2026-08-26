@@ -83,7 +83,15 @@ const onboardingStorage = {
       localStorage.setItem(key, value);
       return;
     }
-    await SecureStore.setItemAsync(key, value);
+    try {
+      await SecureStore.setItemAsync(key, value, {
+        keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK,
+      });
+    } catch (error) {
+      if (__DEV__) {
+        console.error('SecureStore setItem error:', error);
+      }
+    }
   },
   removeItem: async (key: string): Promise<void> => {
     if (isWeb) {
