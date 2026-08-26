@@ -501,6 +501,11 @@ export const mr = {
     saveLabel: {
       createFarm: '$t(glossary.farm) तयार करा',
     },
+    validation: {
+      nameRequired: 'पुढे जाण्यासाठी $t(glossary.farm) नाव टाका.',
+      areaRequired: '0 पेक्षा जास्त क्षेत्रफळ टाका.',
+      cropRequired: 'पुढे जाण्यासाठी पीक नाव टाका.',
+    },
     sections: {
       details: '$t(glossary.farm) तपशील',
       cropType: 'पीक प्रकार',

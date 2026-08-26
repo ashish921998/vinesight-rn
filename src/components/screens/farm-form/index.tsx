@@ -135,7 +135,6 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         onSave={form.handleSave}
         saveLabel={form.isEdit ? t('common.saveChanges') : t('farmForm.saveLabel.createFarm')}
         isLoading={form.isLoading}
-        isSaveDisabled={!form.isValid}
         showResetButton={!form.isEdit}
         onReset={form.handleReset}
         saveButtonTargetId={!form.isEdit ? GUIDED_TOUR_TARGET_IDS.ADD_FARM_SUBMIT : undefined}
@@ -173,6 +172,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               }}
               placeholder={t('farmForm.fields.name.placeholder')}
               required
+              error={form.coreFieldError === 'name' ? t('farmForm.validation.nameRequired') : undefined}
               autoFocus={!form.isEdit}
               returnKeyType="next"
               blurOnSubmit={false}
@@ -203,6 +203,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               keyboardType="decimal-pad"
               suffix={t('units.acres')}
               required
+              error={form.coreFieldError === 'area' ? t('farmForm.validation.areaRequired') : undefined}
               returnKeyType="next"
               blurOnSubmit={false}
               onSubmitEditing={() => {
@@ -307,6 +308,11 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             onChangeText={form.setCustomCropName}
             placeholder={t('farmForm.cropPicker.customCropInputPlaceholder')}
             required
+            error={
+              form.coreFieldError === 'customCrop'
+                ? t('farmForm.validation.cropRequired')
+                : undefined
+            }
             returnKeyType="next"
             blurOnSubmit={false}
             onSubmitEditing={() => {
