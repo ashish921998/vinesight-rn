@@ -906,14 +906,16 @@ export function QuickLogSheet({
   const logType = type ? getLogType(type) : null;
   // Season gate is create-only (see performSave). Irrigation edit also waits
   // for linked-fertigation hydration so Save can't race the query. Spray waits
-  // for the selected mix to load so the harvest-conflict prompt can't be
-  // skipped by saving before PHI is stamped.
+  // for the selected mix to load and for its PHI to be stamped into the draft
+  // so the harvest-conflict prompt can't be skipped.
+  const sprayPhiPending =
+    sprayPhiLoading || (sprayPhiComputation != null && sprayDraft.phiStatus == null);
   const saveDisabled =
     !isValid ||
     saving ||
     !farm ||
     isIrrigationEditPendingLinkedFert ||
-    (type === 'spray' && sprayPhiLoading) ||
+    (type === 'spray' && sprayPhiPending) ||
     (editTarget == null && isBlockedByNoSeason);
 
   // Spray & irrigation are tall, multi-row forms (chemical/fertilizer rows, each
