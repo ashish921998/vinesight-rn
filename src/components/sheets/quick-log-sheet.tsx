@@ -909,7 +909,9 @@ export function QuickLogSheet({
   // for the selected mix to load and for its PHI to be stamped into the draft
   // so the harvest-conflict prompt can't be skipped.
   const sprayPhiPending =
-    sprayPhiLoading || (sprayPhiComputation != null && sprayDraft.phiStatus == null);
+    isGrapeFarm &&
+    sprayDraft.catalogMixId != null &&
+    (sprayPhiLoading || (sprayPhiComputation != null && sprayDraft.phiStatus == null));
   const saveDisabled =
     !isValid ||
     saving ||
