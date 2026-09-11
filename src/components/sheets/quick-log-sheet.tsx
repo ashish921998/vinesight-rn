@@ -549,7 +549,10 @@ export function QuickLogSheet({
 
   // PHI fields derive from mix + spray date; stamp them into the draft so the
   // saved record carries them (same contract as EntryForm).
-  const { data: sprayPhiComputation } = usePhiComputation(sprayDraft.catalogMixId ?? null, dateStr);
+  const { data: sprayPhiComputation, isLoading: sprayPhiLoading } = usePhiComputation(
+    sprayDraft.catalogMixId ?? null,
+    dateStr,
+  );
   useEffect(() => {
     if (!sprayPhiComputation) return;
     setSprayDraft((prev) => {
@@ -902,12 +905,15 @@ export function QuickLogSheet({
 
   const logType = type ? getLogType(type) : null;
   // Season gate is create-only (see performSave). Irrigation edit also waits
-  // for linked-fertigation hydration so Save can't race the query.
+  // for linked-fertigation hydration so Save can't race the query. Spray waits
+  // for the selected mix to load so the harvest-conflict prompt can't be
+  // skipped by saving before PHI is stamped.
   const saveDisabled =
     !isValid ||
     saving ||
     !farm ||
     isIrrigationEditPendingLinkedFert ||
+    (type === 'spray' && sprayPhiLoading) ||
     (editTarget == null && isBlockedByNoSeason);
 
   // Spray & irrigation are tall, multi-row forms (chemical/fertilizer rows, each
