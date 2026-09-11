@@ -140,7 +140,9 @@ export function resolveSprayPhi(data: SprayFormData): SprayPhiResolution {
       ? data.phiStatus
       : 'verified'
     : hasCatalogMix
-      ? 'legacy_unverified'
+      ? data.phiStatus === 'unknown'
+        ? 'unknown'
+        : 'legacy_unverified'
       : (data.phiStatus ?? 'unknown');
 
   return { hasCatalogMix, hasResolvedPhi, normalizedPhiStatus, notes: noteParts.join(' ').trim() };
