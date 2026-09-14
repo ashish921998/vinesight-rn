@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly node_version="v22.21.1"
+readonly node_directory="$HOME/.local/node-$node_version-linux-x64"
+readonly node_archive="node-$node_version-linux-x64.tar.xz"
+readonly node_url="https://nodejs.org/dist/$node_version/$node_archive"
+readonly profile_marker="# vinesight-rn Node 22 toolchain"
+
+step() {
+  local label="$1"
+  shift
+  local started
+  started="$(date +%s)"
+  printf '\n==> %s\n' "$label"
+  "$@"
+  printf '<== %s (%ss)\n' "$label" "$(( $(date +%s) - started ))"
+}
+
+install_node() {
+  if [[ ! -x "$node_directory/bin/node" ]]; then
+    local download_directory
+    download_directory="$(mktemp -d)"
+
+    curl --fail --location --silent --show-error --output "$download_directory/$node_archive" "$node_url"
+    curl --fail --location --silent --show-error --output "$download_directory/SHASUMS256.txt" \
+      "https://nodejs.org/dist/$node_version/SHASUMS256.txt"
+    (
+      cd "$download_directory"
+      grep " $node_archive$" SHASUMS256.txt | sha256sum --check --status
+    )
+    mkdir -p "$HOME/.local"
+    tar --extract --xz --file "$download_directory/$node_archive" --directory "$HOME/.local"
+    rm -rf "$download_directory"
+  fi
+
+  export PATH="$node_directory/bin:$PATH"
+}
+
+configure_login_shell() {
+  local profile="$HOME/.bash_profile"
+  if ! grep --fixed-strings --quiet "$profile_marker" "$profile" 2>/dev/null; then
+    printf '\n%s\n' "$profile_marker" >> "$profile"
+  fi
+  sed -i "\|^export PATH=.*node-$node_version.*|d" "$profile"
+  printf 'export PATH="%s/bin:$PATH"\n' "$node_directory" >> "$profile"
+}
+
+install_dependencies() {
+  local lock_hash
+  lock_hash="$(sha256sum package-lock.json | awk '{print $1}')"
+  local marker="node_modules/.vinesight-lock-hash"
+
+  if [[ -d node_modules ]] && [[ -f "$marker" ]] && [[ "$(<"$marker")" == "$lock_hash" ]]; then
+    printf 'Dependencies already match package-lock.json.\n'
+    return
+  fi
+
+  npm ci --no-audit --no-fund
+  printf '%s\n' "$lock_hash" > "$marker"
+}
+
+step "Installing Node $node_version" install_node
+step "Configuring the login shell" configure_login_shell
+step "Installing locked npm dependencies" install_dependencies
+
+if [[ ! -f .env ]]; then
+  cp -- .env.example .env
+  printf 'Created .env from .env.example; replace placeholder values before using remote services.\n'
+fi

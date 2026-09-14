@@ -3,6 +3,9 @@
 # dependencies
 node_modules/
 
+# Amp-generated portal state
+.amp/portals/
+
 # Expo
 .expo/
 dist/
@@ -75,7 +78,8 @@ skills-lock.json
 
 # Xcode local env (machine-specific paths)
 ios/.xcode.env.local
-.agents
+.agents/*
+!.agents/setup
 
 
 # App Store screenshots (use skills: app-store-screenshots, asc-shots-pipeline)
