@@ -79,6 +79,38 @@ describe('parseComposition', () => {
 });
 
 describe('validateWarehouseItemForm', () => {
+  it.each(['kg', 'gram', 'liter', 'ml'] as const)(
+    'saves only the essential fields with unit %s',
+    (unit) => {
+      const result = validateWarehouseItemForm(
+        {
+          ...validBaseInput,
+          unit,
+          compositionRows: [],
+          densityKgPerL: '',
+          manufacturer: '',
+          notes: '',
+          expiryDate: '',
+          reorderQuantity: '',
+        },
+        NOW,
+      );
+      expect(result).toEqual({
+        ok: true,
+        payload: expect.objectContaining({
+          unit,
+          type: 'fertilizer',
+          composition: [],
+          density_kg_per_l: null,
+          manufacturer: null,
+          notes: null,
+          expiry_date: null,
+          reorder_quantity: null,
+        }),
+      });
+    },
+  );
+
   describe('validation errors (in submit order)', () => {
     it('fails with missing_name when name is blank', () => {
       const result = validateWarehouseItemForm({ ...validBaseInput, name: '   ' }, NOW);
@@ -113,17 +145,17 @@ describe('validateWarehouseItemForm', () => {
       ).toEqual({ ok: false, error: 'invalid_expiry_date' });
     });
 
-    it('fails with missing_composition when fertilizer has no valid rows', () => {
+    it('allows fertilizer without nutrient analysis', () => {
       expect(validateWarehouseItemForm({ ...validBaseInput, compositionRows: [] }, NOW)).toEqual({
-        ok: false,
-        error: 'missing_composition',
+        ok: true,
+        payload: expect.objectContaining({ composition: [] }),
       });
     });
 
-    it('fails with missing_density when a volume unit lacks density', () => {
+    it('allows volume units without density', () => {
       expect(
         validateWarehouseItemForm({ ...validBaseInput, unit: 'liter', densityKgPerL: '' }, NOW),
-      ).toEqual({ ok: false, error: 'missing_density' });
+      ).toEqual({ ok: true, payload: expect.objectContaining({ density_kg_per_l: null }) });
     });
 
     it('does not require composition for spray type', () => {
@@ -187,7 +219,7 @@ describe('validateWarehouseItemForm', () => {
         { ...validBaseInput, unit: 'liter', densityKgPerL: '0' },
         NOW,
       );
-      expect(staleDensity).toEqual({ ok: false, error: 'missing_density' });
+      expect(staleDensity).toEqual({ ok: false, error: 'invalid_density' });
     });
 
     it('nulls reorder_quantity when the field is empty', () => {

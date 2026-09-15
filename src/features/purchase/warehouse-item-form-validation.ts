@@ -58,8 +58,7 @@ export type WarehouseItemFormError =
   | 'invalid_quantity'
   | 'invalid_unit_price'
   | 'invalid_expiry_date'
-  | 'missing_composition'
-  | 'missing_density';
+  | 'invalid_density';
 
 /** Result of parsing/validating the warehouse item form: either an error or the
  * ready-to-persist payload. */
@@ -137,18 +136,14 @@ export function validateWarehouseItemForm(
   }
 
   const composition = parseComposition(compositionRows);
-  if (type === 'fertilizer' && composition.length === 0) {
-    return { ok: false, error: 'missing_composition' };
-  }
 
-  const densityRequired = unit === 'liter' || unit === 'ml';
   const densityValue = Number(densityKgPerL);
   const parsedDensity =
     densityKgPerL.trim().length > 0 && Number.isFinite(densityValue) && densityValue > 0
       ? densityValue
       : null;
-  if (densityRequired && parsedDensity == null) {
-    return { ok: false, error: 'missing_density' };
+  if (densityKgPerL.trim() && parsedDensity == null) {
+    return { ok: false, error: 'invalid_density' };
   }
 
   const previousCatalogProductId = editingItem?.catalog_product_id ?? null;
