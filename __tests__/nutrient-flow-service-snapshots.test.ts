@@ -84,6 +84,27 @@ describe('calculateNutrientTotalsForLog — snapshot / golden vectors', () => {
     expect(result.nutrientTotalsElementalPerAcre.N).toBeCloseTo(0.3, 6);
   });
 
+  it.each([
+    { unit: 'L', quantity: 5, nitrogenKg: 0.6 },
+    { unit: 'ml', quantity: 500, nitrogenKg: 0.06 },
+  ])('converts $quantity $unit with explicit density', ({ unit, quantity, nitrogenKg }) => {
+    const result = calculateNutrientTotalsForLog({
+      items: [
+        {
+          quantity,
+          unit,
+          quantity_basis: 'total',
+          density_kg_per_l: 1.2,
+          composition_snapshot: N_ONLY,
+        },
+      ],
+      areaAcre: 2,
+    });
+    expect(result.nutrientTotalsElemental.N).toBeCloseTo(nitrogenKg, 6);
+    expect(result.nutrientTotalsElementalPerAcre.N).toBeCloseTo(nitrogenKg / 2, 6);
+    expect(result.coveragePercent).toBe(100);
+  });
+
   it('bare L without density leaves nutrient totals unknown', () => {
     const result = calculateNutrientTotalsForLog({
       items: [{ quantity: 5, unit: 'L', quantity_basis: 'total', composition_snapshot: N_ONLY }],

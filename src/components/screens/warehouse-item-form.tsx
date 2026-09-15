@@ -601,6 +601,7 @@ export default function WarehouseItemForm({
 
       if (shouldUpdate) {
         if (editingItem) {
+          setOptionalDetailsOpen(false);
           setShowCataloguePicker(false);
           setKeyboardHeight(0);
           setManualCatalogueDraft(null);
