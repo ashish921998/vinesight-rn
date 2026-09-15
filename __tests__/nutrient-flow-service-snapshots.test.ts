@@ -84,22 +84,22 @@ describe('calculateNutrientTotalsForLog — snapshot / golden vectors', () => {
     expect(result.nutrientTotalsElementalPerAcre.N).toBeCloseTo(0.3, 6);
   });
 
-  it('SNAP: bare L (uppercase alias), N-only, default density', () => {
-    // 5 L × 1.0 (default) = 5 kg × 10% N = 0.5 kg N
+  it('bare L without density leaves nutrient totals unknown', () => {
     const result = calculateNutrientTotalsForLog({
       items: [{ quantity: 5, unit: 'L', quantity_basis: 'total', composition_snapshot: N_ONLY }],
       areaAcre: 2,
     });
-    expect(result.nutrientTotalsElemental.N).toBeCloseTo(0.5, 6);
+    expect(result.nutrientTotalsElemental).toEqual({});
+    expect(result.coveragePercent).toBe(0);
   });
 
-  it('SNAP: bare ml, N-only, default density', () => {
-    // 500 ml × 1.0 kg/L ÷ 1000 = 0.5 kg × 10% N = 0.05 kg N
+  it('bare ml without density leaves nutrient totals unknown', () => {
     const result = calculateNutrientTotalsForLog({
       items: [{ quantity: 500, unit: 'ml', quantity_basis: 'total', composition_snapshot: N_ONLY }],
       areaAcre: 2,
     });
-    expect(result.nutrientTotalsElemental.N).toBeCloseTo(0.05, 6);
+    expect(result.nutrientTotalsElemental).toEqual({});
+    expect(result.coveragePercent).toBe(0);
   });
 
   // ── per-acre / rate units ────────────────────────────────────────────────

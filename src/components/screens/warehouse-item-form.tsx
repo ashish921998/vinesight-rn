@@ -823,6 +823,16 @@ export default function WarehouseItemForm({
           />
         ) : null}
 
+        {!formValidation.ok &&
+        (formValidation.error === 'invalid_density' ||
+          formValidation.error === 'invalid_expiry_date') ? (
+          <Text
+            accessibilityRole="alert"
+            style={{ color: m3.colorScheme.error, fontSize: fontSize.sm, marginBottom: spacing[2] }}
+          >
+            {resolveFormErrorMessage(formValidation.error)}
+          </Text>
+        ) : null}
         <Pressable
           accessibilityRole="button"
           accessibilityState={{ expanded: optionalDetailsOpen }}
@@ -928,7 +938,9 @@ export default function WarehouseItemForm({
                   }}
                 >
                   <Text style={{ color: m3.colorScheme.onSurfaceVariant, fontSize: fontSize.xs }}>
-                    Use the package label value.
+                    {isCatalogDensityApplied
+                      ? 'Filled from the catalogue. Verify against the package label before saving.'
+                      : 'Use the package label value. Without density, this product is excluded from nutrient totals.'}
                   </Text>
                   {densitySourceUrl ? (
                     <Pressable

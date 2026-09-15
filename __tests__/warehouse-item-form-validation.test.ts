@@ -173,6 +173,20 @@ describe('validateWarehouseItemForm', () => {
       );
       expect(result.ok).toBe(true);
     });
+
+    it.each(['kg', 'gram'] as const)(
+      'ignores hidden invalid density after switching to %s',
+      (unit) => {
+        const result = validateWarehouseItemForm(
+          { ...validBaseInput, unit, densityKgPerL: '0' },
+          NOW,
+        );
+        expect(result).toEqual({
+          ok: true,
+          payload: expect.objectContaining({ density_kg_per_l: null }),
+        });
+      },
+    );
   });
 
   describe('payload construction', () => {

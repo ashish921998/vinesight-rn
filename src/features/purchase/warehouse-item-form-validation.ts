@@ -142,7 +142,7 @@ export function validateWarehouseItemForm(
     densityKgPerL.trim().length > 0 && Number.isFinite(densityValue) && densityValue > 0
       ? densityValue
       : null;
-  if (densityKgPerL.trim() && parsedDensity == null) {
+  if ((unit === 'liter' || unit === 'ml') && densityKgPerL.trim() && parsedDensity == null) {
     return { ok: false, error: 'invalid_density' };
   }
 

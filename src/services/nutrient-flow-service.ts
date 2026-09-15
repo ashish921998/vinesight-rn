@@ -8,7 +8,6 @@ import type {
 } from '@/types';
 import {
   CANONICAL_CODE_BY_NORMALIZED,
-  DEFAULT_DENSITY_KG_PER_L,
   OXIDE_TO_ELEMENTAL_FACTORS,
   sanitizeComposition,
 } from '@/constants/nutrient-definitions';
@@ -66,11 +65,11 @@ function roundTo(value: number, precision = 4): number {
   return Math.round(value * scale) / scale;
 }
 
-function resolveDensity(densityKgPerL?: number | null): number {
+function resolveDensity(densityKgPerL?: number | null): number | null {
   if (typeof densityKgPerL === 'number' && Number.isFinite(densityKgPerL) && densityKgPerL > 0) {
     return densityKgPerL;
   }
-  return DEFAULT_DENSITY_KG_PER_L;
+  return null;
 }
 
 /**
@@ -97,7 +96,7 @@ function recordAreaAcres(
  * the volume→mass conversion: when the kernel returns a volume result (L), we
  * multiply by density to get kg.
  *
- * Density defaults to DEFAULT_DENSITY_KG_PER_L (1 kg/L) when not supplied.
+ * Volume items without a valid density return null and reduce nutrient coverage.
  * Unknown units and missing context (no water volume for concentration units,
  * no area for per-acre units) return null — never guessed, never padded.
  */
@@ -136,7 +135,7 @@ function toProductMassKg({
   if (canonical.measure === 'mass') return canonical.value;
 
   // Volume result is in L — convert to kg via density.
-  if (canonical.measure === 'volume') return canonical.value * density;
+  if (canonical.measure === 'volume') return density === null ? null : canonical.value * density;
 
   // Count (pcs/bags) — no kg conversion meaningful; excluded from totals.
   return null;
