@@ -285,6 +285,7 @@ export default function WarehouseItemForm({
   const [catalogueSearchQuery, setCatalogueSearchQuery] = useState('');
   const [showCataloguePicker, setShowCataloguePicker] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [sheetHeight, setSheetHeight] = useState<number | null>(null);
   const [manualCatalogueDraft, setManualCatalogueDraft] = useState<ManualCatalogueDraft | null>(
     null,
   );
@@ -739,7 +740,7 @@ export default function WarehouseItemForm({
   }, [catalogProductsLoading, catalogProductsError]);
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1 }} onLayout={(event) => setSheetHeight(event.nativeEvent.layout.height)}>
       <FormModal
         visible={isVisible}
         onClose={onClose}
@@ -752,6 +753,12 @@ export default function WarehouseItemForm({
         onReset={handleReset}
         presentation={presentation}
         headerTopInsetCap={28}
+        scrollViewProps={{ automaticallyAdjustKeyboardInsets: false }}
+        keyboardVerticalOffset={
+          isIOS && presentation === 'screen' && sheetHeight !== null
+            ? Math.max(0, windowHeight - sheetHeight)
+            : 0
+        }
         contentContainerStyle={{ paddingBottom: 128 }}
       >
         <FormInput

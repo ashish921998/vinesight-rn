@@ -56,6 +56,7 @@ interface FormModalProps {
    * renders inside a native sheet, which already sits below the status bar.
    */
   headerTopInsetCap?: number;
+  keyboardVerticalOffset?: number;
   /**
    * When true the primary save button spans the full footer width (a stronger
    * CTA for submit-style forms). Defaults to the standard right-aligned,
@@ -90,6 +91,7 @@ export function FormModal({
   saveButtonTargetId,
   saveFullWidth = false,
   headerTopInsetCap,
+  keyboardVerticalOffset = 0,
 }: FormModalProps) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
@@ -179,6 +181,7 @@ export function FormModal({
   const content = (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={keyboardVerticalOffset}
       style={{ flex: 1, backgroundColor: m3.surface.s100 }}
     >
       <View style={headerStyle}>
