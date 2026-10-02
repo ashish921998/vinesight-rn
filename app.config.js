@@ -28,7 +28,8 @@ const googleServicesFile =
 // only measures binary size, so it opts out explicitly by setting
 // ALLOW_MISSING_GOOGLE_SERVICES_JSON=true. This is the *only* escape hatch —
 // a real release build that lost the secret can no longer slip through.
-const isEasBuild = process.env.EAS_BUILD === 'true';
+// Cloud builds set EAS_BUILD=true; accept '1' too in case a local build sets that.
+const isEasBuild = ['true', '1'].includes(process.env.EAS_BUILD ?? '');
 const allowMissingGoogleServices = process.env.ALLOW_MISSING_GOOGLE_SERVICES_JSON === 'true';
 if (isEasBuild && !googleServicesFile && !allowMissingGoogleServices) {
   throw new Error(
