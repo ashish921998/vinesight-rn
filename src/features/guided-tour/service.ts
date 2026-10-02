@@ -17,9 +17,16 @@ interface PushDeviceSyncOptions {
   featureOverviewEnabled?: boolean;
 }
 
-// Hard ceiling for the push-token fetch. getExpoPushTokenAsync makes a network
-// call (APNs on iOS, FCM on Android) that can otherwise hang indefinitely.
+// Hard ceiling for a single push-token fetch. getExpoPushTokenAsync makes a
+// network call (APNs on iOS, FCM on Android) that can otherwise hang
+// indefinitely.
 const PUSH_TOKEN_TIMEOUT_MS = 10_000;
+
+// Bounded retry for the push-token fetch. The FCM/Firebase Installations call
+// can fail transiently (e.g. FIS_AUTH_ERROR); up to two retries recover the blip
+// within the session instead of dropping the device permanently.
+const PUSH_TOKEN_MAX_ATTEMPTS = 3;
+const PUSH_TOKEN_BACKOFF_BASE_MS = 500;
 
 function resolveEasProjectId(): string | undefined {
   return (
@@ -53,6 +60,10 @@ async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): P
   }
 }
 
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function getDeviceTimezone(): string | null {
   try {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone?.trim();
@@ -62,19 +73,37 @@ function getDeviceTimezone(): string | null {
   }
 }
 
+// Fetch the push token with bounded retry and exponential backoff. Each attempt
+// keeps its own hard timeout. Only a thrown error retries — a resolved-but-empty
+// token is a valid "no token" result and returns null. Exported for tests.
+export async function fetchExpoPushTokenWithRetry(
+  fetchToken: () => Promise<{ data?: string | null }>,
+): Promise<string | null> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= PUSH_TOKEN_MAX_ATTEMPTS; attempt += 1) {
+    try {
+      const tokenResult = await withTimeout(fetchToken(), PUSH_TOKEN_TIMEOUT_MS, 'getExpoPushTokenAsync');
+      return tokenResult.data || null;
+    } catch (error) {
+      lastError = error;
+      if (attempt < PUSH_TOKEN_MAX_ATTEMPTS) {
+        // Exponential backoff: 500ms, then 1000ms before the next attempt.
+        await delay(PUSH_TOKEN_BACKOFF_BASE_MS * 2 ** (attempt - 1));
+      }
+    }
+  }
+  throw lastError;
+}
+
 async function getExpoPushToken(): Promise<string | null> {
   const Notifications = await import('expo-notifications');
   const permission = await Notifications.getPermissionsAsync();
   if (permission.status !== 'granted') return null;
 
   const projectId = resolveEasProjectId();
-
-  const tokenResult = await withTimeout(
+  return fetchExpoPushTokenWithRetry(() =>
     Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined),
-    PUSH_TOKEN_TIMEOUT_MS,
-    'getExpoPushTokenAsync',
   );
-  return tokenResult.data || null;
 }
 
 function normalizePushLocale(locale: string): PushDeviceLocale {
@@ -198,6 +227,12 @@ export async function userHasAnyFarms(): Promise<boolean> {
   return (data?.length ?? 0) > 0;
 }
 
+// One failure event per distinct failure per app session. syncPushDeviceRegistration
+// is fire-and-forget from a useEffect that re-runs on dependency changes, so an
+// unrecoverable failure (e.g. FIS_AUTH_ERROR) would otherwise emit one telemetry
+// event per invocation and overstate how many users are affected.
+const emittedFailureSignatures = new Set<string>();
+
 export async function syncPushDeviceRegistration(
   locale: string,
   options: PushDeviceSyncOptions = {},
@@ -221,13 +256,18 @@ export async function syncPushDeviceRegistration(
     await updatePushDeviceRow(userId, expoPushToken, normalizePushLocale(locale), options);
     return true;
   } catch (error) {
-    telemetry.capture('guided_tour_push_registration_failed', {
-      context: 'syncPushDeviceRegistration',
-      stage,
-      platform: Platform.OS,
-      has_project_id: Boolean(resolveEasProjectId()),
-      ...describeError(error),
-    });
+    const errorProps = describeError(error);
+    const signature = `${stage}:${errorProps.error_code ?? errorProps.error_name ?? errorProps.error_message}`;
+    if (!emittedFailureSignatures.has(signature)) {
+      emittedFailureSignatures.add(signature);
+      telemetry.capture('guided_tour_push_registration_failed', {
+        context: 'syncPushDeviceRegistration',
+        stage,
+        platform: Platform.OS,
+        has_project_id: Boolean(resolveEasProjectId()),
+        ...errorProps,
+      });
+    }
     if (__DEV__) {
       console.warn('[guided-tour] push device registration failed', error);
     }
