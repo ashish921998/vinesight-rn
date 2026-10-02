@@ -30,7 +30,7 @@ import {
   useThemeStore,
   useAppModeStore,
 } from '@/stores';
-import { useOnboardingInitTimeoutStore, useOnboardingStore } from '@/stores/onboarding-store';
+import { useOnboardingStorageFallbackStore, useOnboardingStore } from '@/stores/onboarding-store';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { ToastHost } from '@/components/ui/toast';
 import i18n, { getDeviceLanguage, setAppLanguage } from '@/i18n';
@@ -686,7 +686,8 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
             `[Vinesight] App init timed out after ${INIT_TIMEOUT_MS}ms — ` +
               `auth loading: ${authStillLoading}, ` +
               `theme hydrated: ${!themeStillPending}, ` +
-              `language hydrated: ${!langStillPending}. Forcing splash hide.`,
+              `language hydrated: ${!langStillPending}, ` +
+              `onboarding hydrated: ${!onboardingStillPending}. Forcing splash hide.`,
           );
         }
         Sentry.captureMessage('App init timed out — forcing splash hide', {
@@ -724,7 +725,7 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
         // Android. Let routes proceed on its defaults, without writing to the
         // persisted store (that would overwrite the saved progress).
         if (onboardingStillPending) {
-          useOnboardingInitTimeoutStore.setState({ timedOut: true });
+          useOnboardingStorageFallbackStore.setState({ active: true });
         }
       }
     }, INIT_TIMEOUT_MS);

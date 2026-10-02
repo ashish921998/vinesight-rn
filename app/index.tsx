@@ -2,7 +2,11 @@ import { View, Text } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore, useLanguageStore } from '@/stores';
-import { useOnboardingReady, useOnboardingStore } from '@/stores/onboarding-store';
+import {
+  useOnboardingReady,
+  useOnboardingStorageFallbackStore,
+  useOnboardingStore,
+} from '@/stores/onboarding-store';
 import { useProfile } from '@/hooks';
 import { getConfigurationStatus } from '@/lib/supabase';
 import { AnimatedSplash } from '@/components/animated-splash';
@@ -25,6 +29,8 @@ export default function Index() {
   const hasSeenOnboarding = useAuthStore((s) => s.hasSeenOnboarding);
   const user = useAuthStore((s) => s.user);
   const onboardingHydrated = useOnboardingReady();
+  const onboardingReadFromStorage = useOnboardingStore((s) => s.hasHydrated);
+  const onboardingFallback = useOnboardingStorageFallbackStore((s) => s.active);
   const hasSeenWelcome = useOnboardingStore((s) => s.hasSeenWelcome);
   const onboardingComplete = useOnboardingStore((s) => s.isComplete);
   const { languageHydrated, hasSelectedLanguage, language } = useLanguageStore(
@@ -122,8 +128,17 @@ export default function Index() {
 
   // Welcome screen is a pre-auth flow. Authenticated users must continue
   // through the normal route resolver instead of being sent back to login.
-  if (!isAuthenticated && !hasSeenWelcome) {
+  // If storage failed or timed out, hasSeenWelcome is only a default, so skip
+  // welcome rather than re-onboard a returning user.
+  if (!isAuthenticated && !onboardingFallback && !hasSeenWelcome) {
     return <Redirect href="/welcome" />;
+  }
+
+  // Signed-in routing depends on saved onboarding progress (isComplete), so
+  // don't route on the timeout's defaults: that would send a returning farmer
+  // back to first-farm setup. Same wait as before the timeout fallback existed.
+  if (isAuthenticated && !onboardingReadFromStorage) {
+    return <AnimatedSplash duration={2500} />;
   }
 
   // Use isPending (not isLoading) so the splash stays up during

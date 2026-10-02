@@ -106,20 +106,20 @@ const onboardingStorage = {
 };
 
 /**
- * Set by the app-init safety timeout when SecureStore never finishes reading
- * onboarding state. Kept in a separate, non-persisted store: any setState on
+ * Set when SecureStore never finishes reading onboarding state (app-init
+ * safety timeout) or the read fails. Kept in a separate, non-persisted store: any setState on
  * the persisted store would write default progress over the saved record
  * while the slow read is still pending.
  */
-export const useOnboardingInitTimeoutStore = create<{ timedOut: boolean }>(() => ({
-  timedOut: false,
+export const useOnboardingStorageFallbackStore = create<{ active: boolean }>(() => ({
+  active: false,
 }));
 
-/** Onboarding state is usable: hydrated from storage, or the init timeout gave up waiting. */
+/** Onboarding state is usable: hydrated from storage, or the storage fallback is active. */
 export const useOnboardingReady = () => {
   const hydrated = useOnboardingStore((s) => s.hasHydrated);
-  const timedOut = useOnboardingInitTimeoutStore((s) => s.timedOut);
-  return hydrated || timedOut;
+  const fallback = useOnboardingStorageFallbackStore((s) => s.active);
+  return hydrated || fallback;
 };
 
 export const useOnboardingStore = create<OnboardingStore>()(
@@ -268,7 +268,12 @@ export const useOnboardingStore = create<OnboardingStore>()(
           activation,
         } as unknown as OnboardingStore;
       },
-      onRehydrateStorage: () => () => {
+      onRehydrateStorage: () => (_state, error) => {
+        if (error) {
+          // A failed read leaves only defaults in memory. Flag it so pre-auth
+          // routing doesn't treat hasSeenWelcome: false as real.
+          useOnboardingStorageFallbackStore.setState({ active: true });
+        }
         useOnboardingStore.setState({ hasHydrated: true });
       },
     },
