@@ -18,10 +18,11 @@ const googleServicesFile =
 // every user on that build with no build-time signal. That is exactly how
 // 3.3.1 shipped without FCM despite the #176 fix being in the tree.
 //
-// The check is scoped to EAS builds (EAS_BUILD=true, set by both cloud
-// `eas build` and local `eas build --local`) so it guards every production /
-// preview ship path without breaking `expo start`, dev clients, or CI — none
-// of which produce a shippable binary and none of which need FCM config.
+// The check is scoped to Android EAS builds (EAS_BUILD=true, set by both cloud
+// `eas build` and local `eas build --local`) outside the development profile,
+// so it guards every production / preview Android ship path without breaking
+// `expo start`, dev clients, iOS builds, or CI — none of which produce a
+// shippable Android binary and none of which need FCM config.
 //
 // The one build allowed to proceed without the file is the Size Analysis
 // workflow: it runs `eas build --local` on a runner that has no secret and
@@ -30,8 +31,16 @@ const googleServicesFile =
 // a real release build that lost the secret can no longer slip through.
 // Cloud builds set EAS_BUILD=true; accept '1' too in case a local build sets that.
 const isEasBuild = ['true', '1'].includes(process.env.EAS_BUILD ?? '');
+// google-services.json is Android-only, and development-profile builds are dev
+// clients, not shippable binaries. EAS sets EAS_BUILD_PLATFORM on every build;
+// anything other than an explicit 'ios' is treated as Android so the check
+// stays fail-closed if the variable is ever missing.
+const isShippableAndroidBuild =
+  isEasBuild &&
+  process.env.EAS_BUILD_PLATFORM !== 'ios' &&
+  process.env.EAS_BUILD_PROFILE !== 'development';
 const allowMissingGoogleServices = process.env.ALLOW_MISSING_GOOGLE_SERVICES_JSON === 'true';
-if (isEasBuild && !googleServicesFile && !allowMissingGoogleServices) {
+if (isShippableAndroidBuild && !googleServicesFile && !allowMissingGoogleServices) {
   throw new Error(
     'Missing Android Firebase config: neither the GOOGLE_SERVICES_JSON EAS file ' +
       'env var nor a local ./google-services.json resolved during an EAS build. ' +
