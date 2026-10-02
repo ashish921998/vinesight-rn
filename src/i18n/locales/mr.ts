@@ -3259,7 +3259,7 @@ export const mr = {
   welcome: {
     title: 'VineSight',
     kicker: 'द्राक्ष बागांच्या टीमसाठी',
-    headline: 'तुमचा द्राक्ष बाग, एकच अॅप',
+    headline: 'तुमची द्राक्षबाग, एकच अॅप',
     subtitle:
       '$t(glossary.irrigation), $t(glossary.spray), $t(glossary.harvest) आणि $t(glossary.task) \u2014 सर्व एकाच ठिकाणी।',
     features: {

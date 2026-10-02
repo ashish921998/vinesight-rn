@@ -210,6 +210,7 @@ export function WelcomeScreen() {
       <Animated.View entering={FadeInDown.delay(1500).duration(400)} style={styles.footer}>
         <Pressable
           onPress={() => handleContinue('get_started')}
+          accessibilityRole="button"
           style={({ pressed }) => [
             styles.ctaButton,
             {
@@ -224,7 +225,12 @@ export function WelcomeScreen() {
           </Text>
         </Pressable>
 
-        <Pressable onPress={() => handleContinue('log_in')} hitSlop={{ top: 12, bottom: 12 }}>
+        <Pressable
+          onPress={() => handleContinue('log_in')}
+          accessibilityRole="button"
+          accessibilityLabel={`${t('welcome.cta.hasAccount')} ${t('welcome.cta.logIn')}`}
+          hitSlop={{ top: 12, bottom: 12 }}
+        >
           <Text style={[styles.secondaryCta, { color: m3.colorScheme.onSurfaceVariant }]}>
             {t('welcome.cta.hasAccount')}{' '}
             <Text style={{ fontWeight: fontWeight.semibold, color: m3.colorScheme.primary }}>

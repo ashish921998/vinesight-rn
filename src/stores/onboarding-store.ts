@@ -188,6 +188,9 @@ export const useOnboardingStore = create<OnboardingStore>()(
           // Reset can happen after storage has hydrated during signup. Keeping
           // this flag avoids trapping the root route on its loading screen.
           hasHydrated: state.hasHydrated,
+          // Resetting onboarding (e.g. on signup) must not send the user back
+          // to the pre-auth welcome screen after a later sign-out.
+          hasSeenWelcome: state.hasSeenWelcome,
         })),
       _setHasHydrated: (value) => set({ hasHydrated: value }),
     }),
@@ -234,10 +237,11 @@ export const useOnboardingStore = create<OnboardingStore>()(
           currentStep = 'firstFarm';
         }
 
+        // Records older than v4 predate the welcome screen. Any persisted
+        // record means the app was already installed and used, so those
+        // users skip welcome even if they never finished onboarding.
         const hasSeenWelcome =
-          typeof state.hasSeenWelcome === 'boolean'
-            ? state.hasSeenWelcome
-            : state.isComplete === true;
+          typeof state.hasSeenWelcome === 'boolean' ? state.hasSeenWelcome : true;
 
         return {
           ...initialState,

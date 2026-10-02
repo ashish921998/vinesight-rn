@@ -82,6 +82,7 @@ export function ReportExporterCard({ isExporting, onShare, panelStyle }: ReportE
         onPress={onShare}
         disabled={isExporting}
         accessibilityRole="button"
+        accessibilityLabel={t('reports.fpc.shareXlsx')}
         accessibilityState={{ disabled: isExporting }}
         style={({ pressed }) => ({
           flexDirection: 'row',
