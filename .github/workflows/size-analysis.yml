@@ -131,6 +131,10 @@ jobs:
           # production builds. Native runtime changes require bumping
           # expo.version and shipping a compatible production binary before
           # publishing OTA updates for the new runtime.
+          # This runner has no GOOGLE_SERVICES_JSON secret and only measures
+          # binary size, so opt out of the app.config.js FCM-config guard that
+          # would otherwise (correctly) fail a shippable build missing Firebase.
+          ALLOW_MISSING_GOOGLE_SERVICES_JSON: 'true'
         run: |
           mkdir -p build
           eas build \
