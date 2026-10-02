@@ -166,6 +166,10 @@ export const ICON_ASSETS = {
     ios: 'square.and.arrow.down.fill',
     android: import('@expo/material-symbols/download.xml'),
   }),
+  'square.and.arrow.up': Icon.select({
+    ios: 'square.and.arrow.up',
+    android: import('@expo/material-symbols/share.xml'),
+  }),
 
   // --- search ---
   magnifyingglass: Icon.select({

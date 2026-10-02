@@ -17,6 +17,7 @@ import {
 } from '../types/onboarding';
 interface OnboardingStore extends OnboardingState {
   // Actions
+  markWelcomeSeen: () => void;
   setCurrentStep: (step: OnboardingStep) => void;
   nextStep: () => void;
   previousStep: () => void;
@@ -33,6 +34,7 @@ interface OnboardingStore extends OnboardingState {
 
 const initialState: OnboardingState = {
   isComplete: false,
+  hasSeenWelcome: false,
   hasHydrated: false,
   currentStep: 'firstFarm',
   preferences: {
@@ -103,10 +105,29 @@ const onboardingStorage = {
   },
 };
 
+/**
+ * Set when SecureStore never finishes reading onboarding state (app-init
+ * safety timeout) or the read fails. Kept in a separate, non-persisted store: any setState on
+ * the persisted store would write default progress over the saved record
+ * while the slow read is still pending.
+ */
+export const useOnboardingStorageFallbackStore = create<{ active: boolean }>(() => ({
+  active: false,
+}));
+
+/** Onboarding state is usable: hydrated from storage, or the storage fallback is active. */
+export const useOnboardingReady = () => {
+  const hydrated = useOnboardingStore((s) => s.hasHydrated);
+  const fallback = useOnboardingStorageFallbackStore((s) => s.active);
+  return hydrated || fallback;
+};
+
 export const useOnboardingStore = create<OnboardingStore>()(
   persist(
     (set, get) => ({
       ...initialState,
+
+      markWelcomeSeen: () => set({ hasSeenWelcome: true }),
 
       setCurrentStep: (step) => set({ currentStep: step }),
 
@@ -184,12 +205,15 @@ export const useOnboardingStore = create<OnboardingStore>()(
           // Reset can happen after storage has hydrated during signup. Keeping
           // this flag avoids trapping the root route on its loading screen.
           hasHydrated: state.hasHydrated,
+          // Resetting onboarding (e.g. on signup) must not send the user back
+          // to the pre-auth welcome screen after a later sign-out.
+          hasSeenWelcome: state.hasSeenWelcome,
         })),
       _setHasHydrated: (value) => set({ hasHydrated: value }),
     }),
     {
       name: 'vinesight-onboarding',
-      version: 3,
+      version: 4,
       storage: createJSONStorage(() => onboardingStorage),
       migrate: (persistedState, version) => {
         const state = persistedState as Record<string, unknown>;
@@ -230,14 +254,26 @@ export const useOnboardingStore = create<OnboardingStore>()(
           currentStep = 'firstFarm';
         }
 
+        // Records older than v4 predate the welcome screen. Any persisted
+        // record means the app was already installed and used, so those
+        // users skip welcome even if they never finished onboarding.
+        const hasSeenWelcome =
+          typeof state.hasSeenWelcome === 'boolean' ? state.hasSeenWelcome : true;
+
         return {
           ...initialState,
           ...state,
+          hasSeenWelcome,
           currentStep: currentStep as OnboardingStep,
           activation,
         } as unknown as OnboardingStore;
       },
-      onRehydrateStorage: () => () => {
+      onRehydrateStorage: () => (_state, error) => {
+        if (error) {
+          // A failed read leaves only defaults in memory. Flag it so pre-auth
+          // routing doesn't treat hasSeenWelcome: false as real.
+          useOnboardingStorageFallbackStore.setState({ active: true });
+        }
         useOnboardingStore.setState({ hasHydrated: true });
       },
     },

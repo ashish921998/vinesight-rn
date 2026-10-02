@@ -47,6 +47,7 @@ import {
 import { ReportExecutiveSummary } from '@/components/screens/reports/report-executive-summary';
 import { ReportDocumentBody } from '@/components/screens/reports/report-document-body';
 import { ReportExportActions } from '@/components/screens/reports/report-export-actions';
+import { ReportExporterCard } from '@/components/screens/reports/report-exporter-card';
 import { getDefaultReportFormat } from '@/components/screens/reports/report-format';
 import type { FarmSeason } from '@/types';
 
@@ -518,12 +519,6 @@ export default function ReportsScreen() {
                   onSelectFormat={setSelectedExportFormat}
                   onShare={() => runExport('share', selectedExportFormat)}
                   onDownload={() => runExport('download', selectedExportFormat)}
-                  onShareExporter={
-                    preview.data.fpcActivity?.length
-                      ? () =>
-                          runExport('share', getDefaultReportFormat('fpc-activity'), 'fpc-activity')
-                      : undefined
-                  }
                   panelStyle={panelStyle}
                 />
 
@@ -534,6 +529,16 @@ export default function ReportsScreen() {
                   preferredCurrency={user?.user_metadata?.currency_preference ?? 'INR'}
                   panelStyle={panelStyle}
                 />
+
+                {preview.data.fpcActivity?.length ? (
+                  <ReportExporterCard
+                    isExporting={isExporting}
+                    onShare={() =>
+                      runExport('share', getDefaultReportFormat('fpc-activity'), 'fpc-activity')
+                    }
+                    panelStyle={panelStyle}
+                  />
+                ) : null}
               </>
             ) : null}
           </>

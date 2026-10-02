@@ -2,7 +2,11 @@ import { View, Text } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore, useLanguageStore } from '@/stores';
-import { useOnboardingStore } from '@/stores/onboarding-store';
+import {
+  useOnboardingReady,
+  useOnboardingStorageFallbackStore,
+  useOnboardingStore,
+} from '@/stores/onboarding-store';
 import { useProfile } from '@/hooks';
 import { getConfigurationStatus } from '@/lib/supabase';
 import { AnimatedSplash } from '@/components/animated-splash';
@@ -24,7 +28,10 @@ export default function Index() {
   const needsProfileCompletion = useAuthStore((s) => s.needsProfileCompletion);
   const hasSeenOnboarding = useAuthStore((s) => s.hasSeenOnboarding);
   const user = useAuthStore((s) => s.user);
-  const onboardingHydrated = useOnboardingStore((s) => s.hasHydrated);
+  const onboardingHydrated = useOnboardingReady();
+  const onboardingReadFromStorage = useOnboardingStore((s) => s.hasHydrated);
+  const onboardingFallback = useOnboardingStorageFallbackStore((s) => s.active);
+  const hasSeenWelcome = useOnboardingStore((s) => s.hasSeenWelcome);
   const onboardingComplete = useOnboardingStore((s) => s.isComplete);
   const { languageHydrated, hasSelectedLanguage, language } = useLanguageStore(
     useShallow((s) => ({
@@ -115,16 +122,31 @@ export default function Index() {
     );
   }
 
+  if (!onboardingHydrated) {
+    return <AnimatedSplash duration={2500} />;
+  }
+
+  // Welcome screen is a pre-auth flow. Authenticated users must continue
+  // through the normal route resolver instead of being sent back to login.
+  // If storage failed or timed out, hasSeenWelcome is only a default, so skip
+  // welcome rather than re-onboard a returning user.
+  if (!isAuthenticated && !onboardingFallback && !hasSeenWelcome) {
+    return <Redirect href="/welcome" />;
+  }
+
+  // Signed-in routing depends on saved onboarding progress (isComplete), so
+  // don't route on the timeout's defaults: that would send a returning farmer
+  // back to first-farm setup. Same wait as before the timeout fallback existed.
+  if (isAuthenticated && !onboardingReadFromStorage) {
+    return <AnimatedSplash duration={2500} />;
+  }
+
   // Use isPending (not isLoading) so the splash stays up during
   // PersistQueryClientProvider cache restoration, when queries are paused:
   // isLoading = isPending && isFetching, which is false during the pause even
   // though data is still undefined — causing a premature redirect to
   // profile-completion. isPending is true whenever data hasn't arrived.
   if (isAuthenticated && (profilePending || workspacePending)) {
-    return <AnimatedSplash duration={2500} />;
-  }
-
-  if (isAuthenticated && !onboardingHydrated) {
     return <AnimatedSplash duration={2500} />;
   }
 
