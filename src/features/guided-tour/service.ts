@@ -82,11 +82,7 @@ export async function fetchExpoPushTokenWithRetry(
   let lastError: unknown;
   for (let attempt = 1; attempt <= PUSH_TOKEN_MAX_ATTEMPTS; attempt += 1) {
     try {
-      const tokenResult = await withTimeout(
-        fetchToken(),
-        PUSH_TOKEN_TIMEOUT_MS,
-        'getExpoPushTokenAsync',
-      );
+      const tokenResult = await withTimeout(fetchToken(), PUSH_TOKEN_TIMEOUT_MS, 'getExpoPushTokenAsync');
       return tokenResult.data || null;
     } catch (error) {
       lastError = error;

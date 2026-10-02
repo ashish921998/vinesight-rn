@@ -172,9 +172,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               }}
               placeholder={t('farmForm.fields.name.placeholder')}
               required
-              error={
-                form.coreFieldError === 'name' ? t('farmForm.validation.nameRequired') : undefined
-              }
+              error={form.coreFieldError === 'name' ? t('farmForm.validation.nameRequired') : undefined}
               autoFocus={!form.isEdit}
               returnKeyType="next"
               blurOnSubmit={false}
@@ -205,9 +203,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               keyboardType="decimal-pad"
               suffix={t('units.acres')}
               required
-              error={
-                form.coreFieldError === 'area' ? t('farmForm.validation.areaRequired') : undefined
-              }
+              error={form.coreFieldError === 'area' ? t('farmForm.validation.areaRequired') : undefined}
               returnKeyType="next"
               blurOnSubmit={false}
               onSubmitEditing={() => {
