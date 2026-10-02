@@ -54,26 +54,6 @@ export function detectAudioFormatFromHeader(binary: Uint8Array): AudioFormatInfo
 }
 
 /**
- * Normalize MIME type for OpenAI Whisper API
- */
-export function normalizeOpenAiAudioMime(mimeType: string): AudioFormatInfo {
-  const normalized = mimeType.trim().toLowerCase();
-  if (normalized.includes('wav')) return { mime: 'audio/wav', filename: 'audio.wav' };
-  if (normalized.includes('flac')) return { mime: 'audio/flac', filename: 'audio.flac' };
-  if (normalized.includes('webm')) return { mime: 'audio/webm', filename: 'audio.webm' };
-  if (normalized.includes('ogg') || normalized.includes('oga'))
-    return { mime: 'audio/ogg', filename: 'audio.ogg' };
-  if (normalized.includes('x-m4a') || normalized.includes('m4a'))
-    return { mime: 'audio/mp4', filename: 'audio.m4a' };
-  if (normalized.includes('mp4')) return { mime: 'audio/mp4', filename: 'audio.m4a' };
-  if (normalized.includes('mpeg') || normalized.includes('mp3'))
-    return { mime: 'audio/mpeg', filename: 'audio.mp3' };
-  if (normalized.includes('caf')) return { mime: 'audio/mpeg', filename: 'audio.mp3' };
-  if (normalized.includes('aac')) return { mime: 'audio/mpeg', filename: 'audio.mp3' };
-  return { mime: 'audio/mpeg', filename: 'audio.mp3' };
-}
-
-/**
  * Normalize MIME type for Sarvam STT API
  */
 export function normalizeSarvamAudioMime(mimeType: string): AudioFormatInfo | null {

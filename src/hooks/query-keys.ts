@@ -164,6 +164,8 @@ export const queryKeys = {
     listAll: () => [...queryKeys.workerAttendance.lists(), 'all'] as const,
     listByWorker: (workerId: number) =>
       [...queryKeys.workerAttendance.lists(), { workerId }] as const,
+    listByWorkerDateRange: (workerId: number | undefined, startDate: string, endDate: string) =>
+      [...queryKeys.workerAttendance.lists(), { workerId, startDate, endDate }] as const,
   },
 
   // Worker Transactions

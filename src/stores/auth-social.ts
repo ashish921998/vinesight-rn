@@ -3,6 +3,7 @@ import { getDataAccess } from '@/data-access';
 import { telemetry } from '@/services/telemetry';
 import {
   getAuthErrorMessage,
+  getErrorMessage,
   getEmailDomain,
   setSentryUser,
   upsertProfileNameFromAuthUserBestEffort,
@@ -111,20 +112,62 @@ export const createSocialActions = (set: SetState) => ({
       });
       if (error) throw error;
 
-      const appleNameFromCredential = [
-        credential.fullName?.givenName?.trim(),
-        credential.fullName?.familyName?.trim(),
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .trim();
-      await upsertProfileNameFromAuthUserBestEffort(data.user, appleNameFromCredential || null);
-      setSentryUser(data.user);
-      telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
+      // Apple provides fullName/email in the credential on the FIRST
+      // authorization only — they are NOT included in the JWT identity token,
+      // so Supabase's signInWithIdToken does not know them. We must persist
+      // them to user_metadata via auth.updateUser immediately so the user is
+      // not asked for name/email again on the profile-completion screen (App
+      // Store Guideline 4 — Sign in with Apple).
+      const givenName = credential.fullName?.givenName?.trim();
+      const familyName = credential.fullName?.familyName?.trim();
+      const appleEmail = credential.email?.trim();
+
+      let effectiveUser = data.user;
+
+      const fullName = [givenName, familyName].filter(Boolean).join(' ').trim();
+      const shouldUpdateEmail = Boolean(appleEmail) && !effectiveUser.email;
+
+      if (fullName || shouldUpdateEmail) {
+        const updatePayload: { data?: Record<string, string>; email?: string } = {};
+        if (fullName) {
+          updatePayload.data = {
+            full_name: fullName,
+            first_name: givenName!,
+            ...(familyName ? { last_name: familyName } : {}),
+          };
+        }
+        if (shouldUpdateEmail) {
+          updatePayload.email = appleEmail!;
+          // Supabase email changes require confirmation — the response
+          // user may still have null email while pending. Persist the
+          // one-time Apple address in metadata so it is never lost.
+          updatePayload.data = {
+            ...(updatePayload.data || {}),
+            apple_email: appleEmail!,
+          };
+        }
+
+        const { data: updateData, error: updateError } =
+          await getDataAccess().auth.updateUser(updatePayload);
+        if (updateError) {
+          telemetry.capture('apple_metadata_update_failed', {
+            user_id: effectiveUser.id,
+            error: getErrorMessage(updateError, 'updateUser failed'),
+          });
+        } else if (updateData.user) {
+          effectiveUser = updateData.user;
+        }
+      }
+
+      await upsertProfileNameFromAuthUserBestEffort(effectiveUser, fullName || null);
+      setSentryUser(effectiveUser);
+      telemetry.identify(effectiveUser.id, {
+        email_domain: getEmailDomain(effectiveUser.email),
+      });
       telemetry.capture('auth_sign_in_succeeded', { method: 'apple' });
       telemetry.capture('user_logged_in', { method: 'apple' });
       set({
-        user: data.user,
+        user: effectiveUser,
         session: data.session,
         isAuthenticated: true,
         isLoading: false,

@@ -70,7 +70,7 @@ function InsetSeparator({ color }: { color: string }) {
 
 /* ─────────────────────── Component ─────────────────────── */
 
-export function ReportSectionBlock({
+function ReportSectionBlockComponent({
   title,
   rows = EMPTY_ROWS,
   records,
@@ -415,3 +415,5 @@ export function ReportSectionBlock({
     </View>
   );
 }
+
+export const ReportSectionBlock = React.memo(ReportSectionBlockComponent);

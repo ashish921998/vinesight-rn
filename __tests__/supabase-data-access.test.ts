@@ -61,6 +61,58 @@ describe('SupabaseDataAccess.records.deleteDailyNote', () => {
   });
 });
 
+describe('SupabaseDataAccess.dashboardStats.getRecentActivities', () => {
+  beforeEach(() => {
+    (supabase.from as jest.Mock).mockReset();
+  });
+
+  it('propagates the farm lookup failure', async () => {
+    const queryError = { code: '42501', message: 'farm query failed' };
+    (supabase.from as jest.Mock).mockReturnValue({
+      select: () => ({
+        eq: () => Promise.resolve({ data: null, error: queryError }),
+      }),
+    });
+
+    await expect(
+      new SupabaseDataAccess().dashboardStats.getRecentActivities({ userId: 'user-1', limit: 5 }),
+    ).rejects.toBe(queryError);
+  });
+
+  it('selects fertigation fertilizers and area and propagates query failures', async () => {
+    const queryError = { code: '42703', message: 'fertigation query failed' };
+    const selectedColumns = new Map<string, string>();
+
+    (supabase.from as jest.Mock).mockImplementation((table: string) => ({
+      select: (columns: string) => {
+        selectedColumns.set(table, columns);
+        if (table === 'farms') {
+          return {
+            eq: () => Promise.resolve({ data: [{ id: 7, name: 'Sassy' }], error: null }),
+          };
+        }
+
+        return {
+          in: () => ({
+            order: () => ({
+              limit: () =>
+                Promise.resolve({
+                  data: null,
+                  error: table === 'fertigation_records' ? queryError : null,
+                }),
+            }),
+          }),
+        };
+      },
+    }));
+
+    await expect(
+      new SupabaseDataAccess().dashboardStats.getRecentActivities({ userId: 'user-1', limit: 5 }),
+    ).rejects.toBe(queryError);
+    expect(selectedColumns.get('fertigation_records')).toBe('id, farm_id, date, fertilizers, area');
+  });
+});
+
 describe('isMissingDisplayOrderColumnError', () => {
   it('matches by code and by schema-cache message', () => {
     expect(isMissingDisplayOrderColumnError({ code: '42703' })).toBe(true);

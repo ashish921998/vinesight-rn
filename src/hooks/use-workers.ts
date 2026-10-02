@@ -146,6 +146,43 @@ export function useDeleteWorker() {
 // MARK: - WORKER ATTENDANCE
 // ============================================================
 
+/**
+ * Canonical date-range fetch for a single worker's attendance.
+ * Used by both the calendar and mark attendance tabs so they share one
+ * query/cache entry and stay in sync via cache invalidation.
+ */
+export async function fetchWorkerAttendanceByDateRange(
+  workerId: number,
+  startDate: string,
+  endDate: string,
+): Promise<WorkerAttendance[]> {
+  const { data, error } = await getDataAccess()
+    .from(TABLES.WORKER_ATTENDANCE)
+    .select('*')
+    .eq('worker_id', workerId)
+    .gte('date', startDate)
+    .lte('date', endDate)
+    .order('date', { ascending: true });
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+export function useWorkerAttendanceByDateRange(
+  workerId: number | undefined,
+  startDate: string,
+  endDate: string,
+) {
+  return useQuery({
+    queryKey: queryKeys.workerAttendance.listByWorkerDateRange(workerId, startDate, endDate),
+    queryFn: () => {
+      if (!workerId) return [];
+      return fetchWorkerAttendanceByDateRange(workerId, startDate, endDate);
+    },
+    enabled: !!workerId,
+  });
+}
+
 export function useAllWorkerAttendance() {
   return useQuery({
     queryKey: queryKeys.workerAttendance.listAll(),
@@ -199,12 +236,9 @@ export function useCreateWorkerAttendance() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (newAttendance) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.workerAttendance.listByWorker(newAttendance.worker_id),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.workerAttendance.listAll(),
+        queryKey: queryKeys.workerAttendance.lists(),
       });
     },
   });
@@ -231,12 +265,9 @@ export function useUpdateWorkerAttendance() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (updatedAttendance) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.workerAttendance.listByWorker(updatedAttendance.worker_id),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.workerAttendance.listAll(),
+        queryKey: queryKeys.workerAttendance.lists(),
       });
     },
   });
@@ -246,23 +277,77 @@ export function useDeleteWorkerAttendance() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      id,
-      workerId: _workerId,
-    }: {
-      id: number;
-      workerId: number;
-    }): Promise<void> => {
+    mutationFn: async (id: number): Promise<void> => {
       const { error } = await getDataAccess().from(TABLES.WORKER_ATTENDANCE).delete().eq('id', id);
 
       if (error) throw error;
     },
-    onSuccess: (_, { workerId }) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.workerAttendance.listByWorker(workerId),
+        queryKey: queryKeys.workerAttendance.lists(),
       });
+    },
+  });
+}
+
+/**
+ * Batch save operation for attendance records.
+ * Each operation represents a create, update, or delete for a single cell.
+ * The `date` field is used for error reporting.
+ */
+export type AttendanceSaveOperation =
+  | { kind: 'create'; date: string; data: WorkerAttendanceInsert }
+  | { kind: 'update'; date: string; id: number; updates: Partial<WorkerAttendance> }
+  | { kind: 'delete'; date: string; id: number };
+
+/**
+ * Batch save for multiple attendance cells in a single mutation.
+ *
+ * Executes all operations sequentially, collecting per-cell errors without
+ * stopping (matching the previous component-level batch behavior). Returns
+ * the array of errors so the caller can show a partial-failure toast.
+ *
+ * Cache invalidation fires once in `onSuccess` — not per cell — so only one
+ * background refetch is triggered regardless of how many cells are saved.
+ */
+export function useSaveAttendanceBatch() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (
+      operations: AttendanceSaveOperation[],
+    ): Promise<Array<{ date: string; error: unknown }>> => {
+      const errors: Array<{ date: string; error: unknown }> = [];
+
+      for (const op of operations) {
+        try {
+          if (op.kind === 'create') {
+            const { error } = await getDataAccess().from(TABLES.WORKER_ATTENDANCE).insert(op.data);
+            if (error) throw error;
+          } else if (op.kind === 'update') {
+            const { error } = await getDataAccess()
+              .from(TABLES.WORKER_ATTENDANCE)
+              .update(op.updates)
+              .eq('id', op.id);
+            if (error) throw error;
+          } else {
+            const { error } = await getDataAccess()
+              .from(TABLES.WORKER_ATTENDANCE)
+              .delete()
+              .eq('id', op.id);
+            if (error) throw error;
+          }
+        } catch (error) {
+          console.error(`[useSaveAttendanceBatch] operation failed for ${op.date}`, error);
+          errors.push({ date: op.date, error });
+        }
+      }
+
+      return errors;
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.workerAttendance.listAll(),
+        queryKey: queryKeys.workerAttendance.lists(),
       });
     },
   });

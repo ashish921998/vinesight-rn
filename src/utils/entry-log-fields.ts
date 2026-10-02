@@ -19,7 +19,11 @@ import type {
   SprayRecordInsert,
 } from '@/types';
 import { mapExpenseTypeIdToRecordType } from '@/utils/expense-type';
-import { resolveAreaUnitPreference, type AreaUnitPreference } from '@/utils/preferences';
+import {
+  convertAreaToAcres,
+  resolveAreaUnitPreference,
+  type AreaUnitPreference,
+} from '@/utils/preferences';
 
 const ACRES_TO_HECTARES = 0.404686;
 
@@ -136,7 +140,9 @@ export function resolveSprayPhi(data: SprayFormData): SprayPhiResolution {
       ? data.phiStatus
       : 'verified'
     : hasCatalogMix
-      ? 'legacy_unverified'
+      ? data.phiStatus === 'unknown'
+        ? 'unknown'
+        : 'legacy_unverified'
       : (data.phiStatus ?? 'unknown');
 
   return { hasCatalogMix, hasResolvedPhi, normalizedPhiStatus, notes: noteParts.join(' ').trim() };
@@ -151,6 +157,13 @@ export function buildEntryLogRecordFields(
       ? context.area
       : 0;
   const factor = perAcreFactor(context.areaUnit);
+  // record.area is stored RAW in the farm's preferred unit (acres OR hectares),
+  // but the nutrient kernel's per-acre denominator expects canonical acres.
+  // Feeding raw hectares leaves per-acre totals ~2.47× too high on hectares
+  // farms. Convert once here; the persisted `area` field stays raw `farmArea`
+  // (contract preserved — see report-compute.ts:290).
+  const areaUnit = resolveAreaUnitPreference(context.areaUnit);
+  const farmAreaAcres = convertAreaToAcres(farmArea, areaUnit);
 
   switch (input.type) {
     case 'irrigation': {
@@ -167,7 +180,7 @@ export function buildEntryLogRecordFields(
       const chemicalItems = buildSprayChemicalItems(data.chemicals, factor);
       const nutrientTotals = calculateNutrientTotalsForLog({
         items: chemicalItems,
-        areaAcre: farmArea,
+        areaAcre: farmAreaAcres,
         waterVolumeL: data.waterVolume ?? null,
       });
       return {
@@ -218,7 +231,7 @@ export function buildEntryLogRecordFields(
       const fertilizers = buildFertigationItems(input.data.fertilizers, factor);
       const nutrientTotals = calculateNutrientTotalsForLog({
         items: fertilizers,
-        areaAcre: farmArea,
+        areaAcre: farmAreaAcres,
       });
       return {
         type: input.type,

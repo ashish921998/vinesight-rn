@@ -444,6 +444,7 @@ export const en = {
     },
     actions: {
       addActivity: 'Add activity',
+      addLog: 'Add log',
       addTask: 'Add task',
       seeAllLogs: 'See all logs',
       seeAllTasks: 'See all tasks',
@@ -476,6 +477,9 @@ export const en = {
       acres: '{{value}} acres',
       unknownAcres: '— acres',
     },
+    details: {
+      noDetails: 'Farm details',
+    },
     waterBalance: {
       label: 'Water balance',
       value: '{{value}} mm',
@@ -494,6 +498,7 @@ export const en = {
       bloom: 'Bloom',
       veraison: 'Véraison',
       harvest: 'Harvest',
+      progress: 'Season progress',
       sincePruning: 'since pruning',
     },
   },
@@ -506,6 +511,11 @@ export const en = {
     saveLabel: {
       createFarm: 'Create Farm',
     },
+    validation: {
+      nameRequired: 'Enter a farm name to continue.',
+      areaRequired: 'Enter an area greater than 0.',
+      cropRequired: 'Enter a crop name to continue.',
+    },
     sections: {
       details: 'Farm Details',
       cropType: 'Crop Type',
@@ -517,6 +527,8 @@ export const en = {
       locationOptional: 'Location (Optional)',
       soilPropertiesOptional: 'Soil Properties (Optional)',
       soilTexture: 'Soil Texture',
+      agronomyDetails: 'Add agronomy details (optional)',
+      agronomyDetailsHint: 'Variety, spacing, irrigation, location, soil & more',
     },
     fields: {
       name: {
@@ -782,7 +794,7 @@ export const en = {
       heroValueLow: '{{count}} LOW',
       heroValueOk: 'All OK',
       reorderFlag: '⚠ REORDER · {{count}}',
-      reorderAt: 'Reorder ≤ ',
+      reorderAt: 'Reorder ≤ {{quantity}}',
       legendLow: '{{count}} low',
       stockOk: 'OK',
       stockLow: 'Low',
@@ -819,6 +831,7 @@ export const en = {
 
   entryForm: {
     logSaved: 'Log saved',
+    logUpdated: 'Log updated',
     taskSaved: 'Task saved',
     activityType: 'Activity type',
     selectActivityTypeHint: 'Select an activity type to open the full-screen form.',
@@ -929,6 +942,25 @@ export const en = {
       selectUnit: 'Select unit',
       quickUnitLabel: 'Use {{unit}} as chemical quantity unit',
       moreUnits: 'More units',
+      unitLabels: {
+        gTotal: 'gm (total)',
+        mlTotal: 'mL (total)',
+        kgTotal: 'kg (total)',
+        lTotal: 'L (total)',
+      },
+      unitHints: {
+        gPerL: 'Grams per liter of spray water',
+        mlPerL: 'Milliliters per liter of spray water',
+        gPerAcre: 'Grams per acre of plot area',
+        mlPerAcre: 'Milliliters per acre of plot area',
+        ppm: 'Parts per million (mg per liter of water)',
+        gTotal: 'Total grams for the whole tank',
+        mlTotal: 'Total milliliters for the whole tank',
+        kgTotal: 'Total kilograms for the whole tank',
+        lTotal: 'Total liters for the whole tank',
+        kgPerAcre: 'Kilograms per acre of plot area',
+        lPerAcre: 'Liters per acre of plot area',
+      },
       tankEcho: {
         water: '{{quantity}} {{unit}} × {{water}} L = {{total}} in tank',
         area: '{{quantity}} {{unit}} × {{area}} acre = {{total}} in tank',
@@ -969,6 +1001,22 @@ export const en = {
       quickUnitLabel: 'Use {{unit}} as fertilizer quantity unit',
       moreUnits: 'More units',
       perAcre: 'Per acre',
+      unitLabels: {
+        kgTotal: 'kg (total)',
+        lTotal: 'L (total)',
+        gTotal: 'gm (total)',
+        mlTotal: 'mL (total)',
+      },
+      unitHints: {
+        kgPerAcre: 'Kilograms per acre of plot area',
+        lPerAcre: 'Liters per acre of plot area',
+        kgTotal: 'Total kilograms for the whole plot',
+        lTotal: 'Total liters for the whole plot',
+        gPerAcre: 'Grams per acre of plot area',
+        mlPerAcre: 'Milliliters per acre of plot area',
+        gTotal: 'Total grams for the whole plot',
+        mlTotal: 'Total milliliters for the whole plot',
+      },
       verbatimUnitHint: 'Unit kept as entered: {{unit}}',
       areaEcho: {
         toTotal: '{{quantity}} {{unit}} → {{total}} total',
@@ -1268,9 +1316,6 @@ export const en = {
     },
     template: {
       title: 'Widget Template',
-      testWidget: {
-        label: 'Test Widget',
-      },
     },
   },
 
@@ -1589,6 +1634,7 @@ export const en = {
     loggingTo: 'Logging to',
     switch: 'Switch',
     loggingToNoFarm: 'No farm yet',
+    editFarmUnavailable: "This log's farm is no longer available.",
   },
 
   assistant: {
@@ -1727,6 +1773,7 @@ export const en = {
       title: 'Attach',
       choosePrompt: 'Choose what to attach',
       image: 'Image',
+      imageQuestionsUnsupported: 'Image questions are not supported yet',
       file: 'File',
       imageTooLarge: 'Image exceeds the 10MB limit. Please choose a smaller file.',
       imageReadError: 'Could not read image data. Please try again.',
@@ -1821,14 +1868,14 @@ export const en = {
       skipAlerts: 'Skip for now',
     },
     firstFarm: {
-      title: 'Add your first farm.',
-      subtitle: 'Start with the essentials. You can edit details later.',
+      title: "Let's set up your farm",
+      subtitle: 'Add the essentials now. You can fill in everything else later.',
       assurance:
         'You only need the essentials now. Everything else can be added from the farm page.',
-      createButton: 'Create first farm',
+      createButton: 'Save farm and start',
       existingTitle: 'Your first farm already exists.',
-      existingSubtitle:
-        'Continue to alerts and finish onboarding. You can edit the farm details later.',
+      existingSubtitle: 'Everything is ready. Continue to your dashboard.',
+      existingButton: 'Go to dashboard',
       existingFarmFallback: 'Farm',
       existingRegionFallback: 'Region',
       existingCropFallback: 'Crop',
@@ -1999,9 +2046,10 @@ export const en = {
       'Got a consultant? Enter the code they gave you to link your farm to them. Skip if not.',
     continue: 'Continue',
     continuing: 'Continuing...',
+    continueWithoutEmail: 'Continue without email',
     skip: 'Skip for now',
     emailExistsWarning:
-      'An account with this email already exists. Please sign in with your email first, then link your phone number from Settings.',
+      'This email is already linked to another account. You can continue without an email, or sign in with that email and link your phone from Settings.',
     a11y: {
       skipProfileCompletion: 'Skip profile completion',
     },
@@ -2074,12 +2122,6 @@ export const en = {
     aiAssistant: {
       title: 'AI Assistant',
       subtitle: 'Open the farming assistant',
-    },
-    appModeIntro: {
-      title: "We've streamlined VineSight",
-      body: 'The app now starts in Simplified mode. Workers, tools, and tasks are hidden by default. You can switch back any time.',
-      enableDetailed: 'Enable Detailed mode',
-      staySimplified: 'Stay on Simplified',
     },
     errors: {
       signOutFailed: 'Failed to sign out. Please try again.',
@@ -2215,7 +2257,7 @@ export const en = {
       'Your personal farming assistant. Ask me anything about grape farming, irrigation, diseases, or harvest!',
     suggestedQuestions: 'Suggested questions:',
     apiKeyRequiredTitle: 'API Key Required',
-    apiKeyRequiredBody: 'Please configure your OpenAI API key in the environment settings.',
+    apiKeyRequiredBody: 'Please configure your Sarvam API key in the environment settings.',
     input: {
       placeholder: 'Ask about farming…',
     },
@@ -2449,18 +2491,11 @@ export const en = {
         cta: 'Retry',
       },
     },
-    quickActions: {
-      title: 'Quick actions',
-      irrigation: 'Irrigation',
-      spray: 'Spray',
-      harvest: 'Harvest',
-      expense: 'Expense',
-      note: 'Note',
-    },
     recentActivity: {
       title: 'Recent activity',
       openFarm: 'Open farm details for {{name}}',
       openFarmDetails: 'Open farm details',
+      editActivity: 'Edit {{label}}',
     },
     empty: {
       recentActivity: 'No recent activity yet.\nAdd an entry to get started.',
@@ -3175,6 +3210,7 @@ export const en = {
     alerts: {
       partialErrorTitle: 'Partial error',
       partialErrorBody: 'Saved with {{count}} error(s). Reloading…',
+      saveErrorBody: 'Failed to save attendance. Please try again.',
       savedTitle: 'Success',
       savedBody: 'Saved attendance for {{name}}.',
       workerCount: '{{count}} workers',
@@ -3213,6 +3249,9 @@ export const en = {
   reports: {
     title: 'Reports',
     fpc: {
+      audience: 'For exporters',
+      exportTitle: 'Exporter activity register',
+      shareXlsx: 'Share XLSX',
       sectionTitle: 'Exporter Activity Register ({{count}} days)',
       day: 'Day',
       irrigation: 'Irrigation',

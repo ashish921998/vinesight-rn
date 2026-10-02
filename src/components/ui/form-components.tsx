@@ -56,6 +56,7 @@ interface FormModalProps {
    * renders inside a native sheet, which already sits below the status bar.
    */
   headerTopInsetCap?: number;
+  keyboardVerticalOffset?: number;
   /**
    * When true the primary save button spans the full footer width (a stronger
    * CTA for submit-style forms). Defaults to the standard right-aligned,
@@ -90,6 +91,7 @@ export function FormModal({
   saveButtonTargetId,
   saveFullWidth = false,
   headerTopInsetCap,
+  keyboardVerticalOffset = 0,
 }: FormModalProps) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
@@ -179,6 +181,7 @@ export function FormModal({
   const content = (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={keyboardVerticalOffset}
       style={{ flex: 1, backgroundColor: m3.surface.s100 }}
     >
       <View style={headerStyle}>
@@ -781,6 +784,8 @@ interface FormInputProps {
   blurOnSubmit?: boolean;
   /** Keeps the input discoverable to assistive technology when its visual label is omitted. */
   accessibilityLabel?: string;
+  /** Inline validation message shown below the input; also reddens the border. */
+  error?: string;
 }
 
 export function FormInput({
@@ -801,6 +806,7 @@ export function FormInput({
   returnKeyType = multiline ? 'default' : 'done',
   blurOnSubmit = true,
   accessibilityLabel,
+  error,
 }: FormInputProps) {
   const m3 = useM3();
   const containerStyle: ViewStyle = {
@@ -825,10 +831,16 @@ export function FormInput({
     alignItems: multiline ? 'flex-start' : 'center',
     backgroundColor: m3.surface.s100,
     borderWidth: 1,
-    borderColor: m3.surface.s300,
+    borderColor: error ? m3.colorScheme.error : m3.surface.s300,
     borderRadius: borderRadius.sm,
     minHeight: 48,
     overflow: 'hidden',
+  };
+
+  const errorStyle: TextStyle = {
+    fontSize: fontSize.xs,
+    color: m3.colorScheme.error,
+    marginTop: spacing[2],
   };
 
   const prefixSuffixStyle: TextStyle = {
@@ -875,6 +887,7 @@ export function FormInput({
         />
         {suffix && <Text style={[prefixSuffixStyle, { paddingRight: spacing[4] }]}>{suffix}</Text>}
       </View>
+      {error ? <Text style={errorStyle}>{error}</Text> : null}
     </View>
   );
 }

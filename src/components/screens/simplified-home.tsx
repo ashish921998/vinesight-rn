@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, ScrollView, Pressable, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,14 +7,22 @@ import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { AppIcon } from '@/components/ui/app-icon';
 import { OptionPickerSheet } from '@/components/ui/option-picker-sheet';
 import { useFarms, useRecentActivities, useLogPresentation } from '@/hooks';
+import type { RecentActivity } from '@/hooks';
+import { getDataAccess } from '@/data-access';
+import type { Farm } from '@/types';
 import { useSelectedFarmStore } from '@/stores';
 import { useM3 } from '@/styles/use-theme';
 import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { telemetry } from '@/services/telemetry';
-import { QuickLogSheet, type QuickLogType } from '@/components/sheets/quick-log-sheet';
+import { toast } from '@/components/ui/toast';
+import {
+  QuickLogSheet,
+  isQuickLogType,
+  type QuickLogEditTarget,
+  type QuickLogType,
+} from '@/components/sheets/quick-log-sheet';
 import { RecentActivityList } from './recent-activity';
-import type { LogTypeId } from '@/constants/calculator-models';
 
 // Home screen for BOTH simplified and detailed mode. An action screen — not an
 // analytics dashboard. Farm-as-title header → quick actions (log directly to
@@ -23,24 +31,11 @@ import type { LogTypeId } from '@/constants/calculator-models';
 const ANALYTICS_BASE = { app_mode: 'simplified', surface: 'home' } as const;
 const RECENT_LIMIT = 6;
 
-type QuickAction = {
-  type: Extract<LogTypeId, 'irrigation' | 'spray' | 'harvest' | 'expense'>;
-  labelKey:
-    | 'dashboard.quickActions.irrigation'
-    | 'dashboard.quickActions.spray'
-    | 'dashboard.quickActions.harvest'
-    | 'dashboard.quickActions.expense';
-};
-
-// The four prime quick-log slots. Icon + color are NOT duplicated here — they
-// are derived from the canonical log-type presentation (useLogPresentation) at
-// render time, so the grid and the recent-activity list can never disagree.
-const QUICK_ACTIONS: readonly QuickAction[] = [
-  { type: 'irrigation', labelKey: 'dashboard.quickActions.irrigation' },
-  { type: 'spray', labelKey: 'dashboard.quickActions.spray' },
-  { type: 'harvest', labelKey: 'dashboard.quickActions.harvest' },
-  { type: 'expense', labelKey: 'dashboard.quickActions.expense' },
-];
+// The four prime quick-log slots. Icon, color and label are NOT duplicated here
+// — all three are derived from the canonical log-type presentation
+// (useLogPresentation) at render time, so the grid and the recent-activity list
+// can never disagree.
+const QUICK_ACTIONS: readonly QuickLogType[] = ['irrigation', 'spray', 'harvest', 'expense'];
 
 export function SimplifiedHome() {
   const m3 = useM3();
@@ -63,6 +58,17 @@ export function SimplifiedHome() {
   const [showFarmPicker, setShowFarmPicker] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [quickLogType, setQuickLogType] = useState<QuickLogType | null>(null);
+  const [editTarget, setEditTarget] = useState<QuickLogEditTarget | null>(null);
+  // Farm resolved for the edit target — kept separate from the global
+  // selected-farm store so editing a log from another farm doesn't switch
+  // the dashboard's default quick-log target.
+  const [editFarm, setEditFarm] = useState<Farm | null>(null);
+
+  // Sheet-intent guard: bumped on every action that changes what the sheet
+  // should show (edit fetch, quick-add, close). An async edit captures the
+  // value and bails if it changed by the time the fetch resolves — so a stale
+  // fetch can no longer clobber a newer tap.
+  const sheetIntentId = useRef(0);
 
   // Resolve the selected farm against the live list — a persisted id may be
   // stale (deleted farm). Falls back to the first farm, then null.
@@ -90,11 +96,13 @@ export function SimplifiedHome() {
   };
 
   const goAddFarm = () => {
+    sheetIntentId.current += 1;
     telemetry.capture('add_farm_tapped', ANALYTICS_BASE);
     router.push('/farm/add');
   };
 
   const handleSwitchFarm = () => {
+    sheetIntentId.current += 1;
     telemetry.capture('farm_switch_tapped', ANALYTICS_BASE);
     setShowFarmPicker(true);
   };
@@ -108,13 +116,68 @@ export function SimplifiedHome() {
   // Quick actions log DIRECTLY to the selected farm — no per-action picker.
   // Each action opens a focused single-log sheet. Notes remain available in the
   // full add-entry flow; the four prime dashboard slots are operational logs.
-  const handleQuickAction = (action: QuickAction) => {
+  const handleQuickAction = (type: QuickLogType) => {
     if (!hasFarms || !selectedFarm?.id) {
       goAddFarm();
       return;
     }
-    telemetry.capture('quick_action_tapped', { ...ANALYTICS_BASE, action: action.type });
-    setQuickLogType(action.type);
+    telemetry.capture('quick_action_tapped', { ...ANALYTICS_BASE, action: type });
+    // Clear any in-flight edit target so a quick-add can't reopen on the edit path.
+    sheetIntentId.current += 1;
+    setEditTarget(null);
+    setQuickLogType(type);
+  };
+
+  // Tapping a recent-activity row fetches the full record by ID and opens the
+  // edit QuickLogSheet inline for the four quick types. Fertigation/note fall
+  // back to the farm details page.
+  const handleEditActivity = async (activity: RecentActivity) => {
+    const numericId = Number(activity.id.split('_')[1]);
+    if (!numericId || !isQuickLogType(activity.type)) {
+      sheetIntentId.current += 1;
+      router.push(`/farm/${activity.farmId}`);
+      return;
+    }
+
+    const table =
+      activity.type === 'irrigation'
+        ? 'irrigation_records'
+        : activity.type === 'spray'
+          ? 'spray_records'
+          : activity.type === 'harvest'
+            ? 'harvest_records'
+            : 'expense_records';
+
+    // Claim the sheet for this edit; if any newer tap bumps the counter
+    // before the fetch resolves, drop this stale result.
+    const myIntentId = (sheetIntentId.current += 1);
+
+    const { data, error } = await getDataAccess()
+      .from(table)
+      .select('*')
+      .eq('id', numericId)
+      .maybeSingle();
+
+    // A newer tap (quick-add, another edit, or close) wins — don't reopen.
+    if (myIntentId !== sheetIntentId.current) return;
+
+    if (error || !data) {
+      router.push(`/farm/${activity.farmId}`);
+      return;
+    }
+
+    // Farm must still be in the current list. A stale recent-activity or lost
+    // access means per-acre/PHI derivations and linked-fertigation create would
+    // silently fall back to the selected farm — refuse rather than corrupt.
+    const farm = farms?.find((f) => f.id === activity.farmId) ?? null;
+    if (!farm) {
+      toast.error(t('simplifiedHome.editFarmUnavailable'));
+      return;
+    }
+
+    setEditTarget({ type: activity.type, record: data } as QuickLogEditTarget);
+    setQuickLogType(activity.type);
+    setEditFarm(farm);
   };
 
   const farmOptions = useMemo(
@@ -225,7 +288,10 @@ export function SimplifiedHome() {
               </Pressable>
 
               <Pressable
-                onPress={() => router.push('/app-settings')}
+                onPress={() => {
+                  sheetIntentId.current += 1;
+                  router.push('/app-settings');
+                }}
                 accessibilityRole="button"
                 accessibilityLabel={t('assistant.settingsGearA11y')}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -246,67 +312,71 @@ export function SimplifiedHome() {
             </View>
           </View>
 
-          {/* Quick Actions — four domain-colored buttons. Log direct to farm. */}
-          <View style={{ marginBottom: spacing[6] }}>
-            <Text
-              accessibilityRole="header"
-              style={{
-                fontSize: fontSize.base,
-                fontWeight: fontWeight.semibold,
-                marginBottom: spacing[3],
-                color: m3.surface.s900,
-              }}
-            >
-              {t('dashboard.quickActions.title')}
-            </Text>
-            {/* 2×2 grid — big targets for gloved/sunlit field use, room for a
-                real label per tile (vs the old 4-across icon strip). */}
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3] }}>
-              {QUICK_ACTIONS.map((action) => {
-                const p = presentation[action.type];
-                return (
-                  <Pressable
-                    key={action.type}
-                    onPress={() => handleQuickAction(action)}
-                    accessibilityRole="button"
-                    accessibilityLabel={t(action.labelKey)}
-                    style={({ pressed }) => ({
-                      flexBasis: '45%',
-                      flexGrow: 1,
-                      borderRadius: borderRadius.md,
-                      padding: spacing[4],
-                      backgroundColor: m3.surface.s100,
-                      borderWidth: 1,
-                      borderColor: m3.surface.s300,
-                      opacity: pressed ? 0.85 : 1,
-                    })}
+          {/* Quick actions — four domain-colored tiles that log direct to the
+              farm named above. No section heading: the tiles read as the
+              screen's purpose, and one less line of chrome is one less thing to
+              parse in the field. 2×2 grid keeps targets big for gloved/sunlit
+              use, with the icon and label side by side so the label gets the
+              full tile width in Marathi/Hindi. */}
+          <View
+            style={{
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              gap: spacing[3],
+              marginBottom: spacing[6],
+            }}
+          >
+            {QUICK_ACTIONS.map((type) => {
+              const p = presentation[type];
+              return (
+                <Pressable
+                  key={type}
+                  onPress={() => handleQuickAction(type)}
+                  accessibilityRole="button"
+                  accessibilityLabel={p.label}
+                  style={({ pressed }) => ({
+                    flexBasis: '45%',
+                    flexGrow: 1,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: spacing[3],
+                    borderRadius: borderRadius.md,
+                    paddingHorizontal: spacing[3],
+                    paddingVertical: spacing[4],
+                    backgroundColor: m3.surface.s100,
+                    borderWidth: 1,
+                    borderColor: m3.surface.s300,
+                    opacity: pressed ? 0.85 : 1,
+                  })}
+                >
+                  <View
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: radius.md,
+                      backgroundColor: colorWithOpacity(p.color, 0.12),
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
                   >
-                    <View
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: radius.md,
-                        backgroundColor: colorWithOpacity(p.color, 0.12),
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginBottom: spacing[2],
-                      }}
-                    >
-                      <AppIcon name={p.icon} size={22} color={p.color} />
-                    </View>
-                    <Text
-                      style={{
-                        fontSize: fontSize.sm,
-                        fontWeight: fontWeight.semibold,
-                        color: m3.surface.s900,
-                      }}
-                    >
-                      {t(action.labelKey)}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
+                    <AppIcon name={p.icon} size={24} color={p.color} />
+                  </View>
+                  <Text
+                    numberOfLines={2}
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      fontSize: fontSize.base,
+                      fontWeight: fontWeight.semibold,
+                      color: m3.surface.s900,
+                    }}
+                  >
+                    {p.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
 
           {/* Recent Activity — compact log cards, still secondary to capture actions. */}
@@ -314,8 +384,12 @@ export function SimplifiedHome() {
             activities={recentActivities}
             isLoading={isLoadingActivities || isLoadingFarms}
             hasFarms={hasFarms}
-            onOpenFarm={(farmId) => router.push(`/farm/${farmId}`)}
-            onViewAll={() => router.push('/logs')}
+            showFarmName={canSwitch}
+            onEditActivity={handleEditActivity}
+            onViewAll={() => {
+              sheetIntentId.current += 1;
+              router.push('/logs');
+            }}
           />
         </View>
       </ScrollView>
@@ -330,11 +404,22 @@ export function SimplifiedHome() {
         options={farmOptions}
       />
 
-      {/* Single-log quick sheet — one bottom sheet per log type. */}
+      {/* Single-log quick sheet — one bottom sheet per log type.
+          Add mode: quickLogType only. Edit mode: editTarget set. */}
       <QuickLogSheet
         type={quickLogType}
-        farm={selectedFarm}
-        onClose={() => setQuickLogType(null)}
+        // editFarm is non-null in edit mode — handleEditActivity guards against
+        // a missing farm and bails before opening. The ?? selectedFarm fallback
+        // is defensive only (keeps the farm: Farm | null type satisfied).
+        farm={editTarget ? (editFarm ?? selectedFarm) : selectedFarm}
+        editTarget={editTarget}
+        onClose={() => {
+          // Bump so any in-flight edit fetch can't reopen the sheet after close.
+          sheetIntentId.current += 1;
+          setQuickLogType(null);
+          setEditTarget(null);
+          setEditFarm(null);
+        }}
       />
     </View>
   );

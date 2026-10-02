@@ -14,3 +14,11 @@ export {
   type SaveSingleLogInput,
   type SaveSingleLogResult,
 } from './use-save-single-log';
+export {
+  LinkedFertigationSaveError,
+  saveIrrigationWithLinkedFertigation,
+  type SaveIrrigationWithLinkedFertigationParams,
+  type SaveIrrigationWithLinkedFertigationResult,
+  type SaveLogFn,
+  type IrrigationDeleteFn,
+} from './save-irrigation-with-linked-fertigation';

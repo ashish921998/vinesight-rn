@@ -78,32 +78,11 @@ describe('${widgetName}', () => {
 });
 `;
 
-const storyContent = `import type { Meta, StoryObj } from '@storybook/react-native';
-import { ${widgetName} } from './${widgetName}';
-
-const meta: Meta<typeof ${widgetName}> = {
-  title: 'Widgets/${category}/${widgetName}',
-  component: ${widgetName},
-  parameters: {
-    controls: { expanded: true },
-  },
-};
-
-export default meta;
-
-type Story = StoryObj<typeof ${widgetName}>;
-
-export const Default: Story = {
-  args: {},
-};
-`;
-
 const indexContent = `export * from './${widgetName}';
 `;
 
 fs.writeFileSync(path.join(baseDir, `${widgetName}.tsx`), componentContent);
 fs.writeFileSync(path.join(baseDir, `${widgetName}.test.tsx`), testContent);
-fs.writeFileSync(path.join(baseDir, `${widgetName}.stories.tsx`), storyContent);
 fs.writeFileSync(path.join(baseDir, 'index.ts'), indexContent);
 
 console.log(`Created widget ${widgetName} in ${path.relative(process.cwd(), baseDir)}`);

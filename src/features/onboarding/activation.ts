@@ -35,7 +35,6 @@ export const markOnboardingFirstActionCompleted = ({
     onboardingStore.markFarmCreated(farmId);
   }
   onboardingStore.markFirstActionCompleted(actionType);
-  onboardingStore.setCurrentStep('notifications');
 
   telemetry.capture('onboarding_first_action_completed', {
     action_type: actionType,

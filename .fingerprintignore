@@ -1,0 +1,4 @@
+# RNRepo: keep downloaded pre-built artifacts out of the Expo
+# Fingerprint hash so EAS fingerprint stays stable across cache refreshes.
+# https://docs.expo.dev/versions/latest/sdk/fingerprint/
+**/.rnrepo-cache/**/*

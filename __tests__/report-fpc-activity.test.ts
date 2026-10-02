@@ -370,6 +370,44 @@ describe('FPC register rendering', () => {
     expect(sheet).toContain('<t xml:space="preserve">12-61-00</t>');
   });
 
+  it('XLSX: repeats the exporter identity and header block on long registers', () => {
+    const manyDays = Array.from({ length: 73 }, (_, index) => ({
+      date: `Day ${index + 1}`,
+      isoDate: `2026-06-${String((index % 28) + 1).padStart(2, '0')}`,
+      daysAfterPruning: index + 1,
+      irrigationHours: null,
+      waterMm: null,
+      growthStage: 'stage',
+      products: [
+        {
+          key: `product-${index}`,
+          source: 'spray' as const,
+          marketName: `Product ${index + 1}`,
+          technicalName: `Technical ${index + 1}`,
+          qtyPerAcreDisplay: null,
+          totalQtyDisplay: null,
+          asLogged: '1 ml',
+          phiDays: null,
+          safeHarvestDate: null,
+          mrl: null,
+        },
+      ],
+      notes: '',
+    }));
+
+    const workbook = generateFpcWorkbook({ ...data, fpcActivity: manyDays });
+    const files = unzipSync(Uint8Array.from(Buffer.from(workbook, 'base64')));
+    const sheet = strFromU8(files['xl/worksheets/sheet1.xml']);
+
+    expect(sheet).toContain('<mergeCell ref="A1:H1"/>');
+    expect(sheet).toContain('<mergeCell ref="A77:H77"/>');
+    expect(sheet).toContain('<row r="80">');
+    expect(sheet).toContain('<t xml:space="preserve">Sr.No</t>');
+    expect(sheet).toContain('<t xml:space="preserve">Qty Per Liter </t>');
+    expect(sheet).toContain('<rowBreaks count="1" manualBreakCount="1">');
+    expect(sheet).toContain('<brk id="76" min="0" max="16383" man="1"/>');
+  });
+
   it('CSV (simple): keeps the Days cell raw "-" when the pruning date is missing', () => {
     // No date_of_pruning → daysAfterPruning is null → Days renders as "-".
     // escapeCSV's formula guard would prefix a leading "-" with a force-text

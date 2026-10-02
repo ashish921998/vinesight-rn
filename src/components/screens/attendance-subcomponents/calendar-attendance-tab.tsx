@@ -2,8 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Alert, Pressable } from 'react-native';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { Spinner } from '@/components/ui/spinner';
-import { getDataAccess } from '@/data-access';
-import type { Worker, WorkerAttendance, WorkStatus } from '@/types';
+import { useWorkerAttendanceByDateRange } from '@/hooks/use-workers';
+import type { Worker, WorkStatus } from '@/types';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -15,6 +15,16 @@ function formatDateToYYYYMMDD(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+/** Returns the first and last calendar dates for the month containing `ref`. */
+function getMonthBoundaries(ref: Date): { monthStart: Date; monthEnd: Date } {
+  const monthStart = new Date(ref);
+  monthStart.setDate(1);
+  const monthEnd = new Date(ref);
+  monthEnd.setMonth(monthEnd.getMonth() + 1);
+  monthEnd.setDate(0);
+  return { monthStart, monthEnd };
 }
 
 type AttendanceStatus = WorkStatus | null;
@@ -43,50 +53,37 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
     workers.length > 0 && workers[0].id !== undefined ? workers[0].id : null,
   );
   const [calendarMonth, setCalendarMonth] = useState(new Date());
-  const [attendanceData, setAttendanceData] = useState<WorkerAttendance[]>([]);
-  const [loading, setLoading] = useState(false);
   const [workerSheetVisible, setWorkerSheetVisible] = useState(false);
 
   const selectedWorker = workers.find((w) => w.id === selectedWorkerId);
+
+  const { startDate, endDate } = useMemo(() => {
+    const { monthStart, monthEnd } = getMonthBoundaries(calendarMonth);
+    return {
+      startDate: formatDateToYYYYMMDD(monthStart),
+      endDate: formatDateToYYYYMMDD(monthEnd),
+    };
+  }, [calendarMonth]);
+
+  const {
+    data: attendanceData = [],
+    isLoading,
+    isError,
+  } = useWorkerAttendanceByDateRange(selectedWorkerId ?? undefined, startDate, endDate);
+
+  React.useEffect(() => {
+    if (isError) {
+      Alert.alert(i18n.t('common.error'), i18n.t('common.errors.failedToLoadAttendance'));
+    }
+  }, [isError]);
 
   const handleWorkerSelect = () => {
     if (workers.length === 0) return;
     setWorkerSheetVisible(true);
   };
 
-  const loadCalendarAttendance = React.useCallback(async () => {
-    if (!selectedWorkerId) return;
-
-    setLoading(true);
-    try {
-      const monthStart = new Date(calendarMonth);
-      monthStart.setDate(1);
-      const monthEnd = new Date(calendarMonth);
-      monthEnd.setMonth(monthEnd.getMonth() + 1);
-      monthEnd.setDate(0);
-
-      const startDate = formatDateToYYYYMMDD(monthStart);
-      const endDate = formatDateToYYYYMMDD(monthEnd);
-
-      const records = await fetchAttendanceForWorker(selectedWorkerId, startDate, endDate);
-      setAttendanceData(records);
-    } catch {
-      Alert.alert(i18n.t('common.error'), i18n.t('common.errors.failedToLoadAttendance'));
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedWorkerId, calendarMonth]);
-
-  React.useEffect(() => {
-    loadCalendarAttendance();
-  }, [loadCalendarAttendance]);
-
   const calendarDays = useMemo(() => {
-    const monthStart = new Date(calendarMonth);
-    monthStart.setDate(1);
-    const monthEnd = new Date(calendarMonth);
-    monthEnd.setMonth(monthEnd.getMonth() + 1);
-    monthEnd.setDate(0);
+    const { monthStart, monthEnd } = getMonthBoundaries(calendarMonth);
 
     const firstDay = monthStart.getDay();
     const daysInMonth = monthEnd.getDate();
@@ -271,7 +268,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
             }}
           />
 
-          {loading ? (
+          {isLoading ? (
             <View style={{ paddingVertical: spacing[8], alignItems: 'center' }}>
               <Spinner size="small" color={UI.primary} />
             </View>
@@ -469,24 +466,4 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
       />
     </ScrollView>
   );
-}
-
-async function fetchAttendanceForWorker(
-  workerId: number,
-  startDate: string,
-  endDate: string,
-): Promise<WorkerAttendance[]> {
-  const { data, error } = await getDataAccess()
-    .from('worker_attendance')
-    .select('*')
-    .eq('worker_id', workerId)
-    .gte('date', startDate)
-    .lte('date', endDate)
-    .order('date', { ascending: true });
-
-  if (error) {
-    throw new Error('Failed to fetch attendance');
-  }
-
-  return data || [];
 }

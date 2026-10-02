@@ -4,7 +4,7 @@ import { LOG_TYPES, type LogTypeId } from '@/constants/calculator-models';
 import { type RegistryIconName } from '@/constants/icon-registry';
 import { useDomainColors } from '@/styles/use-domain-colors';
 
-type LogPresentation = { icon: RegistryIconName; color: string; label: string };
+export type LogPresentation = { icon: RegistryIconName; color: string; label: string };
 
 /**
  * Single typed presentation (icon + color + label) for every log type. Icons and

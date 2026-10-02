@@ -59,6 +59,7 @@ export function FarmSelectModal({
 
         <View style={{ paddingHorizontal: spacing[5], flex: 1 }}>
           <FlatList
+            nestedScrollEnabled
             data={farms.filter((f) => f.id != null)}
             keyExtractor={(item) => item.id?.toString() ?? item.name}
             showsVerticalScrollIndicator={false}

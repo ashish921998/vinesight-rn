@@ -77,7 +77,11 @@ export const ensureValidDate = (value: Date | undefined | null): Date => {
 // ---------------------------------------------------------------------------
 
 export const sanitizeDecimalInput = (value: string): string => {
-  const digitsAndDotOnly = value.replace(/[^0-9.]/g, '');
+  // Convert a comma to a period first. A comma-locale keypad (for example an
+  // Android decimal-pad on an en-ZA device) sends "," as the decimal separator.
+  // Stripping it would silently delete the decimal point.
+  const normalized = value.replace(/,/g, '.');
+  const digitsAndDotOnly = normalized.replace(/[^0-9.]/g, '');
   const firstDotIndex = digitsAndDotOnly.indexOf('.');
   if (firstDotIndex === -1) return digitsAndDotOnly;
   const whole = digitsAndDotOnly.substring(0, firstDotIndex);
@@ -103,24 +107,31 @@ export const resolveFarmCoreSelection = ({
   variety: cropVariety === 'Custom' ? customVariety.trim() : cropVariety.trim(),
 });
 
-export const isFarmCoreFieldsValid = ({
+// Quick-create core: a first-time farmer needs only a name, crop, and area to
+// create a farm. Region and variety are optional and deferred behind the
+// collapsible "Add agronomy details" section — they send safe empty-string
+// defaults on insert (see buildFarmInsertFromCoreFields) rather than blocking
+// the Save button.
+export type FarmCoreFieldError = 'name' | 'area' | 'customCrop';
+
+// Returns the first required field that fails validation, or null when the core
+// fields are valid. The view uses this to show an inline error and focus the
+// field instead of leaving the Create Farm button silently disabled.
+export const getFarmCoreFieldError = ({
   name,
-  region,
   area,
   selectedCrop,
   customCropName,
-  cropVariety,
-  customVariety,
-}: FarmCoreFields): boolean => {
-  if (!name.trim()) return false;
-  if (!region.trim()) return false;
+}: FarmCoreFields): FarmCoreFieldError | null => {
+  if (!name.trim()) return 'name';
   const areaValue = Number(area);
-  if (!Number.isFinite(areaValue) || areaValue <= 0) return false;
-  if (selectedCrop === 'Other' && !customCropName.trim()) return false;
-  if (cropVariety === 'Custom' && !customVariety.trim()) return false;
-  if (!cropVariety.trim() && !customVariety.trim()) return false;
-  return true;
+  if (!Number.isFinite(areaValue) || areaValue <= 0) return 'area';
+  if (selectedCrop === 'Other' && !customCropName.trim()) return 'customCrop';
+  return null;
 };
+
+export const isFarmCoreFieldsValid = (fields: FarmCoreFields): boolean =>
+  getFarmCoreFieldError(fields) === null;
 
 export const buildFarmInsertFromCoreFields = (
   fields: FarmCoreFields,
@@ -132,14 +143,18 @@ export const buildFarmInsertFromCoreFields = (
   if (!Number.isFinite(areaValue) || areaValue <= 0) return null;
 
   const { crop, variety } = resolveFarmCoreSelection(fields);
-  if (!crop || !variety) return null;
+  // crop is guaranteed non-empty by validation; variety/region may be blank for
+  // a quick-create farm. They are NOT nullable in the Farm type, so send safe
+  // empty-string defaults rather than undefined (the live DB nullability is
+  // unknown — there is no CREATE TABLE farms migration in the repo).
+  if (!crop) return null;
 
   return {
     name: fields.name.trim(),
-    region: fields.region.trim(),
+    region: fields.region.trim() || '',
     area: areaValue,
     crop,
-    crop_variety: variety,
+    crop_variety: variety || '',
     planting_date: formatLocalDate(ensureValidDate(plantingDate)),
   };
 };

@@ -20,12 +20,18 @@ import type { Basis, Measure, QuantityContext, QuantityItem } from '@/lib/quanti
  * share one shape (no schema or migration work).
  */
 export interface ProductUnitChip {
-  /** Stable id — doubles as the display label (and any persistence key). */
+  /** Persistence key (spray-unit-store) and picker onSelect value. Stable across display rewording. */
   key: string;
   /** Stored unit spelling (the form's existing vocabulary, kernel-parseable). */
   unit: string;
   /** Stored quantityBasis. 'total' for units whose string carries its own basis — the kernel ignores the column for them. */
   basis: QuantityBasis;
+  /** Non-localized display respelling of the key ("g/L" → "gm/L"). Falls back to `key` when absent. */
+  label?: string;
+  /** i18n key for the display label, resolved via t(). Takes precedence over `label` when present. */
+  labelKey?: string;
+  /** i18n key for a one-line hint shown under the label in the unit picker. Absent → no subtitle. */
+  hintKey?: string;
 }
 
 /**
@@ -47,6 +53,25 @@ export function chipForProductEntry<C extends ProductUnitChip>(
   }
   const effective: QuantityBasis = basis ?? 'total';
   return chips.find((chip) => chip.unit === unit && chip.basis === effective) ?? null;
+}
+
+/** The chip with this persistence key, out of the given vocabulary. Null for unknown/empty keys. */
+export function unitChipByKey<C extends ProductUnitChip>(
+  chips: readonly C[],
+  key: string | null | undefined,
+): C | null {
+  if (!key) return null;
+  return chips.find((chip) => chip.key === key) ?? null;
+}
+
+/** Display text for a chip: labelKey → label → key. `fallbackUnit` is the verbatim unit string when there is no chip. */
+export function unitChipLabel(
+  chip: ProductUnitChip | null | undefined,
+  t: (key: string) => string,
+  fallbackUnit: string,
+): string {
+  if (!chip) return fallbackUnit;
+  return chip.labelKey ? t(chip.labelKey) : (chip.label ?? chip.key);
 }
 
 /** The minimal slice of a form's product row the dose helpers read. */

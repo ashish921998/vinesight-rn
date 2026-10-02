@@ -50,12 +50,27 @@ if (isEasBuild && !googleServicesFile && !allowMissingGoogleServices) {
 // (EAS secret present vs. local/size build) gets the right behavior.
 const hasSentryAuthToken = Boolean(process.env.SENTRY_AUTH_TOKEN?.trim());
 
+const EAS_PROJECT_ID = 'ede2bb37-3ad0-4503-9522-02bd1539e79b';
+
 module.exports = {
   expo: {
     name: 'Vinesight',
     slug: 'vinesight-rn',
-    version: '3.3.2',
+    version: '3.3.25',
     orientation: 'portrait',
+    // EAS Update (OTA). Builds fetch updates from the project's EAS URL on
+    // launch; `fallbackToCacheTimeout: 0` runs the cached update immediately
+    // and applies the downloaded one on next launch (non-blocking).
+    updates: {
+      url: `https://u.expo.dev/${EAS_PROJECT_ID}`,
+      enabled: true,
+      fallbackToCacheTimeout: 0,
+      checkAutomatically: 'ON_LOAD',
+    },
+    // Keep OTA updates compatible across build and publish environments while
+    // isolating native releases. JavaScript-only updates retain this version;
+    // native changes must bump `expo.version` and ship a new store build.
+    runtimeVersion: { policy: 'appVersion' },
     icon: './assets/icons/ios-light.png',
     userInterfaceStyle: 'automatic',
     scheme: 'vinesight',
@@ -68,7 +83,7 @@ module.exports = {
       supportsTablet: true,
       bundleIdentifier: 'com.vinesight.ios',
       usesAppleSignIn: true,
-      buildNumber: '1.3.7',
+      buildNumber: '1.3.8',
       entitlements: {
         'com.apple.security.application-groups': ['group.com.vinesight.app'],
       },
@@ -109,7 +124,7 @@ module.exports = {
     },
     android: {
       package: 'com.vinesight.app',
-      versionCode: 40,
+      versionCode: 43,
       // Required for FCM so `FirebaseApp.initializeApp` runs at build time;
       // without it `getExpoPushTokenAsync` fails on Android with
       // E_REGISTRATION_FAILED ("Default FirebaseApp is not initialized").
@@ -152,12 +167,26 @@ module.exports = {
       bundler: 'metro',
     },
     plugins: [
+      // RNRepo: substitutes supported native libraries with pre-built,
+      // GPG-signed artifacts from the public Maven repo instead of compiling
+      // from source. Unsupported libraries / RN versions automatically fall
+      // back to source compilation. Verify via "[📦 RNRepo]" build logs.
+      '@rnrepo/expo-config-plugin',
       'expo-router',
       'expo-asset',
       'expo-system-ui',
       ['expo-navigation-bar', { enforceContrast: false }],
       './plugins/with-android-navigation-bar',
-      'expo-audio',
+      [
+        'expo-audio',
+        {
+          // The plugin defaults enableBackgroundPlayback to true, which adds
+          // UIBackgroundModes: ['audio'] to Info.plist. The app does not play
+          // persistent background audio, so leaving it on triggers App Store
+          // Guideline 2.5.4 rejections.
+          enableBackgroundPlayback: false,
+        },
+      ],
       'expo-notifications',
       [
         '@sentry/react-native/expo',
@@ -257,7 +286,7 @@ module.exports = {
     },
     extra: {
       eas: {
-        projectId: 'ede2bb37-3ad0-4503-9522-02bd1539e79b',
+        projectId: EAS_PROJECT_ID,
       },
     },
   },

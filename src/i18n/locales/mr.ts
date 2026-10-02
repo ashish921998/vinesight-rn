@@ -434,6 +434,7 @@ export const mr = {
     },
     actions: {
       addActivity: 'नोंद जोडा',
+      addLog: 'नोंद जोडा',
       addTask: '$t(glossary.task) जोडा',
       seeAllLogs: 'सर्व नोंदी पहा',
       seeAllTasks: 'सर्व $t(glossary.task) पहा',
@@ -466,6 +467,9 @@ export const mr = {
       acres: '{{value}} एकर',
       unknownAcres: '— एकर',
     },
+    details: {
+      noDetails: 'शेत तपशील',
+    },
     waterBalance: {
       label: 'पाणी शिल्लक',
       value: '{{value}} mm',
@@ -484,6 +488,7 @@ export const mr = {
       bloom: 'फुलणे',
       veraison: 'व्हेरेसन',
       harvest: 'काढणी',
+      progress: 'हंगामाची प्रगती',
       sincePruning: '$t(glossary.pruning)पासून',
     },
   },
@@ -495,6 +500,11 @@ export const mr = {
     },
     saveLabel: {
       createFarm: '$t(glossary.farm) तयार करा',
+    },
+    validation: {
+      nameRequired: 'पुढे जाण्यासाठी $t(glossary.farm) नाव टाका.',
+      areaRequired: '0 पेक्षा जास्त क्षेत्रफळ टाका.',
+      cropRequired: 'पुढे जाण्यासाठी पीक नाव टाका.',
     },
     sections: {
       details: '$t(glossary.farm) तपशील',
@@ -773,7 +783,7 @@ export const mr = {
       heroValueLow: '{{count}} कमी',
       heroValueOk: 'सर्व ठीक',
       reorderFlag: '⚠ पुनःऑर्डर · {{count}}',
-      reorderAt: 'पुनःऑर्डर ≤ ',
+      reorderAt: 'पुनःऑर्डर ≤ {{quantity}}',
       legendLow: '{{count}} कमी',
       stockOk: 'ठीक',
       stockLow: 'कमी',
@@ -810,6 +820,7 @@ export const mr = {
 
   entryForm: {
     logSaved: 'नोंद जतन केली',
+    logUpdated: 'नोंद अपडेट केली',
     taskSaved: 'कार्य जतन केले',
     activityType: 'क्रियाकलाप प्रकार',
     selectActivityTypeHint: 'पूर्ण फॉर्म उघडण्यासाठी क्रियाकलाप प्रकार निवडा.',
@@ -921,6 +932,25 @@ export const mr = {
       selectUnit: 'युनिट निवडा',
       quickUnitLabel: 'रसायन प्रमाण युनिट म्हणून {{unit}} वापरा',
       moreUnits: 'इतर युनिट्स',
+      unitLabels: {
+        gTotal: 'gm (एकूण)',
+        mlTotal: 'mL (एकूण)',
+        kgTotal: 'kg (एकूण)',
+        lTotal: 'L (एकूण)',
+      },
+      unitHints: {
+        gPerL: 'स्प्रे पाण्याच्या प्रति लिटर ग्राम',
+        mlPerL: 'स्प्रे पाण्याच्या प्रति लिटर मिलीलिटर',
+        gPerAcre: 'प्रति एकर जमिनीचे ग्राम',
+        mlPerAcre: 'प्रति एकर जमिनीचे मिलीलिटर',
+        ppm: 'पार्ट्स पर मिलियन (प्रति लिटर पाण्यामध्ये मिलीग्राम)',
+        gTotal: 'संपूर्ण टाकीसाठी एकूण ग्राम',
+        mlTotal: 'संपूर्ण टाकीसाठी एकूण मिलीलिटर',
+        kgTotal: 'संपूर्ण टाकीसाठी एकूण किलोग्राम',
+        lTotal: 'संपूर्ण टाकीसाठी एकूण लिटर',
+        kgPerAcre: 'प्रति एकर जमिनीचे किलोग्राम',
+        lPerAcre: 'प्रति एकर जमिनीचे लिटर',
+      },
       tankEcho: {
         water: '{{quantity}} {{unit}} × {{water}} लिटर = टाकीत {{total}}',
         area: '{{quantity}} {{unit}} × {{area}} एकर = टाकीत {{total}}',
@@ -962,6 +992,22 @@ export const mr = {
       quickUnitLabel: 'खत प्रमाण युनिट म्हणून {{unit}} वापरा',
       moreUnits: 'इतर युनिट्स',
       perAcre: 'प्रति एकर',
+      unitLabels: {
+        kgTotal: 'kg (एकूण)',
+        lTotal: 'L (एकूण)',
+        gTotal: 'gm (एकूण)',
+        mlTotal: 'mL (एकूण)',
+      },
+      unitHints: {
+        kgPerAcre: 'प्रति एकर जमिनीचे किलोग्राम',
+        lPerAcre: 'प्रति एकर जमिनीचे लिटर',
+        kgTotal: 'संपूर्ण प्लॉटसाठी एकूण किलोग्राम',
+        lTotal: 'संपूर्ण प्लॉटसाठी एकूण लिटर',
+        gPerAcre: 'प्रति एकर जमिनीचे ग्राम',
+        mlPerAcre: 'प्रति एकर जमिनीचे मिलीलिटर',
+        gTotal: 'संपूर्ण प्लॉटसाठी एकूण ग्राम',
+        mlTotal: 'संपूर्ण प्लॉटसाठी एकूण मिलीलिटर',
+      },
       verbatimUnitHint: 'युनिट जसे नोंदवले तसे ठेवले: {{unit}}',
       areaEcho: {
         toTotal: '{{quantity}} {{unit}} → एकूण {{total}}',
@@ -1263,9 +1309,6 @@ export const mr = {
     },
     template: {
       title: 'विजेट टेम्पलेट',
-      testWidget: {
-        label: 'टेस्ट विजेट',
-      },
     },
   },
 
@@ -1584,6 +1627,7 @@ export const mr = {
     loggingTo: 'नोंद करत आहे',
     switch: 'बदला',
     loggingToNoFarm: 'अद्याप शेत नाही',
+    editFarmUnavailable: 'या नोंदीचे शेत आता उपलब्ध नाही.',
   },
   assistant: {
     placeholder: 'तुमचे प्रश्न विचारा — मी कशी मदत करू?',
@@ -1724,6 +1768,7 @@ export const mr = {
       title: 'जोडा',
       choosePrompt: 'काय जोडायचे ते निवडा',
       image: 'इमेज',
+      imageQuestionsUnsupported: 'इमेजवरील प्रश्न अजून समर्थित नाहीत',
       file: 'फाइल',
       imageTooLarge: 'इमेज 10MB मर्यादेपेक्षा मोठी आहे. कृपया लहान फाइल निवडा.',
       imageReadError: 'इमेज डेटा वाचता आला नाही. कृपया पुन्हा प्रयत्न करा.',
@@ -1822,14 +1867,14 @@ export const mr = {
       skipAlerts: 'इशाऱ्यांशिवाय पुढे चला',
     },
     firstFarm: {
-      title: 'तुमचे पहिले $t(glossary.farm) जोडा.',
-      subtitle: 'आवश्यक गोष्टींनी सुरुवात करा. तपशील नंतर संपादित करू शकता.',
+      title: 'चला तुमचे $t(glossary.farm) तयार करूया',
+      subtitle: 'आत्ता फक्त आवश्यक माहिती भरा. बाकी तपशील नंतर भरता येतील.',
       assurance:
         'आत्ता फक्त आवश्यक गोष्टी पुरेशा आहेत. उरलेले सर्व नंतर $t(glossary.farm) पानावरून जोडता येईल.',
-      createButton: 'पहिले $t(glossary.farm) तयार करा',
+      createButton: '$t(glossary.farm) जतन करा आणि सुरू करा',
       existingTitle: 'तुमचे पहिले $t(glossary.farm) आधीच अस्तित्वात आहे.',
-      existingSubtitle:
-        'इशाऱ्यांपर्यंत पुढे जा आणि ऑनबोर्डिंग पूर्ण करा. $t(glossary.farm) चे तपशील नंतर संपादित करू शकता.',
+      existingSubtitle: 'सर्व काही तयार आहे. तुमच्या डॅशबोर्डवर जा.',
+      existingButton: 'डॅशबोर्डवर जा',
       existingFarmFallback: '$t(glossary.farm)',
       existingRegionFallback: 'प्रदेश',
       existingCropFallback: '$t(glossary.crop)',
@@ -2002,9 +2047,10 @@ export const mr = {
       'तुमचा सल्लागार आहे का? तुमचे शेत त्यांच्याशी जोडण्यासाठी त्यांनी दिलेला कोड टाका. नसेल तर वगळा.',
     continue: 'पुढे जा',
     continuing: 'सुरू आहे...',
+    continueWithoutEmail: 'ईमेलशिवाय पुढे जा',
     skip: 'आता सोडा',
     emailExistsWarning:
-      'या ईमेलसह खाते आधीपासून अस्तित्वात आहे. कृपया आधी ईमेलने साइन इन करा, नंतर सेटिंग्जमधून तुमचा फोन नंबर लिंक करा.',
+      'हा ईमेल आधीच दुसऱ्या खात्याशी जोडलेला आहे. तुम्ही ईमेलशिवाय पुढे जाऊ शकता, किंवा त्या ईमेलने साइन इन करून सेटिंग्जमधून तुमचा फोन लिंक करू शकता.',
     a11y: {
       skipProfileCompletion: 'प्रोफाइल पूर्णता सोडा',
     },
@@ -2076,12 +2122,6 @@ export const mr = {
     aiAssistant: {
       title: 'एआय सहाय्यक',
       subtitle: 'शेती सहाय्यक उघडा',
-    },
-    appModeIntro: {
-      title: 'आम्ही VineSight सोपे केले आहे',
-      body: 'अॅप आता सोप्या मोडमध्ये सुरू होतो. कामगार, साधने आणि कार्ये डिफॉल्टनुसार लपवलेली आहेत. तुम्ही कधीही परत स्विच करू शकता.',
-      enableDetailed: 'विस्तृत मोड चालू करा',
-      staySimplified: 'सोप्या मोडमध्ये राहा',
     },
     errors: {
       signOutFailed: 'साइन आउट अयशस्वी. पुन्हा प्रयत्न करा.',
@@ -2221,7 +2261,7 @@ export const mr = {
       'आपला वैयक्तिक शेती सहाय्यक. द्राक्ष लागवड, $t(glossary.irrigation), $t(glossary.disease) किंवा $t(glossary.harvest)बद्दल काहीही विचारा!',
     suggestedQuestions: 'सूचित प्रश्न:',
     apiKeyRequiredTitle: 'API की आवश्यक',
-    apiKeyRequiredBody: 'कृपया पर्यावरण सेटिंग्जमध्ये आपली OpenAI API की सेट करा.',
+    apiKeyRequiredBody: 'कृपया पर्यावरण सेटिंग्जमध्ये आपली Sarvam API की सेट करा.',
     input: {
       placeholder: 'शेतीबद्दल विचारा…',
     },
@@ -2458,18 +2498,11 @@ export const mr = {
         cta: 'पुन्हा प्रयत्न करा',
       },
     },
-    quickActions: {
-      title: 'त्वरित क्रिया',
-      irrigation: '$t(glossary.irrigation)',
-      spray: '$t(glossary.spray)',
-      harvest: '$t(glossary.harvest)',
-      expense: '$t(glossary.expense)',
-      note: 'नोंद',
-    },
     recentActivity: {
       title: 'अलीकडील क्रियाकलाप',
       openFarm: '{{name}} चे $t(glossary.farm) तपशील उघडा',
       openFarmDetails: '$t(glossary.farm) तपशील उघडा',
+      editActivity: '{{label}} संपादित करा',
     },
     empty: {
       recentActivity: 'अजून अलीकडील क्रियाकलाप नाहीत.\nसुरू करण्यासाठी नोंद जोडा.',
@@ -3226,6 +3259,9 @@ export const mr = {
   reports: {
     title: '$t(glossary.report)',
     fpc: {
+      audience: 'निर्यातदारांसाठी',
+      exportTitle: 'निर्यातदार कृती नोंदवही',
+      shareXlsx: 'XLSX सामायिक करा',
       sectionTitle: 'निर्यातदार कृती नोंदवही ({{count}} दिवस)',
       day: 'दिवस',
       irrigation: '$t(glossary.irrigation)',

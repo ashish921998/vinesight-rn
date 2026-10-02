@@ -352,7 +352,11 @@ export function FarmAssistantModal({ visible, onClose, controller }: FarmAssista
             </View>
           )}
 
-          <ScrollView showsVerticalScrollIndicator={false} style={{ flexGrow: 0 }}>
+          <ScrollView
+            nestedScrollEnabled
+            showsVerticalScrollIndicator={false}
+            style={{ flexGrow: 0 }}
+          >
             {renderContent()}
           </ScrollView>
 

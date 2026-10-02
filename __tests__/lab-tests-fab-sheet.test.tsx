@@ -6,11 +6,14 @@ import { View } from 'react-native';
 const mockBottomSheet = jest.fn(({ children }: { children: React.ReactNode }) => (
   <View testID="fab-sheet">{children}</View>
 ));
+const mockBottomSheetScrollView = jest.fn(({ children }: { children: React.ReactNode }) => (
+  <View>{children}</View>
+));
 
 jest.mock('@expo/ui/community/bottom-sheet', () => ({
   __esModule: true,
   BottomSheet: mockBottomSheet,
-  BottomSheetScrollView: require('react-native').View,
+  BottomSheetScrollView: mockBottomSheetScrollView,
 }));
 
 jest.mock('react-native-safe-area-context', () => ({
@@ -52,6 +55,23 @@ const { LabTestsFabSheet } =
 describe('LabTestsFabSheet', () => {
   beforeEach(() => {
     mockBottomSheet.mockClear();
+    mockBottomSheetScrollView.mockClear();
+  });
+
+  it('uses a nested scroll root so Android can hand downward drags to the sheet', () => {
+    render(
+      <LabTestsFabSheet
+        visible
+        onClose={jest.fn()}
+        onAddSoilTest={jest.fn()}
+        onAddPetioleTest={jest.fn()}
+      />,
+    );
+
+    expect(mockBottomSheetScrollView).toHaveBeenCalledWith(
+      expect.objectContaining({ nestedScrollEnabled: true }),
+      undefined,
+    );
   });
 
   it('reflects visibility through the sheet index', () => {

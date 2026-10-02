@@ -52,7 +52,6 @@ export function VarietyPickerSheet({
       <BottomSheetView style={{ flex: 1 }}>
         <GuidedTourTarget
           targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_VARIETY_SHEET}
-          onStartShouldSetResponder={() => true}
           style={{
             flex: 1,
             backgroundColor: m3.surface.s100,
@@ -106,7 +105,7 @@ export function VarietyPickerSheet({
             </View>
 
             {/* List */}
-            <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
+            <ScrollView style={{ flex: 1 }} nestedScrollEnabled keyboardShouldPersistTaps="handled">
               {canCreateCustomVariety && (
                 <Pressable
                   style={{

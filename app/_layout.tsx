@@ -51,9 +51,9 @@ import {
   QUERY_CACHE_MAX_AGE_MS,
 } from '@/lib/query-cache';
 import { GuidedTourController, guidedTourEmit } from '@/features/guided-tour';
-import { AppModeIntroGate } from '@/components/app-mode-intro-modal';
 import { syncPushDeviceRegistration } from '@/features/guided-tour/service';
 import { resolveFeatureOverviewRoute } from '@/services/feature-overview-notifications';
+import { resolveFarmSetupNotificationRoute } from '@/services/farm-setup-notifications';
 import {
   getOnlineStatus,
   startOnlineManager,
@@ -561,7 +561,7 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
     }) => {
       const data = response.notification.request.content.data as {
         type?: string;
-        sequence?: number;
+        sequence?: number | string;
         route?: string;
         campaign?: string;
         day?: number;
@@ -573,6 +573,21 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
       if (data?.type === 'guided_tour_reminder') {
         const sequence = data.sequence === 2 ? 2 : 1;
         guidedTourEmit('guidedTour.notificationOpened', { sequence });
+      } else if (data?.type === 'farm_setup_reminder') {
+        const route = resolveFarmSetupNotificationRoute(data);
+        if (!route) {
+          telemetry.capture('farm_setup_notification_invalid', {
+            campaign: data.campaign ?? null,
+            sequence: data.sequence ?? null,
+          });
+          currentRouter.push('/(tabs)');
+          return;
+        }
+        telemetry.capture('farm_setup_notification_opened', {
+          campaign: data.campaign ?? null,
+          sequence: data.sequence ?? null,
+        });
+        currentRouter.push(route);
       } else if (data?.type === 'feature_overview') {
         const route = resolveFeatureOverviewRoute(data);
         if (!route) {
@@ -836,10 +851,6 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
                     name="log-entry/quick"
                     options={{ presentation: 'modal', headerShown: false }}
                   />
-                  <Stack.Screen
-                    name="edit-activity/[id]"
-                    options={{ presentation: 'fullScreenModal', headerShown: false }}
-                  />
                   <Stack.Screen name="add-note" options={{ headerShown: false }} />
                   <Stack.Screen name="analytics" options={{ headerShown: true }} />
                   <Stack.Screen name="assistant" options={{ headerShown: false }} />
@@ -885,7 +896,6 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
                   <Stack.Screen name="worker-analytics/[id]" options={{ headerShown: true }} />
                 </Stack>
                 <GuidedTourController />
-                <AppModeIntroGate />
               </I18nextProvider>
             </PersistQueryClientProvider>
             <ToastHost />

@@ -432,6 +432,7 @@ export const hi = {
     },
     actions: {
       addActivity: 'गतिविधि जोड़ें',
+      addLog: 'लॉग जोड़ें',
       addTask: 'कार्य जोड़ें',
       seeAllLogs: 'सभी लॉग्स देखें',
       seeAllTasks: 'सभी कार्य देखें',
@@ -464,6 +465,9 @@ export const hi = {
       acres: '{{value}} एकड़',
       unknownAcres: '— एकड़',
     },
+    details: {
+      noDetails: 'खेत का विवरण',
+    },
     waterBalance: {
       label: 'पानी का संतुलन',
       value: '{{value}} मिमी',
@@ -482,6 +486,7 @@ export const hi = {
       bloom: 'फूल',
       veraison: 'वेरेसन',
       harvest: 'फसल',
+      progress: 'सीज़न की प्रगति',
       sincePruning: 'छंटाई से',
     },
   },
@@ -493,6 +498,11 @@ export const hi = {
     },
     saveLabel: {
       createFarm: 'खेत बनाएं',
+    },
+    validation: {
+      nameRequired: 'जारी रखने के लिए खेत का नाम दर्ज करें।',
+      areaRequired: '0 से अधिक क्षेत्रफल दर्ज करें।',
+      cropRequired: 'जारी रखने के लिए फसल का नाम दर्ज करें।',
     },
     sections: {
       details: 'खेत विवरण',
@@ -770,7 +780,7 @@ export const hi = {
       heroValueLow: '{{count}} कम',
       heroValueOk: 'सब ठीक',
       reorderFlag: '⚠ पुनः ऑर्डर · {{count}}',
-      reorderAt: 'पुनः ऑर्डर ≤ ',
+      reorderAt: 'पुनः ऑर्डर ≤ {{quantity}}',
       legendLow: '{{count}} कम',
       stockOk: 'ठीक',
       stockLow: 'कम',
@@ -807,6 +817,7 @@ export const hi = {
 
   entryForm: {
     logSaved: 'लॉग सहेजा गया',
+    logUpdated: 'लॉग अपडेट किया गया',
     taskSaved: 'कार्य सहेजा गया',
     activityType: 'गतिविधि प्रकार',
     selectActivityTypeHint: 'पूर्ण-स्क्रीन फॉर्म खोलने के लिए गतिविधि प्रकार चुनें।',
@@ -918,6 +929,25 @@ export const hi = {
       selectUnit: 'इकाई चुनें',
       quickUnitLabel: 'रसायन मात्रा इकाई के रूप में {{unit}} उपयोग करें',
       moreUnits: 'अन्य इकाइयाँ',
+      unitLabels: {
+        gTotal: 'gm (कुल)',
+        mlTotal: 'mL (कुल)',
+        kgTotal: 'kg (कुल)',
+        lTotal: 'L (कुल)',
+      },
+      unitHints: {
+        gPerL: 'छिड़काव पानी के प्रति लीटर ग्राम',
+        mlPerL: 'छिड़काव पानी के प्रति लीटर मिलीलीटर',
+        gPerAcre: 'प्रति एकड़ जमीन के ग्राम',
+        mlPerAcre: 'प्रति एकड़ जमीन के मिलीलीटर',
+        ppm: 'प्रति मिलियन (प्रति लीटर पानी मिलीग्राम)',
+        gTotal: 'पूरी टंकी के लिए कुल ग्राम',
+        mlTotal: 'पूरी टंकी के लिए कुल मिलीलीटर',
+        kgTotal: 'पूरी टंकी के लिए कुल किलोग्राम',
+        lTotal: 'पूरी टंकी के लिए कुल लीटर',
+        kgPerAcre: 'प्रति एकड़ जमीन के किलोग्राम',
+        lPerAcre: 'प्रति एकड़ जमीन के लीटर',
+      },
       tankEcho: {
         water: '{{quantity}} {{unit}} × {{water}} लीटर = टंकी में {{total}}',
         area: '{{quantity}} {{unit}} × {{area}} एकड़ = टंकी में {{total}}',
@@ -958,6 +988,22 @@ export const hi = {
       quickUnitLabel: 'उर्वरक मात्रा इकाई के रूप में {{unit}} उपयोग करें',
       moreUnits: 'अन्य इकाइयाँ',
       perAcre: 'प्रति एकड़',
+      unitLabels: {
+        kgTotal: 'kg (कुल)',
+        lTotal: 'L (कुल)',
+        gTotal: 'gm (कुल)',
+        mlTotal: 'mL (कुल)',
+      },
+      unitHints: {
+        kgPerAcre: 'प्रति एकड़ जमीन के किलोग्राम',
+        lPerAcre: 'प्रति एकड़ जमीन के लीटर',
+        kgTotal: 'पूरे प्लॉट के लिए कुल किलोग्राम',
+        lTotal: 'पूरे प्लॉट के लिए कुल लीटर',
+        gPerAcre: 'प्रति एकड़ जमीन के ग्राम',
+        mlPerAcre: 'प्रति एकड़ जमीन के मिलीलीटर',
+        gTotal: 'पूरे प्लॉट के लिए कुल ग्राम',
+        mlTotal: 'पूरे प्लॉट के लिए कुल मिलीलीटर',
+      },
       verbatimUnitHint: 'इकाई जैसी दर्ज की गई वैसी रखी गई: {{unit}}',
       areaEcho: {
         toTotal: '{{quantity}} {{unit}} → कुल {{total}}',
@@ -1254,9 +1300,6 @@ export const hi = {
     },
     template: {
       title: 'विजेट टेम्पलेट',
-      testWidget: {
-        label: 'टेस्ट विजेट',
-      },
     },
   },
 
@@ -1574,6 +1617,7 @@ export const hi = {
     loggingTo: 'लॉगिंग कर रहे हैं',
     switch: 'बदलें',
     loggingToNoFarm: 'अभी कोई खेत नहीं है',
+    editFarmUnavailable: 'इस लॉग का खेत अब उपलब्ध नहीं है।',
   },
   assistant: {
     placeholder: 'आपका AI कृषि सहायक — फसल, मिट्टी और शेड्यूल के बारे में पूछें',
@@ -1711,6 +1755,7 @@ export const hi = {
       title: 'जोड़ें',
       choosePrompt: 'क्या जोड़ना है चुनें',
       image: 'इमेज',
+      imageQuestionsUnsupported: 'इमेज से सवाल अभी समर्थित नहीं हैं',
       file: 'फ़ाइल',
       imageTooLarge: 'इमेज 10MB सीमा से अधिक है। कृपया छोटी फ़ाइल चुनें।',
       unsupportedImageType: 'असमर्थित इमेज प्रकार। JPG, PNG, WEBP या HEIC उपयोग करें।',
@@ -1813,14 +1858,14 @@ export const hi = {
       skipAlerts: 'अलर्ट के बिना जारी रखें',
     },
     firstFarm: {
-      title: 'अपना पहला खेत जोड़ें।',
-      subtitle: 'ज़रूरी जानकारी से शुरू करें। आप बाद में विवरण संपादित कर सकते हैं।',
+      title: 'आइए आपका खेत तैयार करें',
+      subtitle: 'अभी केवल ज़रूरी जानकारी जोड़ें। बाकी विवरण बाद में भर सकते हैं।',
       assurance:
         'अभी आपको केवल ज़रूरी बातें चाहिए। बाकी सब कुछ बाद में खेत पेज से जोड़ा जा सकता है।',
-      createButton: 'पहला खेत बनाएं',
+      createButton: 'खेत सहेजें और शुरू करें',
       existingTitle: 'आपका पहला खेत पहले से मौजूद है।',
-      existingSubtitle:
-        'अलर्ट तक आगे बढ़ें और ऑनबोर्डिंग पूरी करें। आप बाद में खेत का विवरण संपादित कर सकते हैं।',
+      existingSubtitle: 'सब कुछ तैयार है। अपने डैशबोर्ड पर जाएं।',
+      existingButton: 'डैशबोर्ड पर जाएं',
       existingFarmFallback: 'खेत',
       existingRegionFallback: 'क्षेत्र',
       existingCropFallback: 'फसल',
@@ -1992,9 +2037,10 @@ export const hi = {
       'क्या आपका कोई सलाहकार है? अपना खेत उनसे जोड़ने के लिए उनका दिया कोड डालें। नहीं है तो छोड़ दें।',
     continue: 'जारी रखें',
     continuing: 'जारी है...',
+    continueWithoutEmail: 'ईमेल के बिना जारी रखें',
     skip: 'अभी छोड़ें',
     emailExistsWarning:
-      'इस ईमेल के साथ एक खाता पहले से मौजूद है। कृपया पहले ईमेल से साइन इन करें, फिर सेटिंग्स से अपना फोन नंबर लिंक करें।',
+      'यह ईमेल पहले से किसी अन्य खाते से जुड़ा है। आप ईमेल के बिना जारी रख सकते हैं, या उस ईमेल से साइन इन करके सेटिंग्स से अपना फोन लिंक कर सकते हैं।',
     a11y: {
       skipProfileCompletion: 'प्रोफ़ाइल पूर्णता छोड़ें',
     },
@@ -2066,12 +2112,6 @@ export const hi = {
     aiAssistant: {
       title: 'एआई सहायक',
       subtitle: 'खेती सहायक खोलें',
-    },
-    appModeIntro: {
-      title: 'हमने VineSight को सरल बना दिया है',
-      body: 'ऐप अब सरल मोड में शुरू होता है। कर्मचारी, उपकरण और कार्य डिफ़ॉल्ट रूप से छिपे हुए हैं। आप कभी भी वापस स्विच कर सकते हैं।',
-      enableDetailed: 'विस्तृत मोड चालू करें',
-      staySimplified: 'सरल मोड में रहें',
     },
     errors: {
       signOutFailed: 'साइन आउट करने में विफल। कृपया पुनः प्रयास करें।',
@@ -2206,7 +2246,7 @@ export const hi = {
       'आपका व्यक्तिगत खेती सहायक। मुझसे अंगूर की खेती, सिंचाई, रोगों या कटाई के बारे में कुछ भी पूछें!',
     suggestedQuestions: 'सुझाए गए प्रश्न:',
     apiKeyRequiredTitle: 'API कुंजी आवश्यक',
-    apiKeyRequiredBody: 'कृपया पर्यावरण सेटिंग्स में अपनी OpenAI API कुंजी कॉन्फ़िगर करें।',
+    apiKeyRequiredBody: 'कृपया पर्यावरण सेटिंग्स में अपनी Sarvam API कुंजी कॉन्फ़िगर करें।',
     input: {
       placeholder: 'खेती के बारे में पूछें…',
     },
@@ -2442,18 +2482,11 @@ export const hi = {
         cta: 'फिर से प्रयास करें',
       },
     },
-    quickActions: {
-      title: 'त्वरित क्रियाएं',
-      irrigation: 'सिंचाई',
-      spray: 'छिड़काव',
-      harvest: 'कटाई',
-      expense: 'खर्च',
-      note: 'नोट',
-    },
     recentActivity: {
       title: 'हाल की गतिविधि',
       openFarm: '{{name}} के खेत का विवरण खोलें',
       openFarmDetails: 'खेत का विवरण खोलें',
+      editActivity: '{{label}} संपादित करें',
     },
     empty: {
       recentActivity: 'अभी तक कोई हालिया गतिविधि नहीं।\nशुरू करने के लिए एक प्रविष्टि जोड़ें।',
@@ -3161,6 +3194,7 @@ export const hi = {
     alerts: {
       partialErrorTitle: 'आंशिक त्रुटि',
       partialErrorBody: '{{count}} त्रुटि के साथ सहेजा गया। पुनः लोड हो रहा है…',
+      saveErrorBody: '$t(glossary.attendance) सहेजने में विफल। कृपया पुनः प्रयास करें।',
       savedTitle: 'सफलता',
       savedBody: '{{name}} के लिए $t(glossary.attendance) सहेजी गई।',
       workerCount: '{{count}} श्रमिक',
@@ -3198,6 +3232,9 @@ export const hi = {
   reports: {
     title: 'रिपोर्ट',
     fpc: {
+      audience: 'निर्यातकों के लिए',
+      exportTitle: 'निर्यातक गतिविधि रजिस्टर',
+      shareXlsx: 'XLSX साझा करें',
       sectionTitle: 'निर्यातक गतिविधि रजिस्टर ({{count}} दिन)',
       day: 'दिन',
       irrigation: 'सिंचाई',

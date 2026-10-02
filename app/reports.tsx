@@ -4,7 +4,17 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { View, ScrollView, Alert, Pressable, StyleSheet, Text, Platform } from 'react-native';
+import {
+  View,
+  ScrollView,
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  Platform,
+  InteractionManager,
+  type ViewStyle,
+} from 'react-native';
 import DateTimePicker from '@expo/ui/community/datetime-picker';
 import { BottomSheet } from '@expo/ui/community/bottom-sheet';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -23,13 +33,7 @@ import {
   clampDateRangeToSeasonBounds,
   formatReportSeasonLabel,
 } from '@/hooks/use-reports';
-import {
-  DateRange,
-  ReportFormat,
-  ReportType,
-  type FpcColumnOptions,
-  FPC_LEAN_COLUMNS,
-} from '@/types/report';
+import { DateRange, ReportFormat, ReportType, FPC_LEAN_COLUMNS } from '@/types/report';
 import { useAuthStore } from '@/stores';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -52,6 +56,19 @@ import type { FarmSeason } from '@/types';
  * which switches between this and the buyer's `fpc-activity` register.
  */
 const REPORT_TYPE: ReportType = 'comprehensive';
+
+type DeferredReportDocumentBodyProps = React.ComponentProps<typeof ReportDocumentBody>;
+
+function DeferredReportDocumentBody(props: DeferredReportDocumentBodyProps) {
+  const [ready, setReady] = useState(false);
+
+  React.useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() => setReady(true));
+    return () => task.cancel();
+  }, []);
+
+  return ready ? <ReportDocumentBody {...props} /> : null;
+}
 
 function resolveSeasonEndDate(season: FarmSeason, todayIso: string): string {
   if (!season.end_date) return todayIso;
@@ -93,7 +110,6 @@ export default function ReportsScreen() {
   const [selectedFarmId, setSelectedFarmId] = useState<number | null>(initialFarmId);
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
-  const [fpcColumns, setFpcColumns] = useState<FpcColumnOptions>(FPC_LEAN_COLUMNS);
   const [selectedExportFormat, setSelectedExportFormat] = useState<ReportFormat>('pdf');
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showToPicker, setShowToPicker] = useState(false);
@@ -264,7 +280,7 @@ export default function ReportsScreen() {
 
     try {
       if (mode === 'download') {
-        const fileUri = await downloadReport(preview, format, type, areaUnit, fpcColumns);
+        const fileUri = await downloadReport(preview, format, type, areaUnit, FPC_LEAN_COLUMNS);
         telemetry.capture('data_exported', eventProps);
         Alert.alert(
           t('reports.alerts.downloadCompleteTitle'),
@@ -273,7 +289,7 @@ export default function ReportsScreen() {
         return;
       }
 
-      await exportReport(preview, format, type, areaUnit, fpcColumns);
+      await exportReport(preview, format, type, areaUnit, FPC_LEAN_COLUMNS);
       telemetry.capture('data_exported', eventProps);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : t('reports.errors.unableToExport');
@@ -323,14 +339,19 @@ export default function ReportsScreen() {
   const toMaximumIso = selectedSeasonBounds?.to ?? todayIso;
   const toMaximumDate = parseDbDateToLocalDate(toMaximumIso) ?? new Date();
 
-  const panelStyle = {
-    backgroundColor: m3.surface.s100,
-    borderRadius: radius.lg,
-    borderCurve: 'continuous' as const,
-    padding: spacing[4],
-    borderWidth: 1,
-    borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.7),
-  };
+  const panelStyle = useMemo<ViewStyle>(
+    () => ({
+      backgroundColor: m3.surface.s100,
+      borderRadius: radius.lg,
+      borderCurve: 'continuous',
+      padding: spacing[4],
+      borderWidth: 1,
+      borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.7),
+    }),
+    [m3.colorScheme.outlineVariant, m3.surface.s100],
+  );
+
+  const reportDocumentKey = `${selectedFarmId ?? 'none'}:${selectedSeasonId ?? 'all'}:${dateRange.from}:${dateRange.to}`;
 
   return (
     <SafeAreaView
@@ -497,21 +518,20 @@ export default function ReportsScreen() {
                   onSelectFormat={setSelectedExportFormat}
                   onShare={() => runExport('share', selectedExportFormat)}
                   onDownload={() => runExport('download', selectedExportFormat)}
+                  onShareExporter={
+                    preview.data.fpcActivity?.length
+                      ? () =>
+                          runExport('share', getDefaultReportFormat('fpc-activity'), 'fpc-activity')
+                      : undefined
+                  }
                   panelStyle={panelStyle}
                 />
 
-                <ReportDocumentBody
+                <DeferredReportDocumentBody
+                  key={reportDocumentKey}
                   preview={preview}
                   reportType={REPORT_TYPE}
                   preferredCurrency={user?.user_metadata?.currency_preference ?? 'INR'}
-                  fpcColumns={fpcColumns}
-                  onFpcColumnsChange={setFpcColumns}
-                  // The register is a separate document for a separate reader, so
-                  // it exports from its own section rather than the report's bar,
-                  // in the format buyers actually consume.
-                  onExportRegister={() =>
-                    runExport('share', getDefaultReportFormat('fpc-activity'), 'fpc-activity')
-                  }
                   panelStyle={panelStyle}
                 />
               </>

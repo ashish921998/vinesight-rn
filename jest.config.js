@@ -24,9 +24,5 @@ module.exports = {
       '@react-native-async-storage/async-storage/jest/async-storage-mock',
     '^react-native-mmkv$': '<rootDir>/jest-setup/mmkv-mock.js',
   },
-  collectCoverageFrom: [
-    'components/widgets/**/*.{ts,tsx}',
-    '!components/widgets/**/*.stories.tsx',
-    '!components/widgets/**/index.ts',
-  ],
+  collectCoverageFrom: ['components/widgets/**/*.{ts,tsx}', '!components/widgets/**/index.ts'],
 };

@@ -10,18 +10,13 @@ function envNumber(name: string, fallback: number): number {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-// Prices verified 2026-02-26 (OpenAI pricing page); override via env vars when needed.
+// Override pricing through server-side environment variables as Sarvam plans change.
 export const PRICING = {
   sarvam: {
     stt_per_second: envNumber('ASSISTANT_PRICE_SARVAM_STT_PER_SECOND', 0.00013),
     tts_per_char: envNumber('ASSISTANT_PRICE_SARVAM_TTS_PER_CHAR', 0.00000001),
-  },
-  openai: {
-    stt_per_second: envNumber('ASSISTANT_PRICE_OPENAI_STT_PER_SECOND', 0.0001),
-    tts_per_char: envNumber('ASSISTANT_PRICE_OPENAI_TTS_PER_CHAR', 0.000015),
-    gpt_4o_mini_input_per_1k: envNumber('ASSISTANT_PRICE_GPT4O_MINI_INPUT_PER_1K', 0.00015),
-    gpt_4o_mini_output_per_1k: envNumber('ASSISTANT_PRICE_GPT4O_MINI_OUTPUT_PER_1K', 0.0006),
-    embedding_3_small_per_1k: envNumber('ASSISTANT_PRICE_EMBEDDING_3_SMALL_PER_1K', 0.00002),
+    llm_input_per_1k: envNumber('ASSISTANT_PRICE_SARVAM_LLM_INPUT_PER_1K', 0),
+    llm_output_per_1k: envNumber('ASSISTANT_PRICE_SARVAM_LLM_OUTPUT_PER_1K', 0),
   },
 };
 
@@ -57,19 +52,15 @@ export function calculateCost(input: {
   let sttCost = 0;
   if (input.sttProviderUsed === 'sarvam') {
     sttCost = input.audioDurationSeconds * PRICING.sarvam.stt_per_second;
-  } else if (input.sttProviderUsed === 'openai' || input.sttProviderUsed === 'openai_fallback') {
-    sttCost = input.audioDurationSeconds * PRICING.openai.stt_per_second;
   }
 
-  const llmInputCost = (input.inputTokens / 1000) * PRICING.openai.gpt_4o_mini_input_per_1k;
-  const llmOutputCost = (input.outputTokens / 1000) * PRICING.openai.gpt_4o_mini_output_per_1k;
-  const embeddingCost = (input.embeddingTokens / 1000) * PRICING.openai.embedding_3_small_per_1k;
+  const llmInputCost = (input.inputTokens / 1000) * PRICING.sarvam.llm_input_per_1k;
+  const llmOutputCost = (input.outputTokens / 1000) * PRICING.sarvam.llm_output_per_1k;
+  const embeddingCost = 0;
 
   let ttsCost = 0;
   if (input.ttsProviderUsed === 'sarvam') {
     ttsCost = input.ttsCharCount * PRICING.sarvam.tts_per_char;
-  } else if (input.ttsProviderUsed === 'openai' || input.ttsProviderUsed === 'openai_fallback') {
-    ttsCost = input.ttsCharCount * PRICING.openai.tts_per_char;
   }
 
   return {

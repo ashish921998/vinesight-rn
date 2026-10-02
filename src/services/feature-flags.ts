@@ -49,6 +49,22 @@ export const FLAG_KEYS = {
    *      the kill-switch is no longer needed.
    */
   COMPLIANCE_EVALUATOR: 'compliance-evaluator',
+
+  /**
+   * force-simple-mode
+   *
+   * Ramp-down switch for the Simplified/Detailed app-mode toggle. When enabled,
+   * any user still in Detailed mode is pulled back to Simplified without a
+   * release (see `enforceSimpleMode` in `src/stores/app-mode-store.ts`).
+   *
+   * Default: FALSE — the user's own choice wins. Turning this on overrides a
+   * deliberate opt-in, so scope it to a cohort before going 100%.
+   *
+   * Note: enforcement is sticky. It writes `detailedMode: false` through to
+   * AsyncStorage, so turning the flag back off does NOT restore Detailed mode —
+   * affected users must re-enable it in Settings.
+   */
+  FORCE_SIMPLE_MODE: 'force-simple-mode',
 } as const;
 
 /** Union type of all known flag keys — a typo is a compile error. */
@@ -57,4 +73,5 @@ export type FeatureFlagKey = (typeof FLAG_KEYS)[keyof typeof FLAG_KEYS];
 /** Per-flag default values returned when PostHog is unavailable. */
 export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   'compliance-evaluator': false,
+  'force-simple-mode': false,
 };

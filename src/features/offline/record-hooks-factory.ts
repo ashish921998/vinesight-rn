@@ -107,6 +107,10 @@ export function makeRecordWriteHooks<TRow extends RowWithFarm, TInsert extends I
       onSuccess: (row) => {
         if (isRecordWriteFlushInProgress()) return;
         queryClient.invalidateQueries({ queryKey: keys.listByFarm(row.farm_id) });
+        // Broad-list invalidation so cross-farm views (logs screen "all farms"
+        // via listByFarms) also refresh — listByFarm is a sibling, not a parent,
+        // so invalidating it alone misses the listByFarms queries.
+        queryClient.invalidateQueries({ queryKey: keys.lists() });
         queryClient.invalidateQueries({
           queryKey: queryKeys.reports.unassignedRecordCount(row.farm_id),
         });
@@ -123,6 +127,10 @@ export function makeRecordWriteHooks<TRow extends RowWithFarm, TInsert extends I
       onSuccess: (_result, { farmId }) => {
         if (isRecordWriteFlushInProgress()) return;
         queryClient.invalidateQueries({ queryKey: keys.listByFarm(farmId) });
+        // Broad-list invalidation so cross-farm views (logs screen "all farms"
+        // via listByFarms) also refresh — mirrors useUpdate; listByFarm is a
+        // sibling, not a parent, so invalidating it alone misses listByFarms.
+        queryClient.invalidateQueries({ queryKey: keys.lists() });
         queryClient.invalidateQueries({
           queryKey: queryKeys.reports.unassignedRecordCount(farmId),
         });

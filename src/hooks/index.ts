@@ -85,9 +85,13 @@ export {
   // Attendance
   useAllWorkerAttendance,
   useWorkerAttendance,
+  useWorkerAttendanceByDateRange,
+  fetchWorkerAttendanceByDateRange,
   useCreateWorkerAttendance,
   useUpdateWorkerAttendance,
   useDeleteWorkerAttendance,
+  useSaveAttendanceBatch,
+  type AttendanceSaveOperation,
   // Transactions
   useAllWorkerTransactions,
   useWorkerTransactions,
@@ -118,21 +122,6 @@ export {
   useCreateWarehouseItem,
   useUpdateWarehouseItem,
   useDeleteWarehouseItem,
-  // Soil Tests
-  useSoilTestRecords,
-  useCreateSoilTestRecord,
-  useUpdateSoilTestRecord,
-  useDeleteSoilTestRecord,
-  // Petiole Tests
-  usePetioleTestRecords,
-  useCreatePetioleTestRecord,
-  useUpdatePetioleTestRecord,
-  useDeletePetioleTestRecord,
-  // Soil Profiles
-  useSoilProfiles,
-  useCreateSoilProfile,
-  useUpdateSoilProfile,
-  useDeleteSoilProfile,
   // Calculation History
   useCalculationHistory,
   useCreateCalculationHistory,
@@ -227,7 +216,7 @@ export {
 // Re-export parameter constants for backward compatibility
 export { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '../constants/lab-test-parameters';
 
-// Soil Profile Utilities (Hooks already exported from useProfile)
+// Soil Profile Utilities
 export {
   soilProfileQueryKeys,
   SECTION_NAMES,
@@ -253,3 +242,6 @@ export { useSprayInputSources, useFertigationInputSources } from './use-log-inpu
 // Canonical log-type presentation (icon + color) shared by quick actions and
 // the recent-activity list.
 export { useLogPresentation } from './use-log-presentation';
+
+// QuickLogSheet edit-mode hydration + save orchestration
+export { useQuickLogEdit } from './use-quick-log-edit';

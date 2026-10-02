@@ -4,18 +4,11 @@
  * Ported from iOS AuthManager.swift
  */
 
-import type { User, Session } from '@supabase/supabase-js';
+import type { Session } from '@supabase/supabase-js';
 
 // ============================================================
 // MARK: - OTP Types
 // ============================================================
-
-/**
- * Type of OTP being verified
- * - email: Passwordless sign-in OTP
- * - signup: Email verification OTP after account creation
- */
-export type EmailOTPType = 'email' | 'signup';
 
 /**
  * Type of OTP being verified via phone
@@ -23,133 +16,6 @@ export type EmailOTPType = 'email' | 'signup';
  */
 export type PhoneOTPType = 'sms';
 export type PhoneAuthMode = 'signin' | 'signup';
-
-// ============================================================
-// MARK: - Auth State
-// ============================================================
-
-export interface AuthState {
-  /** Whether the user is authenticated */
-  isAuthenticated: boolean;
-
-  /** Whether auth operations are in progress */
-  isLoading: boolean;
-
-  /** The current Supabase user */
-  currentUser: User | null;
-
-  /** Current session */
-  session: Session | null;
-
-  /** Error message from auth operations */
-  errorMessage: string | null;
-
-  /** Email pending email confirmation (legacy flow) */
-  pendingEmailConfirmation: string | null;
-
-  /** Email pending OTP verification */
-  pendingOTPEmail: string | null;
-
-  /** Phone pending OTP verification */
-  pendingOTPPhone: string | null;
-
-  /** Whether OTP was sent successfully */
-  otpSentSuccessfully: boolean;
-
-  /** Type of OTP flow in progress */
-  pendingOTPType: EmailOTPType;
-
-  /** Whether the user needs to complete their profile */
-  needsProfileCompletion: boolean;
-}
-
-export const initialAuthState: AuthState = {
-  isAuthenticated: false,
-  isLoading: true,
-  currentUser: null,
-  session: null,
-  errorMessage: null,
-  pendingEmailConfirmation: null,
-  pendingOTPEmail: null,
-  pendingOTPPhone: null,
-  otpSentSuccessfully: false,
-  pendingOTPType: 'email',
-  needsProfileCompletion: false,
-};
-
-// ============================================================
-// MARK: - Auth Actions (for Zustand store)
-// ============================================================
-
-export interface AuthActions {
-  /** Check existing session on app start */
-  checkSession: () => Promise<void>;
-
-  /** Sign up with email and password */
-  signUp: (email: string, password: string, name?: string) => Promise<void>;
-
-  /** Sign up with OTP verification */
-  signUpWithOTP: (email: string, password: string, name?: string) => Promise<void>;
-
-  /** Sign in with email and password */
-  signIn: (email: string, password: string) => Promise<void>;
-
-  /** Send OTP for passwordless sign-in */
-  sendOTP: (email: string) => Promise<void>;
-
-  /** Verify OTP code */
-  verifyOTP: (email: string, code: string) => Promise<void>;
-
-  /** Resend OTP code */
-  resendOTP: () => Promise<void>;
-
-  /** Cancel OTP flow */
-  cancelOTPFlow: () => void;
-
-  /** Start phone auth flow (signin blocks auto user creation, signup allows it) */
-  signInWithPhone: (phone: string, mode?: PhoneAuthMode) => Promise<void>;
-
-  /** Verify phone OTP code */
-  verifyPhoneOTP: (phone: string, code: string) => Promise<void>;
-
-  /** Resend phone OTP code */
-  resendPhoneOTP: (mode?: PhoneAuthMode, phone?: string) => Promise<void>;
-
-  /** Cancel phone OTP flow */
-  cancelPhoneOTPFlow: () => void;
-
-  /** Complete user profile after phone sign-in */
-  completeProfile: (data: { firstName: string; lastName: string; email?: string }) => Promise<void>;
-
-  /** Sign out */
-  signOut: () => Promise<void>;
-
-  /** Delete account */
-  deleteAccount: (deleteReason: string) => Promise<void>;
-
-  /** Refresh session (e.g., when app comes to foreground) */
-  refreshSessionIfNeeded: () => Promise<void>;
-
-  /** Resend confirmation email */
-  resendConfirmationEmail: (email: string) => Promise<void>;
-
-  /** Clear error message */
-  clearError: () => void;
-
-  /** Update user country */
-  updateUserCountry: (country: string) => Promise<void>;
-
-  /** Update user area unit preference */
-  updateUserAreaUnit: (areaUnit: 'hectares' | 'acres') => Promise<void>;
-
-  /** Set loading state */
-  setLoading: (loading: boolean) => void;
-
-  /** Set error message */
-  setError: (message: string | null) => void;
-}
-
-export type AuthStore = AuthState & AuthActions;
 
 // ============================================================
 // MARK: - Auth Credentials

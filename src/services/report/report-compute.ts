@@ -627,7 +627,7 @@ export function generateReportData(
           )
         : null,
       // record.area is raw in this unit too — the ledger converts per record.
-      areaUnit: options.areaUnit,
+      areaUnit: options.areaUnit ?? null,
     }),
     fpcActivity: buildFpcActivity(
       farm,

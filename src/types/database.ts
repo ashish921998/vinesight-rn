@@ -868,8 +868,16 @@ export function toSupabaseTimestampString(date: Date): string {
   return date.toISOString();
 }
 
-/** Parse Supabase date string to Date */
+/** Parse Supabase date string to Date. Date-only strings (YYYY-MM-DD) are
+ * parsed as local midnight so a negative-UTC timezone doesn't shift the
+ * calendar day back by one. Timestamp strings (with a T/Z) are left to the
+ * native ISO parser, which already handles the offset. */
 export function fromSupabaseDateString(dateString: string): Date | null {
+  // Date-only: YYYY-MM-DD — append T00:00:00 to force local parsing.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    const date = new Date(`${dateString}T00:00:00`);
+    return isNaN(date.getTime()) ? null : date;
+  }
   const date = new Date(dateString);
   return isNaN(date.getTime()) ? null : date;
 }

@@ -131,10 +131,6 @@ class VoiceOutputService {
         console.warn(
           '[voice-output] No server audio returned — will fall back to device Speech.speak (NOT Sarvam)',
         );
-      } else if (audio.provider === 'openai_fallback' || audio.provider === 'openai') {
-        console.warn(
-          '[voice-output] Using OpenAI TTS, NOT Sarvam. Check SARVAM_API_KEY in Supabase secrets.',
-        );
       }
     }
     let replacedAudioUri: string | null = null;

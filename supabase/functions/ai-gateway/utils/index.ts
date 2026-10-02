@@ -69,7 +69,6 @@ export {
   MAX_TEXT_LENGTH,
   MIN_AUDIO_BASE64_LENGTH,
   MIN_AUDIO_ESTIMATED_BYTES,
-  normalizeOpenAiAudioMime,
   normalizeSarvamAudioMime,
   STT_TIMEOUT_MS,
   TTS_TIMEOUT_MS,

@@ -17,6 +17,24 @@ import {
   PROFILE_CURRENT_QUERY_KEY,
 } from './auth-helpers';
 import type { SetState, GetState } from './auth-types';
+import { initializeNewFarmerExperience } from './new-farmer-experience';
+
+const NEW_ACCOUNT_WINDOW_MS = 10 * 60 * 1000;
+
+export function isRecentlyCreatedAuthUser(
+  user: { created_at?: string } | null,
+  now: number = Date.now(),
+): boolean {
+  if (!user?.created_at) return false;
+  const createdAt = Date.parse(user.created_at);
+  return Number.isFinite(createdAt) && Math.abs(now - createdAt) <= NEW_ACCOUNT_WINDOW_MS;
+}
+
+// Shown when the email a farmer typed during profile completion is already tied
+// to another account. Email is optional here, so we point them at both recovery
+// paths: finish without the email now, or sign in with email and link the phone.
+const DUPLICATE_EMAIL_MESSAGE =
+  'This email is already linked to another account. You can continue without an email, or sign in with that email and link your phone from Settings.';
 
 export const createPhoneActions = (set: SetState, get: GetState) => ({
   signInWithPhone: async (phone: string, mode: 'signin' | 'signup' = 'signin', name?: string) => {
@@ -193,8 +211,16 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
 
       if (error) throw error;
 
-      const isSignup = pendingPhoneMode === 'signup';
+      // Supabase's combined phone flow succeeds with shouldCreateUser=true for
+      // both new and existing accounts. The requested mode therefore cannot by
+      // itself prove that this is a new farmer. OTPs expire well inside this
+      // window, so the auth user's creation timestamp is the reliable signal.
+      const isSignup = pendingPhoneMode === 'signup' && isRecentlyCreatedAuthUser(data.user);
       const needsProfileCompletion = !hasCompletedProfileName(data.user);
+
+      if (isSignup) {
+        await initializeNewFarmerExperience();
+      }
 
       // Set auth state FIRST before any side-effects that could throw
       if (isSignup && data.user) {
@@ -298,7 +324,7 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
   },
 
   completeProfile: async (data: { firstName: string; lastName: string; email?: string }) => {
-    set({ errorMessage: null, isLoading: true });
+    set({ errorMessage: null, emailAlreadyRegistered: false, isLoading: true });
     telemetry.capture('profile_completion_started');
 
     try {
@@ -340,8 +366,8 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
 
         if (existingProfiles && existingProfiles.length > 0) {
           set({
-            errorMessage:
-              'An account with this email already exists. Please sign in with your email first, then link your phone number from Settings.',
+            errorMessage: DUPLICATE_EMAIL_MESSAGE,
+            emailAlreadyRegistered: true,
             isLoading: false,
           });
           return;
@@ -418,13 +444,17 @@ export const createPhoneActions = (set: SetState, get: GetState) => ({
         isLoading: false,
       });
     } catch (error: unknown) {
-      telemetry.capture('profile_completion_failed');
-      const duplicateEmailMessage =
-        'An account with this email already exists. Please sign in with your email first, then link your phone number from Settings.';
+      const isDuplicateEmail = isDuplicateEmailError(error);
+      telemetry.capture('profile_completion_failed', {
+        reason: isDuplicateEmail ? 'duplicate_email' : 'other',
+      });
       set({
-        errorMessage: isDuplicateEmailError(error)
-          ? duplicateEmailMessage
+        errorMessage: isDuplicateEmail
+          ? DUPLICATE_EMAIL_MESSAGE
           : getAuthErrorMessage(error, 'Failed to update profile', 'profile_update'),
+        // A duplicate email is recoverable: the email is optional, so the UI can
+        // offer to finish signup without it rather than trapping the farmer.
+        emailAlreadyRegistered: isDuplicateEmail,
         isLoading: false,
       });
     }

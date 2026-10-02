@@ -1,38 +1,51 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { AppIcon } from '@/components/ui/app-icon';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { Spinner } from '@/components/ui/spinner';
 import { useLogPresentation, type RecentActivity } from '@/hooks';
+import {
+  RecentActivityRow,
+  type ActivityRowModel,
+} from '@/components/activity/recent-activity-row';
 import { useM3 } from '@/styles/use-theme';
-import { borderRadius, fontSize, fontWeight, radius, spacing } from '@/styles/theme';
-import { colorWithOpacity } from '@/utils/color';
-import { formatDate } from '@/i18n/format';
+import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
 
 interface RecentActivityListProps {
   activities: RecentActivity[] | undefined;
   isLoading: boolean;
   hasFarms: boolean;
-  onOpenFarm: (farmId: number) => void;
+  /** Only true with 2+ farms — with one farm the header already names it. */
+  showFarmName: boolean;
+  onEditActivity: (activity: RecentActivity) => void;
   onViewAll: () => void;
 }
 
 // Compact recent-activity timeline for the home screen. Derives every log
-// type's icon + color from the single useLogPresentation map (icons from the
+// type's icon + color + label from the single useLogPresentation map (from the
 // canonical LOG_TYPES model), so it stays in sync with the quick-action grid.
+// The log TYPE is the row title — a bare "4h" or a chemical name tells a farmer
+// nothing on its own — with the amount/detail as the supporting line.
 export function RecentActivityList({
   activities,
   isLoading,
   hasFarms,
-  onOpenFarm,
+  showFarmName,
+  onEditActivity,
   onViewAll,
 }: RecentActivityListProps) {
   const m3 = useM3();
   const { t } = useTranslation();
   const presentation = useLogPresentation();
-
   const activityList = activities && activities.length > 0 ? activities : null;
+
+  const handleRowPress = React.useCallback(
+    (row: ActivityRowModel) => {
+      const activity = activities?.find((item) => item.id === row.id);
+      if (activity) onEditActivity(activity);
+    },
+    [activities, onEditActivity],
+  );
 
   return (
     <View style={{ marginBottom: spacing[6] }}>
@@ -90,96 +103,15 @@ export function RecentActivityList({
         </View>
       ) : activityList ? (
         <View style={{ gap: spacing[1] }}>
-          {activityList.map((activity) => {
-            const p = presentation[activity.type];
-            const activityDate = formatDate(activity.date, {
-              month: 'short',
-              day: 'numeric',
-            });
-
-            return (
-              <Pressable
-                key={activity.id}
-                onPress={() => onOpenFarm(activity.farmId)}
-                accessibilityRole="button"
-                accessibilityLabel={`${
-                  activity.farmName
-                    ? t('dashboard.recentActivity.openFarm', { name: activity.farmName })
-                    : t('dashboard.recentActivity.openFarmDetails')
-                }, ${activity.description}, ${activityDate}`}
-                style={({ pressed }) => ({
-                  flexDirection: 'row',
-                  alignItems: 'flex-start',
-                  gap: spacing[2],
-                  paddingHorizontal: spacing[2],
-                  paddingVertical: spacing[2],
-                  borderRadius: borderRadius.md,
-                  backgroundColor: pressed ? m3.surface.s200 : m3.surface.s100,
-                  borderWidth: 1,
-                  borderColor: m3.surface.s200,
-                  opacity: pressed ? 0.9 : 1,
-                })}
-              >
-                <View
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: radius.md,
-                    backgroundColor: colorWithOpacity(p.color, 0.12),
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
-                >
-                  <AppIcon name={p.icon} size={16} color={p.color} />
-                </View>
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'flex-start',
-                      gap: spacing[2],
-                    }}
-                  >
-                    <Text
-                      numberOfLines={2}
-                      style={{
-                        flex: 1,
-                        minWidth: 0,
-                        fontSize: fontSize.sm,
-                        fontWeight: fontWeight.semibold,
-                        color: m3.surface.s900,
-                        lineHeight: 18,
-                      }}
-                    >
-                      {activity.description}
-                    </Text>
-                    <Text
-                      numberOfLines={1}
-                      style={{
-                        fontSize: fontSize.xs,
-                        color: m3.surface.s500,
-                        lineHeight: 17,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {activityDate}
-                    </Text>
-                  </View>
-                  <Text
-                    numberOfLines={1}
-                    style={{
-                      fontSize: fontSize.xs,
-                      color: m3.surface.s500,
-                      lineHeight: 15,
-                    }}
-                  >
-                    {activity.farmName}
-                  </Text>
-                </View>
-              </Pressable>
-            );
-          })}
+          {activityList.map((activity) => (
+            <RecentActivityRow
+              key={activity.id}
+              activity={activity}
+              showFarmName={showFarmName}
+              presentation={presentation}
+              onPress={handleRowPress}
+            />
+          ))}
         </View>
       ) : (
         <View

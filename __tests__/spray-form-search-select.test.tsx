@@ -162,6 +162,31 @@ const catalogMixes: ChemicalMix[] = [
   },
 ];
 
+const invalidCatalogMix: ChemicalMix = {
+  id: 88,
+  name: 'Invalid mix',
+  target_problem: 'Unknown',
+  application_mode: 'preventive',
+  source_page: null,
+  is_active: true,
+  components: [
+    {
+      id: 3,
+      mix_id: 88,
+      product_id: 300,
+      product_name: 'Broken dose',
+      active_ingredient: null,
+      dose_value: 10,
+      dose_unit: 'gm',
+      dose_basis: 'fixed_per_tank',
+      base_tank_liters: null,
+      phi_days: null,
+      phi_verified: false,
+      phi_source: 'unknown',
+    },
+  ],
+};
+
 /**
  * Stateful harness: the ChemicalRow name field is parent-controlled, so the
  * typeahead only opens when onChange round-trips into fresh data.
@@ -169,9 +194,11 @@ const catalogMixes: ChemicalMix[] = [
 function Harness({
   initial,
   onChange,
+  mixes,
 }: {
   initial: SprayFormData;
   onChange: (data: SprayFormData) => void;
+  mixes: ChemicalMix[];
 }) {
   const [data, setData] = useState(initial);
   return (
@@ -183,7 +210,7 @@ function Harness({
       }}
       historyItems={historyItems}
       planItems={planItems}
-      catalogMixes={catalogMixes}
+      catalogMixes={mixes}
     />
   );
 }
@@ -191,8 +218,9 @@ function Harness({
 function renderSprayForm(
   onChange: (data: SprayFormData) => void,
   data: SprayFormData = createEmptySprayFormData(),
+  mixes: ChemicalMix[] = catalogMixes,
 ) {
-  return render(<Harness initial={data} onChange={onChange} />);
+  return render(<Harness initial={data} onChange={onChange} mixes={mixes} />);
 }
 
 /** Type into the empty row's name field so the typeahead opens. */
@@ -369,6 +397,22 @@ describe('SprayForm typeahead adoption', () => {
     expect(next.safeHarvestDate ?? null).toBeNull();
     expect(next.governingPhiDays ?? null).toBeNull();
     expect(next.phiStatus ?? null).toBeNull();
+  });
+
+  it('keeps a blank editable row when a mix has no valid components', () => {
+    const onChange = jest.fn();
+    const screen = renderSprayForm(onChange, createEmptySprayFormData(), [invalidCatalogMix]);
+
+    typeName(screen, 'Invalid');
+    fireEvent.press(screen.getByText('Invalid mix'));
+
+    const next = onChange.mock.calls.at(-1)?.[0] as SprayFormData;
+    expect(next.chemicals).toHaveLength(1);
+    expect(next.chemicals[0]).toMatchObject({
+      name: '',
+      quantity: undefined,
+      unit: 'gm/L',
+    });
   });
 
   it('adds a plain custom row from the escape hatch', () => {
