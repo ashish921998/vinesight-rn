@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import {
   Image,
   ScrollView,
@@ -73,7 +74,13 @@ export function WelcomeScreen() {
     opacity: logoOpacity.value,
   }));
 
+  // Ignore repeat taps: a second router.replace while the first transition is
+  // still running can leave expo-router in a bad navigation state.
+  const hasContinuedRef = useRef(false);
+
   const handleContinue = (action: 'get_started' | 'log_in') => {
+    if (hasContinuedRef.current) return;
+    hasContinuedRef.current = true;
     markWelcomeSeen();
     telemetry.capture(`welcome_${action}`);
     router.replace('/(auth)/phone-login');

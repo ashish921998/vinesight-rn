@@ -30,6 +30,7 @@ import {
   useThemeStore,
   useAppModeStore,
 } from '@/stores';
+import { useOnboardingStore } from '@/stores/onboarding-store';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { ToastHost } from '@/components/ui/toast';
 import i18n, { getDeviceLanguage, setAppLanguage } from '@/i18n';
@@ -671,12 +672,14 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
       const authStillLoading = useAuthStore.getState().isLoading;
       const themeStillPending = !useThemeStore.getState().hasHydrated;
       const langStillPending = !useLanguageStore.getState().hasHydrated;
+      const onboardingStillPending = !useOnboardingStore.getState().hasHydrated;
 
-      if (authStillLoading || themeStillPending || langStillPending) {
+      if (authStillLoading || themeStillPending || langStillPending || onboardingStillPending) {
         const context = {
           authStillLoading,
           themeHydrated: !themeStillPending,
           languageHydrated: !langStillPending,
+          onboardingHydrated: !onboardingStillPending,
         };
         if (__DEV__) {
           console.warn(
@@ -716,6 +719,11 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
             })
             .catch(() => {})
             .finally(() => useLanguageStore.setState({ hasHydrated: true }));
+        }
+        // The onboarding store persists to SecureStore, which can hang on
+        // Android. Fall back to its defaults so the index route can leave splash.
+        if (onboardingStillPending) {
+          useOnboardingStore.setState({ hasHydrated: true });
         }
       }
     }, INIT_TIMEOUT_MS);

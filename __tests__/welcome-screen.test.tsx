@@ -62,16 +62,27 @@ describe('WelcomeScreen', () => {
     jest.clearAllMocks();
   });
 
-  it('routes both welcome actions to phone login and persists that welcome was seen', () => {
+  it.each([
+    ['welcome.cta.getStarted', 'welcome_get_started'],
+    ['welcome.cta.logIn', 'welcome_log_in'],
+  ])('routes %s to phone login and persists that welcome was seen', (label, event) => {
+    const { getByText } = render(<WelcomeScreen />);
+
+    fireEvent.press(getByText(label));
+
+    expect(mockMarkWelcomeSeen).toHaveBeenCalledTimes(1);
+    expect(mockReplace).toHaveBeenCalledWith('/(auth)/phone-login');
+    expect(mockCapture).toHaveBeenCalledWith(event);
+  });
+
+  it('navigates only once when the buttons are tapped repeatedly', () => {
     const { getByText } = render(<WelcomeScreen />);
 
     fireEvent.press(getByText('welcome.cta.getStarted'));
+    fireEvent.press(getByText('welcome.cta.getStarted'));
     fireEvent.press(getByText('welcome.cta.logIn'));
 
-    expect(mockMarkWelcomeSeen).toHaveBeenCalledTimes(2);
-    expect(mockReplace).toHaveBeenNthCalledWith(1, '/(auth)/phone-login');
-    expect(mockReplace).toHaveBeenNthCalledWith(2, '/(auth)/phone-login');
-    expect(mockCapture).toHaveBeenCalledWith('welcome_get_started');
-    expect(mockCapture).toHaveBeenCalledWith('welcome_log_in');
+    expect(mockMarkWelcomeSeen).toHaveBeenCalledTimes(1);
+    expect(mockReplace).toHaveBeenCalledTimes(1);
   });
 });
