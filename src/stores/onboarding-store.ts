@@ -105,6 +105,23 @@ const onboardingStorage = {
   },
 };
 
+/**
+ * Set by the app-init safety timeout when SecureStore never finishes reading
+ * onboarding state. Kept in a separate, non-persisted store: any setState on
+ * the persisted store would write default progress over the saved record
+ * while the slow read is still pending.
+ */
+export const useOnboardingInitTimeoutStore = create<{ timedOut: boolean }>(() => ({
+  timedOut: false,
+}));
+
+/** Onboarding state is usable: hydrated from storage, or the init timeout gave up waiting. */
+export const useOnboardingReady = () => {
+  const hydrated = useOnboardingStore((s) => s.hasHydrated);
+  const timedOut = useOnboardingInitTimeoutStore((s) => s.timedOut);
+  return hydrated || timedOut;
+};
+
 export const useOnboardingStore = create<OnboardingStore>()(
   persist(
     (set, get) => ({

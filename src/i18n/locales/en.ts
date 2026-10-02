@@ -3247,7 +3247,7 @@ export const en = {
   },
 
   welcome: {
-    title: 'VineSight',
+    title: 'Vinesight',
     kicker: 'Built for vineyard teams',
     headline: 'Your vineyard, one app',
     subtitle: 'Track irrigation, sprays, harvests, and tasks \u2014 all in one place.',

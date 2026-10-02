@@ -3,16 +3,16 @@ import { Redirect } from 'expo-router';
 import { WelcomeScreen } from '@/features/welcome';
 import { AnimatedSplash } from '@/components/animated-splash';
 import { useAuthStore } from '@/stores';
-import { useOnboardingStore } from '@/stores/onboarding-store';
+import { useOnboardingReady, useOnboardingStore } from '@/stores/onboarding-store';
 
 export default function WelcomeRoute() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isLoading = useAuthStore((s) => s.isLoading);
-  const onboardingHydrated = useOnboardingStore((s) => s.hasHydrated);
+  const onboardingReady = useOnboardingReady();
 
   // Wait for auth and onboarding state before deciding, so a deep link that
   // lands here during startup doesn't flash welcome to a signed-in user.
-  if (isLoading || !onboardingHydrated) {
+  if (isLoading || !onboardingReady) {
     return <AnimatedSplash duration={2500} />;
   }
 
@@ -26,12 +26,20 @@ export default function WelcomeRoute() {
 }
 
 function WelcomeGate() {
-  // Read once on mount (after hydration) rather than subscribing: tapping a
+  // Read once on mount rather than subscribing to hasSeenWelcome: tapping a
   // CTA marks welcome as seen and navigates itself, and a second redirect
   // from here would race that navigation.
-  const [seenAtEntry] = useState(() => useOnboardingStore.getState().hasSeenWelcome);
+  const [entry] = useState(() => {
+    const { hasHydrated, hasSeenWelcome } = useOnboardingStore.getState();
+    return { hydrated: hasHydrated, seen: hasHydrated && hasSeenWelcome };
+  });
+  // If we got here on the init-timeout fallback, storage may still finish
+  // loading and reveal a returning user who already saw welcome.
+  const seenAfterLateHydration = useOnboardingStore(
+    (s) => !entry.hydrated && s.hasHydrated && s.hasSeenWelcome,
+  );
 
-  if (seenAtEntry) {
+  if (entry.seen || seenAfterLateHydration) {
     return <Redirect href="/(auth)/phone-login" />;
   }
 

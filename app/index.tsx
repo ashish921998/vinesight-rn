@@ -2,7 +2,7 @@ import { View, Text } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore, useLanguageStore } from '@/stores';
-import { useOnboardingStore } from '@/stores/onboarding-store';
+import { useOnboardingReady, useOnboardingStore } from '@/stores/onboarding-store';
 import { useProfile } from '@/hooks';
 import { getConfigurationStatus } from '@/lib/supabase';
 import { AnimatedSplash } from '@/components/animated-splash';
@@ -24,7 +24,7 @@ export default function Index() {
   const needsProfileCompletion = useAuthStore((s) => s.needsProfileCompletion);
   const hasSeenOnboarding = useAuthStore((s) => s.hasSeenOnboarding);
   const user = useAuthStore((s) => s.user);
-  const onboardingHydrated = useOnboardingStore((s) => s.hasHydrated);
+  const onboardingHydrated = useOnboardingReady();
   const hasSeenWelcome = useOnboardingStore((s) => s.hasSeenWelcome);
   const onboardingComplete = useOnboardingStore((s) => s.isComplete);
   const { languageHydrated, hasSelectedLanguage, language } = useLanguageStore(

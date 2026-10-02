@@ -3257,7 +3257,7 @@ export const mr = {
   },
 
   welcome: {
-    title: 'VineSight',
+    title: 'Vinesight',
     kicker: 'द्राक्ष बागांच्या टीमसाठी',
     headline: 'तुमची द्राक्षबाग, एकच अॅप',
     subtitle:

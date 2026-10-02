@@ -3230,7 +3230,7 @@ export const hi = {
   },
 
   welcome: {
-    title: 'VineSight',
+    title: 'Vinesight',
     kicker: 'द्राक्षाबागी टीमों के लिए',
     headline: 'आपका द्राक्षाबाग, एक ऐप',
     subtitle: 'सिंचाई, छिड़काव, कटाई और कार्य \u2014 सब एक जगह।',
