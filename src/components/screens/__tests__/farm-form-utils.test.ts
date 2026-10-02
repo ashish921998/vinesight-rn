@@ -1,7 +1,9 @@
 import {
   isFarmCoreFieldsValid,
+  getFarmCoreFieldError,
   buildFarmInsertFromCoreFields,
   resolveFarmCoreSelection,
+  sanitizeDecimalInput,
 } from '../farm-form/utils';
 import type { FarmCoreFields } from '../farm-form/utils';
 
@@ -93,6 +95,55 @@ describe('isFarmCoreFieldsValid — quick-create (name + crop + area only)', () 
         customCropName: 'Dragonfruit',
       }),
     ).toBe(true);
+  });
+});
+
+describe('sanitizeDecimalInput — comma-locale decimal separator', () => {
+  it('converts a comma decimal separator to a period', () => {
+    expect(sanitizeDecimalInput('1,5')).toBe('1.5');
+  });
+
+  it('keeps a period decimal separator', () => {
+    expect(sanitizeDecimalInput('1.5')).toBe('1.5');
+  });
+
+  it('collapses extra separators into a single decimal point', () => {
+    expect(sanitizeDecimalInput('1,5,2')).toBe('1.52');
+  });
+
+  it('strips letters and other symbols', () => {
+    expect(sanitizeDecimalInput('12a.5')).toBe('12.5');
+  });
+});
+
+describe('getFarmCoreFieldError — first missing required field', () => {
+  it('returns null when the core fields are valid', () => {
+    expect(
+      getFarmCoreFieldError({
+        ...baseCoreFields,
+        name: 'Farm',
+        area: '5',
+        selectedCrop: 'Grapes',
+      }),
+    ).toBeNull();
+  });
+
+  it('reports name first, then area, then custom crop', () => {
+    expect(
+      getFarmCoreFieldError({ ...baseCoreFields, name: '', area: '', selectedCrop: 'Other' }),
+    ).toBe('name');
+    expect(
+      getFarmCoreFieldError({ ...baseCoreFields, name: 'Farm', area: '0', selectedCrop: 'Grapes' }),
+    ).toBe('area');
+    expect(
+      getFarmCoreFieldError({
+        ...baseCoreFields,
+        name: 'Farm',
+        area: '5',
+        selectedCrop: 'Other',
+        customCropName: '',
+      }),
+    ).toBe('customCrop');
   });
 });
 
