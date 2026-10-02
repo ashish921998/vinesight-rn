@@ -53,6 +53,7 @@ import {
 import { GuidedTourController, guidedTourEmit } from '@/features/guided-tour';
 import { syncPushDeviceRegistration } from '@/features/guided-tour/service';
 import { resolveFeatureOverviewRoute } from '@/services/feature-overview-notifications';
+import { resolveFarmSetupNotificationRoute } from '@/services/farm-setup-notifications';
 import {
   getOnlineStatus,
   startOnlineManager,
@@ -560,7 +561,7 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
     }) => {
       const data = response.notification.request.content.data as {
         type?: string;
-        sequence?: number;
+        sequence?: number | string;
         route?: string;
         campaign?: string;
         day?: number;
@@ -572,6 +573,21 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
       if (data?.type === 'guided_tour_reminder') {
         const sequence = data.sequence === 2 ? 2 : 1;
         guidedTourEmit('guidedTour.notificationOpened', { sequence });
+      } else if (data?.type === 'farm_setup_reminder') {
+        const route = resolveFarmSetupNotificationRoute(data);
+        if (!route) {
+          telemetry.capture('farm_setup_notification_invalid', {
+            campaign: data.campaign ?? null,
+            sequence: data.sequence ?? null,
+          });
+          currentRouter.push('/(tabs)');
+          return;
+        }
+        telemetry.capture('farm_setup_notification_opened', {
+          campaign: data.campaign ?? null,
+          sequence: data.sequence ?? null,
+        });
+        currentRouter.push(route);
       } else if (data?.type === 'feature_overview') {
         const route = resolveFeatureOverviewRoute(data);
         if (!route) {

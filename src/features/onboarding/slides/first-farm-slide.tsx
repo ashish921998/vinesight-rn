@@ -19,6 +19,7 @@ import { useM3 } from '@/styles/use-theme';
 import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { triggerHapticSuccess } from '@/utils/haptics';
+import { OnboardingStageHeader } from '../components/onboarding-stage-header';
 
 interface FirstFarmSlideProps {
   isActive: boolean;
@@ -198,17 +199,11 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
     return (
       <View style={[styles.container, { backgroundColor: m3.colorScheme.background }]}>
         <View style={styles.panel}>
-          <Animated.View
-            entering={isActive ? FadeInDown.duration(450) : undefined}
-            style={styles.header}
-          >
-            <Text style={[styles.title, { color: m3.colorScheme.onSurface }]}>
-              {t('onboarding.firstFarm.existingTitle')}
-            </Text>
-            <Text style={[styles.subtitle, { color: m3.colorScheme.onSurfaceVariant }]}>
-              {t('onboarding.firstFarm.existingSubtitle')}
-            </Text>
-          </Animated.View>
+          <OnboardingStageHeader
+            isActive={isActive}
+            title={t('onboarding.firstFarm.existingTitle')}
+            subtitle={t('onboarding.firstFarm.existingSubtitle')}
+          />
 
           <Animated.View
             entering={isActive ? FadeInDown.delay(100).duration(450) : undefined}
@@ -255,17 +250,11 @@ export function FirstFarmSlide({ isActive, onResolved }: FirstFarmSlideProps) {
   return (
     <View style={[styles.container, { backgroundColor: m3.colorScheme.background }]}>
       <View style={styles.panel}>
-        <Animated.View
-          entering={isActive ? FadeInDown.duration(450) : undefined}
-          style={styles.header}
-        >
-          <Text style={[styles.title, { color: m3.colorScheme.onSurface }]}>
-            {t('onboarding.firstFarm.title')}
-          </Text>
-          <Text style={[styles.subtitle, { color: m3.colorScheme.onSurfaceVariant }]}>
-            {t('onboarding.firstFarm.subtitle')}
-          </Text>
-        </Animated.View>
+        <OnboardingStageHeader
+          isActive={isActive}
+          title={t('onboarding.firstFarm.title')}
+          subtitle={t('onboarding.firstFarm.subtitle')}
+        />
 
         <ScrollView
           contentInsetAdjustmentBehavior="automatic"
@@ -383,18 +372,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: spacing[2],
     gap: spacing[4],
-  },
-  header: {
-    gap: spacing[1],
-  },
-  title: {
-    fontSize: fontSize['2xl'],
-    fontWeight: fontWeight.bold,
-    lineHeight: 30,
-  },
-  subtitle: {
-    fontSize: fontSize.sm,
-    lineHeight: 20,
   },
   formContent: {
     gap: spacing[3],

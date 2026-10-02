@@ -159,7 +159,7 @@ export async function handleRequest(req: Request): Promise<Response> {
     let routeStateDirty = false;
 
     // On audio turns, sync persisted detected_locale with current STT result.
-    // When STT didn't return a language code (e.g., OpenAI Whisper fallback),
+    // When STT didn't return a language code,
     // use text-based Devanagari detection so the locale signal isn't lost.
     const detectedLocaleForPersistence: 'en' | 'hi' | 'mr' | null =
       sttDetectedLocale ?? detectLocaleFromText(transcript);
@@ -460,7 +460,7 @@ export async function handleRequest(req: Request): Promise<Response> {
       inputMode: 'text',
       traceId,
       latencyMs: latency,
-      provider: audioProviderUsed ?? 'openai',
+      provider: audioProviderUsed ?? 'sarvam',
       model: getAdvisoryModel(),
       citations,
       toolCalls,

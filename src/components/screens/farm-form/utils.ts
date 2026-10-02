@@ -77,7 +77,11 @@ export const ensureValidDate = (value: Date | undefined | null): Date => {
 // ---------------------------------------------------------------------------
 
 export const sanitizeDecimalInput = (value: string): string => {
-  const digitsAndDotOnly = value.replace(/[^0-9.]/g, '');
+  // Convert a comma to a period first. A comma-locale keypad (for example an
+  // Android decimal-pad on an en-ZA device) sends "," as the decimal separator.
+  // Stripping it would silently delete the decimal point.
+  const normalized = value.replace(/,/g, '.');
+  const digitsAndDotOnly = normalized.replace(/[^0-9.]/g, '');
   const firstDotIndex = digitsAndDotOnly.indexOf('.');
   if (firstDotIndex === -1) return digitsAndDotOnly;
   const whole = digitsAndDotOnly.substring(0, firstDotIndex);
@@ -108,18 +112,26 @@ export const resolveFarmCoreSelection = ({
 // collapsible "Add agronomy details" section — they send safe empty-string
 // defaults on insert (see buildFarmInsertFromCoreFields) rather than blocking
 // the Save button.
-export const isFarmCoreFieldsValid = ({
+export type FarmCoreFieldError = 'name' | 'area' | 'customCrop';
+
+// Returns the first required field that fails validation, or null when the core
+// fields are valid. The view uses this to show an inline error and focus the
+// field instead of leaving the Create Farm button silently disabled.
+export const getFarmCoreFieldError = ({
   name,
   area,
   selectedCrop,
   customCropName,
-}: FarmCoreFields): boolean => {
-  if (!name.trim()) return false;
+}: FarmCoreFields): FarmCoreFieldError | null => {
+  if (!name.trim()) return 'name';
   const areaValue = Number(area);
-  if (!Number.isFinite(areaValue) || areaValue <= 0) return false;
-  if (selectedCrop === 'Other' && !customCropName.trim()) return false;
-  return true;
+  if (!Number.isFinite(areaValue) || areaValue <= 0) return 'area';
+  if (selectedCrop === 'Other' && !customCropName.trim()) return 'customCrop';
+  return null;
 };
+
+export const isFarmCoreFieldsValid = (fields: FarmCoreFields): boolean =>
+  getFarmCoreFieldError(fields) === null;
 
 export const buildFarmInsertFromCoreFields = (
   fields: FarmCoreFields,

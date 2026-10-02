@@ -6,6 +6,47 @@ import type { FertigationRecord, NutrientCompositionItem, SprayRecord } from '@/
 import { convertAreaToAcres } from '@/utils/preferences';
 
 describe('nutrient-flow-service', () => {
+  it.each([null, undefined, 0, -1, NaN, Infinity])(
+    'excludes volume items with density %s while retaining known mass totals and partial coverage',
+    (density) => {
+      const composition: NutrientCompositionItem[] = [
+        { nutrient_code: 'N', percent: 20, basis: 'declared' },
+      ];
+      const result = calculateNutrientTotalsForLog({
+        items: [
+          {
+            quantity: 10,
+            unit: 'liter',
+            density_kg_per_l: density,
+            composition_snapshot: composition,
+          },
+          { quantity: 5, unit: 'kg', composition_snapshot: composition },
+        ],
+        areaAcre: 2,
+      });
+      expect(result.nutrientTotalsElemental).toEqual({ N: 1 });
+      expect(result.nutrientTotalsElementalPerAcre).toEqual({ N: 0.5 });
+      expect(result.coveragePercent).toBe(50);
+      expect(result.composedItemCount).toBe(1);
+    },
+  );
+
+  it('uses supplied density rather than assuming water density for liquid fertilizer', () => {
+    const result = calculateNutrientTotalsForLog({
+      items: [
+        {
+          quantity: 10,
+          unit: 'liter',
+          density_kg_per_l: 1.4,
+          composition_snapshot: [{ nutrient_code: 'N', percent: 20, basis: 'declared' }],
+        },
+      ],
+      areaAcre: 1,
+    });
+    expect(result.nutrientTotalsElemental.N).toBeCloseTo(2.8);
+    expect(result.coveragePercent).toBe(100);
+  });
+
   it('converts oxide nutrients to elemental totals', () => {
     const result = calculateNutrientTotalsForLog({
       items: [

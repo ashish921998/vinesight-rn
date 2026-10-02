@@ -152,7 +152,6 @@ module.exports = [
       '.claude/',
       '.worktrees/',
       '.expo/',
-      '.rnstorybook/',
       'dist/',
       'web-build/',
       'babel.config.js',

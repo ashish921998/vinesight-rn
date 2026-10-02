@@ -549,7 +549,10 @@ export function QuickLogSheet({
 
   // PHI fields derive from mix + spray date; stamp them into the draft so the
   // saved record carries them (same contract as EntryForm).
-  const { data: sprayPhiComputation } = usePhiComputation(sprayDraft.catalogMixId ?? null, dateStr);
+  const { data: sprayPhiComputation, isLoading: sprayPhiLoading } = usePhiComputation(
+    sprayDraft.catalogMixId ?? null,
+    dateStr,
+  );
   useEffect(() => {
     if (!sprayPhiComputation) return;
     setSprayDraft((prev) => {
@@ -843,20 +846,9 @@ export function QuickLogSheet({
   const handleSave = useCallback(() => {
     if (!isValid || savingRef.current) return;
     if (type === 'spray') {
-      // PHI computation for a selected mix is async (usePhiComputation stamps
-      // it a tick after selection). Until it lands, phiStatus is null and both
-      // gates below no-op — so an immediate save could persist a mix with no
-      // governing PHI / safe-harvest date and skip the conflict prompt. Block
-      // until it resolves.
-      if (isGrapeFarm && sprayDraft.catalogMixId != null && sprayDraft.phiStatus == null) {
-        Alert.alert(
-          t('entryForm.phiErrors.computeFailedTitle'),
-          t('entryForm.phiErrors.computeFailedBody'),
-        );
-        return;
-      }
-      // Same harvest-safety gate as EntryForm: a catalog mix whose PHI window
-      // crosses the season's target harvest needs an explicit double-confirm.
+      // Harvest-safety gate: a catalog mix whose PHI window crosses the
+      // season's target harvest needs an explicit double-confirm. A missing or
+      // unknown PHI never blocks the save — the spray is stored as-is.
       if (
         isGrapeFarm &&
         sprayDraft.catalogMixId &&
@@ -901,19 +893,6 @@ export function QuickLogSheet({
         );
         return;
       }
-      if (
-        isGrapeFarm &&
-        sprayDraft.phiStatus === 'unknown' &&
-        (!sprayDraft.catalogMixId ||
-          sprayDraft.safeHarvestDate == null ||
-          sprayDraft.governingPhiDays == null)
-      ) {
-        Alert.alert(
-          t('entryForm.phiErrors.computeFailedTitle'),
-          t('entryForm.phiErrors.computeFailedBody'),
-        );
-        return;
-      }
     }
     void performSave();
   }, [isValid, type, isGrapeFarm, sprayDraft, activeSeason?.target_harvest_date, performSave, t]);
@@ -926,12 +905,19 @@ export function QuickLogSheet({
 
   const logType = type ? getLogType(type) : null;
   // Season gate is create-only (see performSave). Irrigation edit also waits
-  // for linked-fertigation hydration so Save can't race the query.
+  // for linked-fertigation hydration so Save can't race the query. Spray waits
+  // for the selected mix to load and for its PHI to be stamped into the draft
+  // so the harvest-conflict prompt can't be skipped.
+  const sprayPhiPending =
+    isGrapeFarm &&
+    sprayDraft.catalogMixId != null &&
+    (sprayPhiLoading || (sprayPhiComputation != null && sprayDraft.phiStatus == null));
   const saveDisabled =
     !isValid ||
     saving ||
     !farm ||
     isIrrigationEditPendingLinkedFert ||
+    (type === 'spray' && sprayPhiPending) ||
     (editTarget == null && isBlockedByNoSeason);
 
   // Spray & irrigation are tall, multi-row forms (chemical/fertilizer rows, each

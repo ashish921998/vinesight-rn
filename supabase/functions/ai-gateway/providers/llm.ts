@@ -1,6 +1,6 @@
 /**
  * LLM (Large Language Model) Provider Module
- * Handles chat completions and intent extraction via OpenAI GPT-4o-mini.
+ * Handles chat completions and intent extraction via Sarvam.
  */
 
 import {
@@ -10,13 +10,13 @@ import {
   toRecord,
   withAbortTimeout,
 } from '../utils/index.ts';
-import type { ImageAttachment } from '../context/assembler.ts';
 
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')?.trim() ?? '';
+const SARVAM_API_KEY = Deno.env.get('SARVAM_API_KEY')?.trim() ?? '';
 
 // Model configuration
-const ADVISORY_MODEL = Deno.env.get('ASSISTANT_OPENAI_MODEL')?.trim() || 'gpt-4o-mini';
-const EXTRACTION_MODEL = Deno.env.get('ASSISTANT_EXTRACTION_MODEL')?.trim() || 'gpt-4o-mini';
+const ADVISORY_MODEL = Deno.env.get('ASSISTANT_SARVAM_CHAT_MODEL')?.trim() || 'sarvam-105b';
+const EXTRACTION_MODEL =
+  Deno.env.get('ASSISTANT_SARVAM_EXTRACTION_MODEL')?.trim() || ADVISORY_MODEL;
 
 export interface ChatCompletionResult {
   text: string;
@@ -24,8 +24,14 @@ export interface ChatCompletionResult {
   outputTokens: number;
 }
 
+interface ImageAttachment {
+  dataUrl: string;
+  mimeType: string;
+  name: string;
+}
+
 /**
- * Call OpenAI chat completion API
+ * Call Sarvam chat completion API.
  * IMPORTANT: Farm/memory/RAG context blocks are placed in the system message,
  * NOT in the user message. This ensures the context is always available
  * to the model regardless of message length constraints.
@@ -37,8 +43,11 @@ export async function chatCompletion(input: {
   imageAttachments?: ImageAttachment[];
   signal?: AbortSignal;
 }): Promise<ChatCompletionResult> {
-  if (!OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY is not configured');
+  if (!SARVAM_API_KEY) {
+    throw new Error('SARVAM_API_KEY is not configured');
+  }
+  if (input.imageAttachments?.length) {
+    throw new Error('Image attachments are not supported by the configured Sarvam chat model');
   }
 
   const languageInstruction =
@@ -58,38 +67,23 @@ export async function chatCompletion(input: {
 
   const systemMessage = `${languageInstruction} ${safetyInstruction}${contextSection}`;
 
-  // Build user message: multimodal (text + images) when images are present
-  const images = input.imageAttachments ?? [];
-  const userMessage: Record<string, unknown> =
-    images.length > 0
-      ? {
-          role: 'user',
-          content: [
-            { type: 'text', text: input.prompt },
-            ...images.map((img) => ({
-              type: 'image_url',
-              image_url: { url: img.dataUrl, detail: 'low' as const },
-            })),
-          ],
-        }
-      : { role: 'user', content: input.prompt };
-
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const response = await fetch('https://api.sarvam.ai/v1/chat/completions', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
+      'api-subscription-key': SARVAM_API_KEY,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       model: ADVISORY_MODEL,
       temperature: 0.3,
       max_tokens: 700,
+      reasoning_effort: null,
       messages: [
         {
           role: 'system',
           content: systemMessage,
         },
-        userMessage,
+        { role: 'user', content: input.prompt },
       ],
     }),
     signal: input.signal,
@@ -97,13 +91,13 @@ export async function chatCompletion(input: {
 
   const data = await response.json();
   if (!response.ok) {
-    const message = data?.error?.message ?? 'OpenAI chat request failed';
+    const message = data?.error?.message ?? 'Sarvam chat request failed';
     throw new Error(message);
   }
 
   const content = data?.choices?.[0]?.message?.content;
   if (typeof content !== 'string' || !content.trim()) {
-    throw new Error('OpenAI returned an empty response');
+    throw new Error('Sarvam returned an empty response');
   }
 
   const usage = toRecord(data?.usage);
@@ -116,7 +110,7 @@ export async function chatCompletion(input: {
 }
 
 /**
- * Extract intent using OpenAI JSON mode
+ * Extract intent using Sarvam JSON mode.
  */
 export async function extractIntent(input: {
   transcript: string;
@@ -125,23 +119,24 @@ export async function extractIntent(input: {
   contextFarmName?: string | null;
   signal?: AbortSignal;
 }): Promise<string> {
-  if (!OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY is not configured');
+  if (!SARVAM_API_KEY) {
+    throw new Error('SARVAM_API_KEY is not configured');
   }
 
   const today = new Date();
   const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const response = await fetch('https://api.sarvam.ai/v1/chat/completions', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
+      'api-subscription-key': SARVAM_API_KEY,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       model: EXTRACTION_MODEL,
       temperature: 0,
       max_tokens: 280,
+      reasoning_effort: null,
       response_format: { type: 'json_object' },
       messages: [
         {

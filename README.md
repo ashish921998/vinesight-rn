@@ -69,7 +69,7 @@ vinesight-rn/
 
 ## Features
 
-- **AI Chat Assistant**: Farming advice powered by OpenAI GPT-4o.
+- **AI Chat Assistant**: Farming advice powered by Sarvam.
 - **Weather Tracking**: Agricultural weather data per farm.
 - **Activity Logs**: Comprehensive view of farming activities.
 - **Attendance Tracking**: Worker attendance management.

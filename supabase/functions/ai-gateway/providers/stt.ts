@@ -1,20 +1,18 @@
 /**
  * STT (Speech-to-Text) Provider Module
- * Handles audio transcription via Sarvam Saaras v3 and OpenAI Whisper fallback.
+ * Handles audio transcription via Sarvam Saaras v3.
  *
  * Key features:
  * - Saaras v3 model as primary STT (supports 23 Indian languages + English)
  * - Auto language detection via language_code='unknown'
  * - M4A/MP4 format support (Saaras v3 handles these)
  * - Circuit breaker pattern (5 failures → open for 60s)
- * - OpenAI Whisper fallback when Sarvam fails
+ * - No cross-provider fallback; failures remain visible to the caller
  */
 
 import {
   checkCircuitBreaker,
   decodeBase64ToBytes,
-  detectAudioFormatFromHeader,
-  normalizeOpenAiAudioMime,
   recordProviderFailure,
   recordProviderSuccess,
   STT_TIMEOUT_MS,
@@ -24,7 +22,6 @@ import {
   withAbortTimeout,
 } from '../utils/index.ts';
 
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')?.trim() ?? '';
 const SARVAM_API_KEY = Deno.env.get('SARVAM_API_KEY')?.trim() ?? '';
 
 // Sarvam STT model - Saaras v3 is the default (supports M4A/MP4 and 23 languages)
@@ -37,10 +34,6 @@ const SARVAM_STT_MODEL = (() => {
   if (normalized === 'saaras:v3' || normalized === 'saaras:v2') return SARVAM_STT_MODEL_RAW;
   return SARVAM_STT_MODEL_RAW;
 })();
-
-// Feature flag for Sarvam STT usage
-const USE_SARVAM_FOR_VOICE =
-  (Deno.env.get('ASSISTANT_USE_SARVAM_VOICE') ?? 'true').toLowerCase() !== 'false';
 
 export interface SttResult {
   transcript: string;
@@ -153,59 +146,7 @@ async function callSarvamSttInternal(
 }
 
 /**
- * Call OpenAI Whisper STT API
- */
-async function callOpenAiSttInternal(
-  base64Audio: string,
-  mimeType: string,
-  signal?: AbortSignal,
-): Promise<{ transcript: string; confidence: number | null }> {
-  if (!OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is not configured');
-
-  const binary = decodeBase64ToBytes(base64Audio);
-
-  const headerDetected = detectAudioFormatFromHeader(binary);
-  const mimeBasedAudio = normalizeOpenAiAudioMime(mimeType);
-  const openAiAudio = headerDetected ?? mimeBasedAudio;
-
-  const headerHex = Array.from(binary.slice(0, 12))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join(' ');
-  console.log(
-    `[OpenAI STT] clientMime=${mimeType} mimeNormalized=${mimeBasedAudio.mime}/${mimeBasedAudio.filename} headerDetected=${headerDetected ? `${headerDetected.mime}/${headerDetected.filename}` : 'none'} using=${openAiAudio.mime}/${openAiAudio.filename} bytes=${binary.length} header=${headerHex}`,
-  );
-
-  const form = new FormData();
-  form.append('model', 'whisper-1');
-  form.append('file', new Blob([binary], { type: openAiAudio.mime }), openAiAudio.filename);
-
-  const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-    },
-    body: form,
-    signal,
-  });
-
-  const data = await response.json();
-  if (!response.ok) {
-    console.error(
-      `[OpenAI STT] rejected: ${JSON.stringify(data?.error)} mime=${openAiAudio.mime} filename=${openAiAudio.filename} bytes=${binary.length}`,
-    );
-    throw new Error(data?.error?.message ?? 'OpenAI STT failed');
-  }
-
-  const transcript = data?.text;
-  if (typeof transcript !== 'string' || !transcript.trim()) {
-    throw new Error('stt_empty_transcript');
-  }
-
-  return { transcript: transcript.trim(), confidence: null };
-}
-
-/**
- * Transcribe audio using configured providers with fallback
+ * Transcribe audio using Sarvam.
  * Saaras v3 supports all audio formats including M4A/MP4
  */
 export async function transcribeAudio(input: {
@@ -213,76 +154,34 @@ export async function transcribeAudio(input: {
   mimeType: string;
   providerFallbackEnabled: boolean;
 }): Promise<SttResult> {
-  const { base64Audio, mimeType, providerFallbackEnabled } = input;
+  const { base64Audio, mimeType } = input;
 
   // Note: Saaras v3 supports M4A/MP4 - no bypass needed for these formats
 
   console.log(
-    `[STT dispatch] audioMimeType=${mimeType} useSarvam=${USE_SARVAM_FOR_VOICE} model=${SARVAM_STT_MODEL} base64len=${base64Audio.length}`,
+    `[STT dispatch] audioMimeType=${mimeType} model=${SARVAM_STT_MODEL} base64len=${base64Audio.length}`,
   );
 
-  let fallbackReason: string | undefined;
-
-  if (USE_SARVAM_FOR_VOICE) {
-    const canUseSarvam = checkCircuitBreaker('sarvam_stt');
-    if (canUseSarvam) {
-      try {
-        const result = await withAbortTimeout(
-          (signal) => callSarvamSttInternal(base64Audio, mimeType, signal),
-          STT_TIMEOUT_MS,
-          `Sarvam STT timed out after ${STT_TIMEOUT_MS}ms`,
-        );
-        recordProviderSuccess('sarvam_stt');
-        return {
-          transcript: result.transcript,
-          confidence: result.confidence,
-          provider: 'sarvam',
-          detectedLanguage: result.detectedLanguage,
-        };
-      } catch (error) {
-        recordProviderFailure('sarvam_stt');
-        const errorMessage = stringifyUnknown(error);
-        // Check for empty transcript error
-        if (errorMessage.includes('stt_empty_transcript')) {
-          throw new Error('stt_empty_transcript');
-        }
-        if (!providerFallbackEnabled) throw error;
-        console.warn('Sarvam STT failed, falling back to OpenAI:', errorMessage);
-        fallbackReason = 'sarvam_stt_failed';
-      }
-    } else {
-      console.warn('Sarvam STT circuit breaker open; using OpenAI directly');
-      fallbackReason = 'sarvam_stt_circuit_open';
-    }
-  }
-
-  // OpenAI fallback or primary
-  if (!checkCircuitBreaker('openai_stt')) {
-    console.warn('OpenAI STT circuit breaker open, cannot transcribe audio');
-    if (fallbackReason) {
-      throw new Error('Both STT providers circuit-open or failed');
-    }
-    throw new Error('OpenAI STT circuit breaker is open');
+  if (!checkCircuitBreaker('sarvam_stt')) {
+    throw new Error('Sarvam STT circuit breaker is open');
   }
   try {
     const result = await withAbortTimeout(
-      (signal) => callOpenAiSttInternal(base64Audio, mimeType, signal),
+      (signal) => callSarvamSttInternal(base64Audio, mimeType, signal),
       STT_TIMEOUT_MS,
-      `OpenAI STT timed out after ${STT_TIMEOUT_MS}ms`,
+      `Sarvam STT timed out after ${STT_TIMEOUT_MS}ms`,
     );
-    recordProviderSuccess('openai_stt');
+    recordProviderSuccess('sarvam_stt');
     return {
       transcript: result.transcript,
       confidence: result.confidence,
-      provider: fallbackReason ? 'openai_fallback' : 'openai',
-      fallbackReason,
-      detectedLanguage: null,
+      provider: 'sarvam',
+      detectedLanguage: result.detectedLanguage,
     };
   } catch (error) {
-    recordProviderFailure('openai_stt');
-    if (fallbackReason) {
-      throw new Error(`Both STT providers failed: ${stringifyUnknown(error)}`);
-    }
+    recordProviderFailure('sarvam_stt');
+    if (stringifyUnknown(error).includes('stt_empty_transcript'))
+      throw new Error('stt_empty_transcript');
     throw error;
   }
 }
@@ -291,7 +190,7 @@ export async function transcribeAudio(input: {
  * Check if Sarvam STT is enabled
  */
 export function isSarvamSttEnabled(): boolean {
-  return USE_SARVAM_FOR_VOICE;
+  return true;
 }
 
 /**

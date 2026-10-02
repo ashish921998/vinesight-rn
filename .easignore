@@ -3,7 +3,6 @@
 .gstack/
 .kotlin/
 .metro-health-check*
-.rnstorybook/
 .env
 .env.*
 !.env.example

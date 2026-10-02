@@ -12,17 +12,14 @@ import { ONBOARDING_COMPLETION_HREF } from './onboarding-navigation';
 import { FirstFarmSlide } from './slides/first-farm-slide';
 
 /**
- * New-farmer onboarding intentionally contains one task: add the first farm.
- * Basic personal details are collected by profile-completion immediately before
- * this route. Once the farm exists, the farmer goes straight to the dashboard.
+ * New-farmer onboarding stays focused on one useful outcome: confirming or
+ * creating the first farm. Personal details are collected before this route.
  */
 export function OnboardingScreen() {
   const m3 = useM3();
   const hasStartedRef = useRef(false);
 
   useEffect(() => {
-    // App mode is device-persisted, so explicitly reset it for a new farmer in
-    // case another account previously selected Detailed mode on this device.
     useAppModeStore.getState().setDetailedMode(false);
     useOnboardingStore.getState().setCurrentStep('firstFarm');
 
@@ -41,9 +38,6 @@ export function OnboardingScreen() {
     onboarding.completeOnboarding();
     useAuthStore.getState().setHasSeenOnboarding(true);
     useAppModeStore.getState().setDetailedMode(false);
-
-    // The first farm is the whole onboarding. Contextual help can now appear
-    // on the dashboard instead of sending the farmer through another form.
     useGuidedTourStore.getState().completeTour();
 
     telemetry.capture('onboarding_farm_created', { farm_id: farmId });
@@ -53,7 +47,7 @@ export function OnboardingScreen() {
       app_mode: 'simple',
     });
 
-      router.replace(ONBOARDING_COMPLETION_HREF);
+    router.replace(ONBOARDING_COMPLETION_HREF);
   }, []);
 
   return (
@@ -74,7 +68,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   topBar: {
-    alignItems: 'center',
     paddingHorizontal: spacing[5],
     paddingTop: spacing[4],
     paddingBottom: spacing[3],

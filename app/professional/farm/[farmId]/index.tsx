@@ -19,11 +19,28 @@ import { useM3 } from '@/styles/use-theme';
 import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatDate, formatNumber } from '@/i18n/format';
+import type { DelegatedActivityItem } from '@/data-access/DataAccess';
+import type { LogRecordInput } from '@/utils/log-description';
 
 const SAFE_HARVEST_COLOR = '#0b8d32';
 
 function ActivityItemSeparator() {
   return <View style={{ height: spacing[3] }} />;
+}
+
+function toLogRecord(item: DelegatedActivityItem): LogRecordInput {
+  switch (item.record_type) {
+    case 'irrigation':
+      return { type: 'irrigation', data: item.record_data };
+    case 'spray':
+      return { type: 'spray', data: item.record_data };
+    case 'fertigation':
+      return { type: 'fertigation', data: item.record_data };
+    case 'harvest':
+      return { type: 'harvest', data: item.record_data };
+    case 'note':
+      return { type: 'note', data: item.record_data };
+  }
 }
 
 interface StatusChip {
@@ -366,11 +383,7 @@ export default function ProfessionalFarm() {
             )
           }
           renderItem={({ item }) => (
-            <TimelineLogCard
-              type={item.record_type}
-              date={item.record_data.date}
-              data={item.record_data}
-            />
+            <TimelineLogCard log={toLogRecord(item)} date={item.record_data.date} />
           )}
         />
       )}

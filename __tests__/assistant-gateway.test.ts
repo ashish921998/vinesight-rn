@@ -30,7 +30,7 @@ describe('assistant-gateway', () => {
         assistant_audio_b64: 'ZmFrZS1hdWRpbw==',
         assistant_audio_mime_type: 'audio/mpeg',
         audio_provider_used: 'sarvam',
-        model_used: 'gpt-4o',
+        model_used: 'sarvam-105b',
         citations: [
           {
             id: 'c1',
@@ -127,7 +127,7 @@ describe('assistant-gateway', () => {
     mockInvoke.mockResolvedValue({
       data: {
         assistant_text: 'Captured your question from transcript.',
-        model_used: 'gpt-4o',
+        model_used: 'sarvam-105b',
         conversation_id: 'conversation-1',
         turn_id: 'turn-2',
       },
@@ -163,7 +163,7 @@ describe('assistant-gateway', () => {
     mockInvoke.mockResolvedValue({
       data: {
         assistant_text: 'Processed voice input.',
-        model_used: 'gpt-4o',
+        model_used: 'sarvam-105b',
         conversation_id: 'conversation-1',
         turn_id: 'turn-3',
       },
@@ -201,7 +201,7 @@ describe('assistant-gateway', () => {
     mockInvoke.mockResolvedValue({
       data: {
         assistant_text: 'Acknowledged.',
-        model_used: 'gpt-4o',
+        model_used: 'sarvam-105b',
         conversation_id: 'conversation-1',
         turn_id: 'turn-4',
       },

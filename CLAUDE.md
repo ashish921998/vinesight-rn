@@ -15,6 +15,6 @@
 - Health check: none (mobile app — no HTTP endpoint; verify via EAS dashboard)
 
 ### Notes
-- **OTA is active** — `expo-updates` installed, `runtimeVersion` uses fingerprint policy. A new store build (both platforms) is required before OTA updates will be delivered, since existing binaries lack the native expo-updates module. Use `npm run update:staging` / `npm run update:production` to publish.
-- For native code changes (new plugins, SDK upgrades): use `eas build --profile production --platform all` + `eas submit` instead
+- **OTA is active** — `expo-updates` installed, `runtimeVersion` uses the app-version policy. A new store build (both platforms) is required before OTA updates will be delivered, since existing binaries lack the native expo-updates module. Use `npm run update:staging` / `npm run update:production` to publish.
+- For native code changes (new plugins, SDK upgrades): bump `expo.version`, then use `eas build --profile production --platform all` + `eas submit` instead
 - Build locally: `npm run build:android:production:local` (AAB) or `npm run build:android:preview:local` (APK)

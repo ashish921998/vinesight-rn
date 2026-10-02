@@ -19,9 +19,9 @@ import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { GUIDED_TOUR_TARGET_IDS, GuidedTourTarget } from '@/features/guided-tour';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
-import { FarmsPaneB, type FarmFilter } from '@/components/screens/farms-pane-b';
+import { FarmsPaneB } from '@/components/screens/farms-pane-b';
 import { ExtendedFab } from '@/components/screens/extended-fab';
-import { WarehousePaneB, type WarehouseFilter } from '@/components/screens/warehouse-pane-b';
+import { WarehousePaneB } from '@/components/screens/warehouse-pane-b';
 
 type ExploreTab = 'farms' | 'warehouse';
 
@@ -102,8 +102,6 @@ export default function ExploreScreen() {
     isRefetching: warehouseRefetching,
   } = useWarehouseItems();
   const deleteItemMutation = useDeleteWarehouseItem();
-  const [warehouseFilter, setWarehouseFilter] = useState<WarehouseFilter>('all');
-  const [farmFilter, setFarmFilter] = useState<FarmFilter>('all');
 
   const currency = useCurrency();
 
@@ -256,8 +254,6 @@ export default function ExploreScreen() {
         isLoading={farmsLoading}
         today={today}
         searchQuery={searchQuery}
-        activeFilter={farmFilter}
-        onFilterChange={setFarmFilter}
         onAddFarm={handleAddFarm}
         onFarmPress={handleFarmPress}
         onEditFarm={handleEditFarm}
@@ -294,9 +290,7 @@ export default function ExploreScreen() {
         items={warehouseItems}
         isLoading={warehouseLoading}
         searchQuery={searchQuery}
-        activeFilter={warehouseFilter}
         currency={currency}
-        onFilterChange={setWarehouseFilter}
         onAddItem={() => openWarehouseItem(null)}
         onItemPress={handleEditWarehouseItem}
         onItemLongPress={handleDeleteWarehouseItem}

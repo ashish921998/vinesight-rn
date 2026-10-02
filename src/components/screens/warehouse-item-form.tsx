@@ -245,10 +245,8 @@ function resolveFormErrorMessage(error: WarehouseItemFormError): string {
       return i18n.t('common.errors.enterValidUnitPrice');
     case 'invalid_expiry_date':
       return 'Enter expiry date as YYYY-MM-DD.';
-    case 'missing_composition':
-      return 'Add at least one valid nutrient composition row for fertilizer.';
-    case 'missing_density':
-      return 'Enter bulk density for products stored by volume.';
+    case 'invalid_density':
+      return 'Enter a valid bulk density greater than zero.';
   }
 }
 
@@ -266,6 +264,7 @@ export default function WarehouseItemForm({
   const updateMutation = useUpdateWarehouseItem();
   const { data: accountProducts } = useWarehouseItems();
 
+  const [optionalDetailsOpen, setOptionalDetailsOpen] = useState(false);
   const [name, setName] = useState('');
   const [type, setType] = useState<WarehouseItemType>('fertilizer');
   const [quantity, setQuantity] = useState('');
@@ -286,6 +285,7 @@ export default function WarehouseItemForm({
   const [catalogueSearchQuery, setCatalogueSearchQuery] = useState('');
   const [showCataloguePicker, setShowCataloguePicker] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [sheetHeight, setSheetHeight] = useState<number | null>(null);
   const [manualCatalogueDraft, setManualCatalogueDraft] = useState<ManualCatalogueDraft | null>(
     null,
   );
@@ -317,8 +317,7 @@ export default function WarehouseItemForm({
   }, [existingManufacturers, manufacturer]);
   const [manufacturerFocused, setManufacturerFocused] = useState(false);
   const densitySourceUrl = selectedCatalogProduct?.density_source_url ?? null;
-  const selectedCatalogHasDensity = selectedCatalogProduct?.density_kg_per_l != null;
-  const densityRequired = unit === 'liter' || unit === 'ml';
+  const isVolumeUnit = unit === 'liter' || unit === 'ml';
   const primaryCompositionRows = useMemo(
     () =>
       new Map(
@@ -427,6 +426,7 @@ export default function WarehouseItemForm({
     setName('');
     setType('fertilizer');
     setQuantity('');
+    setOptionalDetailsOpen(false);
     setUnit('kg');
     setUnitPrice('');
     setReorderQuantity('');
@@ -601,6 +601,7 @@ export default function WarehouseItemForm({
 
       if (shouldUpdate) {
         if (editingItem) {
+          setOptionalDetailsOpen(false);
           setShowCataloguePicker(false);
           setKeyboardHeight(0);
           setManualCatalogueDraft(null);
@@ -740,7 +741,7 @@ export default function WarehouseItemForm({
   }, [catalogProductsLoading, catalogProductsError]);
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1 }} onLayout={(event) => setSheetHeight(event.nativeEvent.layout.height)}>
       <FormModal
         visible={isVisible}
         onClose={onClose}
@@ -753,77 +754,14 @@ export default function WarehouseItemForm({
         onReset={handleReset}
         presentation={presentation}
         headerTopInsetCap={28}
+        scrollViewProps={{ automaticallyAdjustKeyboardInsets: false }}
+        keyboardVerticalOffset={
+          isIOS && presentation === 'screen' && sheetHeight !== null
+            ? Math.max(0, windowHeight - sheetHeight)
+            : 0
+        }
         contentContainerStyle={{ paddingBottom: 128 }}
       >
-        <SectionHeader
-          title="Item Type"
-          subtitle="Select fertilizer or spray."
-          style={{ marginBottom: spacing[3] }}
-        />
-
-        <View style={{ marginBottom: spacing[5] }}>
-          <SegmentedControl
-            options={ITEM_TYPES}
-            selectedValue={type}
-            onSelect={(value) => handleTypeSelect(value as WarehouseItemType)}
-            accessibilityLabel="Item type"
-          />
-        </View>
-
-        <SectionHeader
-          title="Catalogue"
-          subtitle="Optional. Select a product or enter it manually."
-          style={{ marginBottom: 12 }}
-        />
-
-        <Pressable
-          style={{
-            backgroundColor: m3.surface.s100,
-            borderWidth: 2,
-            borderColor: m3.surface.s200,
-            borderRadius: componentRadius.input,
-            paddingHorizontal: spacing[4],
-            paddingVertical: spacing[4],
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: spacing[2],
-          }}
-          onPress={() => {
-            setCatalogueSearchQuery('');
-            setShowCataloguePicker(true);
-          }}
-        >
-          <Text
-            style={{
-              fontSize: fontSize.base,
-              color: selectedCatalogProductId ? m3.surface.s900 : m3.surface.s400,
-              fontWeight: selectedCatalogProductId ? fontWeight.medium : fontWeight.normal,
-              flex: 1,
-            }}
-            numberOfLines={1}
-          >
-            {selectedCatalogProduct
-              ? formatCatalogueProductDisplayName(selectedCatalogProduct)
-              : 'Select from catalogue (or skip)'}
-          </Text>
-          <UISymbol name="chevron.down" size={20} color={m3.colorScheme.onSurfaceVariant} />
-        </Pressable>
-
-        {selectedCatalogProduct ? (
-          <Text
-            style={{
-              marginBottom: spacing[4],
-              color: m3.colorScheme.onSurfaceVariant,
-              fontSize: fontSize.xs,
-            }}
-          >
-            Catalogue defaults applied. You can edit the item details below.
-          </Text>
-        ) : null}
-
-        <SectionHeader title="Product" style={{ marginBottom: 16 }} />
-
         <FormInput
           label="Item Name"
           value={name}
@@ -832,8 +770,6 @@ export default function WarehouseItemForm({
           required
           style={{ marginBottom: 12 }}
         />
-
-        <SectionHeader title="Quantity & Unit" style={{ marginBottom: 12 }} />
 
         <FormInput
           label="Quantity"
@@ -854,7 +790,7 @@ export default function WarehouseItemForm({
         >
           Unit
         </Text>
-        <View style={{ marginBottom: densityRequired ? spacing[3] : 20 }}>
+        <View style={{ marginBottom: 20 }}>
           <SegmentedControl
             options={UNIT_OPTIONS}
             selectedValue={unit}
@@ -862,64 +798,6 @@ export default function WarehouseItemForm({
             accessibilityLabel="Quantity unit"
           />
         </View>
-
-        {densityRequired ? (
-          <View>
-            <FormInput
-              label="Bulk Density (kg/L)"
-              value={densityKgPerL}
-              onChangeText={(value) => {
-                densityOwnershipInitializedRef.current = true;
-                setDensityKgPerL(value);
-                setIsCatalogDensityApplied(false);
-              }}
-              placeholder={selectedCatalogProduct ? 'Enter from package label' : 'e.g. 1.00'}
-              keyboardType="decimal-pad"
-              required
-              style={{ marginBottom: densitySourceUrl ? 4 : 16 }}
-            />
-
-            <View
-              style={{
-                marginBottom: 20,
-                flexDirection: 'row',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                gap: spacing[1],
-              }}
-            >
-              <Text style={{ color: m3.colorScheme.onSurfaceVariant, fontSize: fontSize.xs }}>
-                {isCatalogDensityApplied
-                  ? 'Filled from catalogue data. Verify against the package label.'
-                  : selectedCatalogHasDensity
-                    ? 'Your entered value was kept. Verify against the package label or compare with the catalogue.'
-                    : selectedCatalogProduct
-                      ? 'Not available in the catalogue. Enter the value printed on the package label.'
-                      : 'Enter the value printed on the package label.'}
-              </Text>
-              {densitySourceUrl ? (
-                <Pressable
-                  accessibilityRole="link"
-                  accessibilityLabel="View bulk density source"
-                  onPress={() => void Linking.openURL(densitySourceUrl)}
-                  hitSlop={8}
-                >
-                  <Text
-                    style={{
-                      color: m3.primary.p600,
-                      fontSize: fontSize.xs,
-                      fontWeight: fontWeight.semibold,
-                    }}
-                  >
-                    View source
-                  </Text>
-                </Pressable>
-              ) : null}
-            </View>
-          </View>
-        ) : null}
-
-        <SectionHeader title="Purchase Price" style={{ marginBottom: 12 }} />
 
         <FormInput
           label={`Unit Price (${currency})`}
@@ -946,265 +824,407 @@ export default function WarehouseItemForm({
           />
         ) : null}
 
-        <SectionHeader title="Product Details" style={{ marginBottom: 16 }} />
-
-        <View style={{ marginBottom: 12 }}>
+        {!formValidation.ok &&
+        (formValidation.error === 'invalid_density' ||
+          formValidation.error === 'invalid_expiry_date') ? (
+          <Text
+            accessibilityRole="alert"
+            style={{ color: m3.colorScheme.error, fontSize: fontSize.sm, marginBottom: spacing[2] }}
+          >
+            {resolveFormErrorMessage(formValidation.error)}
+          </Text>
+        ) : null}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ expanded: optionalDetailsOpen }}
+          onPress={() => setOptionalDetailsOpen((open) => !open)}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: m3.surface.s100,
+            borderWidth: 1,
+            borderColor: m3.surface.s200,
+            borderRadius: componentRadius.input,
+            padding: spacing[4],
+            marginBottom: spacing[5],
+          }}
+        >
           <Text
             style={{
-              fontSize: fontSize.xs,
-              fontWeight: fontWeight.medium,
-              color: m3.surface.s500,
-              marginBottom: spacing[2],
+              fontSize: fontSize.base,
+              color: m3.surface.s900,
+              fontWeight: fontWeight.semibold,
             }}
           >
-            Manufacturer (Optional)
+            Optional details
           </Text>
-          <View
-            style={{
-              backgroundColor: m3.surface.s100,
-              borderWidth: 1,
-              borderColor: m3.surface.s300,
-              borderRadius: borderRadius.sm,
-              minHeight: 48,
-              overflow: 'hidden',
-            }}
-          >
-            <TextInput
-              value={manufacturer}
-              onChangeText={setManufacturer}
-              placeholder="e.g., Vanita Agro"
-              placeholderTextColor={m3.neutral.n400}
-              onFocus={() => setManufacturerFocused(true)}
-              onBlur={() => setManufacturerFocused(false)}
-              autoCorrect={false}
+          <UISymbol
+            name={optionalDetailsOpen ? 'chevron.up' : 'chevron.down'}
+            size={20}
+            color={m3.colorScheme.onSurfaceVariant}
+          />
+        </Pressable>
+        {optionalDetailsOpen ? (
+          <View>
+            <SectionHeader title="Item Type" style={{ marginBottom: spacing[3] }} />
+
+            <View style={{ marginBottom: spacing[5] }}>
+              <SegmentedControl
+                options={ITEM_TYPES}
+                selectedValue={type}
+                onSelect={(value) => handleTypeSelect(value as WarehouseItemType)}
+                accessibilityLabel="Item type"
+              />
+            </View>
+
+            <SectionHeader title="Catalogue" style={{ marginBottom: 12 }} />
+
+            <Pressable
               style={{
-                paddingHorizontal: spacing[4],
-                paddingVertical: spacing[3],
-                fontSize: fontSize.base,
-                color: m3.surface.s900,
-              }}
-            />
-          </View>
-          {manufacturerFocused &&
-          manufacturer.trim().length > 0 &&
-          manufacturerSuggestions.length > 0 ? (
-            <View
-              style={{
-                marginTop: 4,
-                borderRadius: borderRadius.sm,
-                borderWidth: 1,
+                backgroundColor: m3.surface.s100,
+                borderWidth: 2,
                 borderColor: m3.surface.s200,
-                backgroundColor: m3.colorScheme.surface,
-                maxHeight: 200,
-                overflow: 'hidden',
+                borderRadius: componentRadius.input,
+                paddingHorizontal: spacing[4],
+                paddingVertical: spacing[4],
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: spacing[2],
+              }}
+              onPress={() => {
+                setCatalogueSearchQuery('');
+                setShowCataloguePicker(true);
               }}
             >
-              {manufacturerSuggestions.slice(0, 8).map((suggestion, index) => (
-                <Pressable
-                  key={suggestion}
-                  onPressIn={() => setManufacturer(suggestion)}
+              <Text
+                style={{
+                  fontSize: fontSize.base,
+                  color: selectedCatalogProductId ? m3.surface.s900 : m3.surface.s400,
+                  fontWeight: selectedCatalogProductId ? fontWeight.medium : fontWeight.normal,
+                  flex: 1,
+                }}
+                numberOfLines={1}
+              >
+                {selectedCatalogProduct
+                  ? formatCatalogueProductDisplayName(selectedCatalogProduct)
+                  : 'Select from catalogue'}
+              </Text>
+              <UISymbol name="chevron.down" size={20} color={m3.colorScheme.onSurfaceVariant} />
+            </Pressable>
+
+            {isVolumeUnit ? (
+              <View>
+                <FormInput
+                  label="Bulk Density (kg/L)"
+                  value={densityKgPerL}
+                  onChangeText={(value) => {
+                    densityOwnershipInitializedRef.current = true;
+                    setDensityKgPerL(value);
+                    setIsCatalogDensityApplied(false);
+                  }}
+                  placeholder={selectedCatalogProduct ? 'Enter from package label' : 'e.g. 1.00'}
+                  keyboardType="decimal-pad"
+                  style={{ marginBottom: densitySourceUrl ? 4 : 16 }}
+                />
+
+                <View
+                  style={{
+                    marginBottom: 20,
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    gap: spacing[1],
+                  }}
+                >
+                  <Text style={{ color: m3.colorScheme.onSurfaceVariant, fontSize: fontSize.xs }}>
+                    {isCatalogDensityApplied
+                      ? 'Filled from the catalogue. Verify against the package label before saving.'
+                      : 'Use the package label value. Without density, this product is excluded from nutrient totals.'}
+                  </Text>
+                  {densitySourceUrl ? (
+                    <Pressable
+                      accessibilityRole="link"
+                      accessibilityLabel="View bulk density source"
+                      onPress={() => void Linking.openURL(densitySourceUrl)}
+                      hitSlop={8}
+                    >
+                      <Text
+                        style={{
+                          color: m3.primary.p600,
+                          fontSize: fontSize.xs,
+                          fontWeight: fontWeight.semibold,
+                        }}
+                      >
+                        View source
+                      </Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+              </View>
+            ) : null}
+
+            <View style={{ marginBottom: 12 }}>
+              <Text
+                style={{
+                  fontSize: fontSize.xs,
+                  fontWeight: fontWeight.medium,
+                  color: m3.surface.s500,
+                  marginBottom: spacing[2],
+                }}
+              >
+                Manufacturer
+              </Text>
+              <View
+                style={{
+                  backgroundColor: m3.surface.s100,
+                  borderWidth: 1,
+                  borderColor: m3.surface.s300,
+                  borderRadius: borderRadius.sm,
+                  minHeight: 48,
+                  overflow: 'hidden',
+                }}
+              >
+                <TextInput
+                  value={manufacturer}
+                  onChangeText={setManufacturer}
+                  placeholder="e.g., Vanita Agro"
+                  placeholderTextColor={m3.neutral.n400}
+                  onFocus={() => setManufacturerFocused(true)}
+                  onBlur={() => setManufacturerFocused(false)}
+                  autoCorrect={false}
                   style={{
                     paddingHorizontal: spacing[4],
                     paddingVertical: spacing[3],
-                    borderTopWidth: index === 0 ? 0 : 1,
-                    borderTopColor: m3.surface.s100,
+                    fontSize: fontSize.base,
+                    color: m3.surface.s900,
+                  }}
+                />
+              </View>
+              {manufacturerFocused &&
+              manufacturer.trim().length > 0 &&
+              manufacturerSuggestions.length > 0 ? (
+                <View
+                  style={{
+                    marginTop: 4,
+                    borderRadius: borderRadius.sm,
+                    borderWidth: 1,
+                    borderColor: m3.surface.s200,
+                    backgroundColor: m3.colorScheme.surface,
+                    maxHeight: 200,
+                    overflow: 'hidden',
                   }}
                 >
-                  <Text style={{ fontSize: fontSize.sm, color: m3.surface.s900 }}>
-                    {suggestion}
-                  </Text>
-                </Pressable>
-              ))}
+                  {manufacturerSuggestions.slice(0, 8).map((suggestion, index) => (
+                    <Pressable
+                      key={suggestion}
+                      onPressIn={() => setManufacturer(suggestion)}
+                      style={{
+                        paddingHorizontal: spacing[4],
+                        paddingVertical: spacing[3],
+                        borderTopWidth: index === 0 ? 0 : 1,
+                        borderTopColor: m3.surface.s100,
+                      }}
+                    >
+                      <Text style={{ fontSize: fontSize.sm, color: m3.surface.s900 }}>
+                        {suggestion}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : null}
             </View>
-          ) : null}
-        </View>
 
-        <FormInput
-          label="Expiry Date (Optional)"
-          value={expiryDate}
-          onChangeText={setExpiryDate}
-          placeholder="YYYY-MM-DD"
-          style={{ marginBottom: 12 }}
-        />
-
-        <FormInput
-          label="Notes (Optional)"
-          value={notes}
-          onChangeText={setNotes}
-          placeholder="Any additional details..."
-          multiline
-          numberOfLines={2}
-          style={{ marginBottom: 16 }}
-        />
-
-        {type === 'spray' && !showSprayComposition && validComposition.length === 0 ? (
-          <Pressable
-            onPress={() => setShowSprayComposition(true)}
-            accessibilityRole="button"
-            accessibilityLabel="Add nutrient analysis"
-            style={{ alignSelf: 'flex-start', marginBottom: 20, paddingVertical: spacing[2] }}
-          >
-            <Text style={{ color: m3.primary.p600, fontWeight: fontWeight.semibold }}>
-              + Add nutrient analysis
-            </Text>
-          </Pressable>
-        ) : (
-          <>
-            <SectionHeader
-              title="Guaranteed Analysis"
-              subtitle={
-                type === 'fertilizer'
-                  ? 'Required. Copy the percentages printed on the package label.'
-                  : 'Optional. Copy the percentages printed on the package label.'
-              }
+            <FormInput
+              label="Expiry Date"
+              value={expiryDate}
+              onChangeText={setExpiryDate}
+              placeholder="YYYY-MM-DD"
               style={{ marginBottom: 12 }}
             />
 
-            {compositionSource === 'preset' ? (
-              <View
-                style={{
-                  marginBottom: spacing[3],
-                  padding: spacing[3],
-                  borderRadius: borderRadius.sm,
-                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.08),
-                }}
+            <FormInput
+              label="Notes"
+              value={notes}
+              onChangeText={setNotes}
+              placeholder="Any additional details..."
+              multiline
+              numberOfLines={2}
+              style={{ marginBottom: 16 }}
+            />
+
+            {type === 'spray' && !showSprayComposition && validComposition.length === 0 ? (
+              <Pressable
+                onPress={() => setShowSprayComposition(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Add nutrient analysis"
+                style={{ alignSelf: 'flex-start', marginBottom: 20, paddingVertical: spacing[2] }}
               >
-                <Text style={{ color: m3.surface.s800, fontSize: fontSize.xs }}>
-                  Catalogue analysis applied. Editing a value uses a manual analysis.
+                <Text style={{ color: m3.primary.p600, fontWeight: fontWeight.semibold }}>
+                  + Add nutrient analysis
                 </Text>
-              </View>
-            ) : null}
+              </Pressable>
+            ) : (
+              <>
+                <SectionHeader title="Guaranteed Analysis" style={{ marginBottom: 12 }} />
 
-            <View style={{ flexDirection: 'row', gap: spacing[2], marginBottom: spacing[4] }}>
-              {PRIMARY_NUTRIENTS.map(({ code, label, accessibilityLabel }) => (
-                <View key={code} style={{ flex: 1 }}>
-                  <FormInput
-                    label={label}
-                    accessibilityLabel={accessibilityLabel}
-                    value={primaryCompositionRows.get(code)?.percent ?? ''}
-                    onChangeText={(percent) => updatePrimaryNutrient(code, percent)}
-                    placeholder="0"
-                    keyboardType="decimal-pad"
-                    style={{ marginBottom: 0 }}
-                  />
-                </View>
-              ))}
-            </View>
-
-            <Text
-              style={{
-                marginBottom: spacing[2],
-                color: m3.surface.s500,
-                fontSize: fontSize.xs,
-                fontWeight: fontWeight.medium,
-              }}
-            >
-              Other guaranteed nutrients
-            </Text>
-
-            {otherCompositionRows.length > 0 ? (
-              <View style={{ flexDirection: 'row', gap: spacing[2], marginBottom: spacing[2] }}>
-                <Text
-                  style={{
-                    flex: 1,
-                    color: m3.surface.s500,
-                    fontSize: fontSize.xs,
-                    fontWeight: fontWeight.medium,
-                  }}
-                >
-                  Nutrient
-                </Text>
-                <Text
-                  style={{
-                    width: 96,
-                    color: m3.surface.s500,
-                    fontSize: fontSize.xs,
-                    fontWeight: fontWeight.medium,
-                  }}
-                >
-                  Percent
-                </Text>
-                <View style={{ width: 32 }} />
-              </View>
-            ) : null}
-
-            {otherCompositionRows.map((row) => (
-              <View key={row.id} style={{ flexDirection: 'row', gap: spacing[2], marginBottom: 8 }}>
-                <Pressable
-                  onPress={() => setNutrientPickerRowId(row.id)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Select nutrient, currently ${formatNutrientLabel(row.nutrient_code)}`}
-                  style={{
-                    flex: 1,
-                    minHeight: 48,
-                    paddingHorizontal: spacing[3],
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    borderWidth: 1,
-                    borderColor: m3.surface.s300,
-                    borderRadius: borderRadius.sm,
-                    backgroundColor: m3.surface.s100,
-                  }}
-                >
-                  <Text
+                {compositionSource === 'preset' ? (
+                  <View
                     style={{
-                      color: row.nutrient_code ? m3.surface.s900 : m3.neutral.n400,
-                      fontSize: fontSize.sm,
+                      marginBottom: spacing[3],
+                      padding: spacing[3],
+                      borderRadius: borderRadius.sm,
+                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.08),
                     }}
-                    numberOfLines={1}
                   >
-                    {row.nutrient_code ? formatNutrientLabel(row.nutrient_code) : 'Select nutrient'}
-                  </Text>
-                  <UISymbol name="chevron.down" size={16} color={m3.colorScheme.onSurfaceVariant} />
-                </Pressable>
-                <View style={{ width: 96 }}>
-                  <FormInput
-                    label=""
-                    accessibilityLabel={`${formatNutrientLabel(row.nutrient_code || 'nutrient')} percentage`}
-                    value={row.percent}
-                    onChangeText={(percent) => updateCompositionRow(row.id, { percent })}
-                    placeholder="0"
-                    keyboardType="decimal-pad"
-                    style={{ marginBottom: 0 }}
-                  />
+                    <Text style={{ color: m3.surface.s800, fontSize: fontSize.xs }}>
+                      Catalogue analysis applied. Editing a value uses a manual analysis.
+                    </Text>
+                  </View>
+                ) : null}
+
+                <View style={{ flexDirection: 'row', gap: spacing[2], marginBottom: spacing[4] }}>
+                  {PRIMARY_NUTRIENTS.map(({ code, label, accessibilityLabel }) => (
+                    <View key={code} style={{ flex: 1 }}>
+                      <FormInput
+                        label={label}
+                        accessibilityLabel={accessibilityLabel}
+                        value={primaryCompositionRows.get(code)?.percent ?? ''}
+                        onChangeText={(percent) => updatePrimaryNutrient(code, percent)}
+                        placeholder="0"
+                        keyboardType="decimal-pad"
+                        style={{ marginBottom: 0 }}
+                      />
+                    </View>
+                  ))}
                 </View>
-                <Pressable
-                  onPress={() => removeCompositionRow(row.id)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Remove ${formatNutrientLabel(row.nutrient_code || 'nutrient')}`}
-                  hitSlop={8}
-                  style={{ width: 32, alignItems: 'center', justifyContent: 'center' }}
+
+                <Text
+                  style={{
+                    marginBottom: spacing[2],
+                    color: m3.surface.s500,
+                    fontSize: fontSize.xs,
+                    fontWeight: fontWeight.medium,
+                  }}
                 >
-                  <UISymbol name="minus.circle" size={20} color={m3.colorScheme.error} />
+                  Other guaranteed nutrients
+                </Text>
+
+                {otherCompositionRows.length > 0 ? (
+                  <View style={{ flexDirection: 'row', gap: spacing[2], marginBottom: spacing[2] }}>
+                    <Text
+                      style={{
+                        flex: 1,
+                        color: m3.surface.s500,
+                        fontSize: fontSize.xs,
+                        fontWeight: fontWeight.medium,
+                      }}
+                    >
+                      Nutrient
+                    </Text>
+                    <Text
+                      style={{
+                        width: 96,
+                        color: m3.surface.s500,
+                        fontSize: fontSize.xs,
+                        fontWeight: fontWeight.medium,
+                      }}
+                    >
+                      Percent
+                    </Text>
+                    <View style={{ width: 32 }} />
+                  </View>
+                ) : null}
+
+                {otherCompositionRows.map((row) => (
+                  <View
+                    key={row.id}
+                    style={{ flexDirection: 'row', gap: spacing[2], marginBottom: 8 }}
+                  >
+                    <Pressable
+                      onPress={() => setNutrientPickerRowId(row.id)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Select nutrient, currently ${formatNutrientLabel(row.nutrient_code)}`}
+                      style={{
+                        flex: 1,
+                        minHeight: 48,
+                        paddingHorizontal: spacing[3],
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        borderWidth: 1,
+                        borderColor: m3.surface.s300,
+                        borderRadius: borderRadius.sm,
+                        backgroundColor: m3.surface.s100,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: row.nutrient_code ? m3.surface.s900 : m3.neutral.n400,
+                          fontSize: fontSize.sm,
+                        }}
+                        numberOfLines={1}
+                      >
+                        {row.nutrient_code
+                          ? formatNutrientLabel(row.nutrient_code)
+                          : 'Select nutrient'}
+                      </Text>
+                      <UISymbol
+                        name="chevron.down"
+                        size={16}
+                        color={m3.colorScheme.onSurfaceVariant}
+                      />
+                    </Pressable>
+                    <View style={{ width: 96 }}>
+                      <FormInput
+                        label=""
+                        accessibilityLabel={`${formatNutrientLabel(row.nutrient_code || 'nutrient')} percentage`}
+                        value={row.percent}
+                        onChangeText={(percent) => updateCompositionRow(row.id, { percent })}
+                        placeholder="0"
+                        keyboardType="decimal-pad"
+                        style={{ marginBottom: 0 }}
+                      />
+                    </View>
+                    <Pressable
+                      onPress={() => removeCompositionRow(row.id)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Remove ${formatNutrientLabel(row.nutrient_code || 'nutrient')}`}
+                      hitSlop={8}
+                      style={{ width: 32, alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <UISymbol name="minus.circle" size={20} color={m3.colorScheme.error} />
+                    </Pressable>
+                  </View>
+                ))}
+
+                <Pressable
+                  onPress={addCompositionRow}
+                  accessibilityRole="button"
+                  accessibilityLabel="Add another guaranteed nutrient"
+                  style={{ alignSelf: 'flex-start', marginBottom: 20, paddingVertical: spacing[2] }}
+                >
+                  <Text style={{ color: m3.primary.p600, fontWeight: fontWeight.semibold }}>
+                    + Add nutrient
+                  </Text>
                 </Pressable>
-              </View>
-            ))}
+              </>
+            )}
 
-            <Pressable
-              onPress={addCompositionRow}
-              accessibilityRole="button"
-              accessibilityLabel="Add another guaranteed nutrient"
-              style={{ alignSelf: 'flex-start', marginBottom: 20, paddingVertical: spacing[2] }}
-            >
-              <Text style={{ color: m3.primary.p600, fontWeight: fontWeight.semibold }}>
-                + Add nutrient
-              </Text>
-            </Pressable>
-          </>
-        )}
+            <SectionHeader title="Stock Preference" style={{ marginBottom: 16 }} />
 
-        <SectionHeader title="Stock Preference" style={{ marginBottom: 16 }} />
-
-        <FormInput
-          label="Low Stock Alert (Optional)"
-          value={reorderQuantity}
-          onChangeText={setReorderQuantity}
-          placeholder="Leave empty to disable"
-          keyboardType="decimal-pad"
-          suffix={unit}
-          style={{ marginBottom: 12 }}
-        />
+            <FormInput
+              label="Low Stock Alert"
+              value={reorderQuantity}
+              onChangeText={setReorderQuantity}
+              placeholder="Leave empty to disable"
+              keyboardType="decimal-pad"
+              suffix={unit}
+              style={{ marginBottom: 12 }}
+            />
+          </View>
+        ) : null}
       </FormModal>
 
       <BottomSheet
