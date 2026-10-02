@@ -84,7 +84,9 @@ describe('fetchExpoPushTokenWithRetry', () => {
 describe('syncPushDeviceRegistration telemetry dedup', () => {
   beforeEach(() => {
     mockCapture.mockReset();
-    mockGetSession.mockReset().mockResolvedValue({ data: { session: { user: { id: 'user-1' } } } });
+    mockGetSession
+      .mockReset()
+      .mockResolvedValue({ data: { session: { user: { id: 'user-1' } } } });
     Platform.OS = 'android';
   });
 
