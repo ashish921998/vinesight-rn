@@ -27,7 +27,7 @@ module.exports = {
   expo: {
     name: 'Vinesight',
     slug: 'vinesight-rn',
-    version: '3.3.25',
+    version: '3.3.26',
     orientation: 'portrait',
     // EAS Update (OTA). Builds fetch updates from the project's EAS URL on
     // launch; `fallbackToCacheTimeout: 0` runs the cached update immediately
