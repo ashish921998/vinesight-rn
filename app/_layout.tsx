@@ -30,6 +30,7 @@ import {
   useThemeStore,
   useAppModeStore,
 } from '@/stores';
+import { useOnboardingStorageFallbackStore, useOnboardingStore } from '@/stores/onboarding-store';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { ToastHost } from '@/components/ui/toast';
 import i18n, { getDeviceLanguage, setAppLanguage } from '@/i18n';
@@ -671,19 +672,22 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
       const authStillLoading = useAuthStore.getState().isLoading;
       const themeStillPending = !useThemeStore.getState().hasHydrated;
       const langStillPending = !useLanguageStore.getState().hasHydrated;
+      const onboardingStillPending = !useOnboardingStore.getState().hasHydrated;
 
-      if (authStillLoading || themeStillPending || langStillPending) {
+      if (authStillLoading || themeStillPending || langStillPending || onboardingStillPending) {
         const context = {
           authStillLoading,
           themeHydrated: !themeStillPending,
           languageHydrated: !langStillPending,
+          onboardingHydrated: !onboardingStillPending,
         };
         if (__DEV__) {
           console.warn(
             `[Vinesight] App init timed out after ${INIT_TIMEOUT_MS}ms — ` +
               `auth loading: ${authStillLoading}, ` +
               `theme hydrated: ${!themeStillPending}, ` +
-              `language hydrated: ${!langStillPending}. Forcing splash hide.`,
+              `language hydrated: ${!langStillPending}, ` +
+              `onboarding hydrated: ${!onboardingStillPending}. Forcing splash hide.`,
           );
         }
         Sentry.captureMessage('App init timed out — forcing splash hide', {
@@ -716,6 +720,12 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
             })
             .catch(() => {})
             .finally(() => useLanguageStore.setState({ hasHydrated: true }));
+        }
+        // The onboarding store persists to SecureStore, which can hang on
+        // Android. Let routes proceed on its defaults, without writing to the
+        // persisted store (that would overwrite the saved progress).
+        if (onboardingStillPending) {
+          useOnboardingStorageFallbackStore.setState({ active: true });
         }
       }
     }, INIT_TIMEOUT_MS);
@@ -790,6 +800,10 @@ const RootLayoutComponent = Sentry.wrap(function RootLayout() {
                   <Stack.Screen name="index" />
                   <Stack.Screen
                     name="language-selection"
+                    options={{ headerShown: false, gestureEnabled: false }}
+                  />
+                  <Stack.Screen
+                    name="welcome"
                     options={{ headerShown: false, gestureEnabled: false }}
                   />
                   <Stack.Screen name="(auth)" />
