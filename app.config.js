@@ -134,7 +134,7 @@ module.exports = {
     },
     android: {
       package: 'com.vinesight.app',
-      versionCode: 43,
+      versionCode: 44,
       // Required for FCM so `FirebaseApp.initializeApp` runs at build time;
       // without it `getExpoPushTokenAsync` fails on Android with
       // E_REGISTRATION_FAILED ("Default FirebaseApp is not initialized").
