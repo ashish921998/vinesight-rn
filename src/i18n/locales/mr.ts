@@ -136,7 +136,15 @@ export const mr = {
     unavailableFarmer: 'हा शेतकरी आता उपलब्ध नाही. यादी रीफ्रेश करा.',
     unavailableFarm: 'शेताचा प्रवेश आता उपलब्ध नाही.',
     activity: 'हालचाल',
+    recentActivity: 'अलीकडील हालचाल',
     emptyActivity: 'अद्याप कोणतीही हालचाल नाही.',
+    seeAllLogs_one: 'सर्व {{count}} नोंद पहा',
+    seeAllLogs_other: 'सर्व {{count}} नोंदी पहा',
+    allLogs: 'सर्व नोंदी',
+    searchLogsPlaceholder: 'नोंदी शोधा',
+    noMatchingLogs: 'तुमच्या फिल्टरशी जुळणाऱ्या नोंदी नाहीत.',
+    clearFilters: 'फिल्टर साफ करा',
+    clearSearch: 'शोध साफ करा',
     addLog: 'नोंद जोडा',
     addDelegatedLog: 'प्रतिनिधी नोंद जोडा',
     logType: 'नोंद प्रकार',
@@ -147,6 +155,10 @@ export const mr = {
     attribution: '{{member}} · {{organization}} यांनी जोडले',
     organizationMember: 'संस्था सदस्य',
     organization: 'संस्था',
+    metrics: {
+      safeToHarvest: '{{date}} पासून $t(glossary.harvest)साठी सुरक्षित',
+      harvested: '{{value}} किलो $t(glossary.harvest) झाली',
+    },
     fields: {
       duration: 'कालावधी (तास)',
       chemical: 'कॅटलॉग फवारणी',
@@ -517,6 +529,8 @@ export const mr = {
       locationOptional: 'ठिकाण (ऐच्छिक)',
       soilPropertiesOptional: '$t(glossary.soil) गुणधर्म (ऐच्छिक)',
       soilTexture: '$t(glossary.soil)चा पोत',
+      agronomyDetails: 'शेतीविषयक तपशील जोडा (ऐच्छिक)',
+      agronomyDetailsHint: 'वाण, अंतर, $t(glossary.irrigation), ठिकाण, $t(glossary.soil) आणि इतर',
     },
     fields: {
       name: {
@@ -3223,6 +3237,7 @@ export const mr = {
       partialErrorBody: '{{count}} त्रुटीसह जतन झाले. पुन्हा लोड होत आहे…',
       savedTitle: 'यशस्वी',
       savedBody: '{{name}} साठी $t(glossary.attendance) जतन झाली.',
+      saveErrorBody: '$t(glossary.attendance) जतन करता आली नाही. कृपया पुन्हा प्रयत्न करा.',
       workerCount: '{{count}} $t(glossary.worker)',
       completeTitle: 'पूर्ण',
       completeBody: 'सर्व $t(glossary.worker) पूर्ण!',

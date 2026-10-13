@@ -23,9 +23,11 @@ import { useIsDark, useM3 } from '@/styles/use-theme';
 import appLogoDark from '../../assets/icons/ios-dark.png';
 import appLogoLight from '../../assets/icons/ios-light.png';
 import * as WebBrowser from 'expo-web-browser';
+import { useRevealAboveKeyboard } from '@/hooks/use-reveal-above-keyboard';
 
 export default function LoginScreen() {
   const { t } = useTranslation();
+  const { targetRef: submitRef, scrollProps } = useRevealAboveKeyboard();
   const m3 = useM3();
   const isDark = useIsDark();
   const appLogo = isDark ? appLogoDark : appLogoLight;
@@ -217,6 +219,7 @@ export default function LoginScreen() {
       style={containerStyle}
     >
       <ScrollView
+        {...scrollProps}
         contentContainerStyle={{ flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -304,21 +307,23 @@ export default function LoginScreen() {
               )}
 
               {/* Submit Button */}
-              <Button
-                title={
-                  isLoading
-                    ? isSignUp
-                      ? t('auth.signingUp', { defaultValue: 'Signing up...' })
-                      : t('auth.signingIn', { defaultValue: 'Signing in...' })
-                    : isSignUp
-                      ? t('auth.signUp')
-                      : t('auth.signIn')
-                }
-                onPress={handleAuth}
-                isLoading={isLoading}
-                disabled={!isFormValid}
-                style={{ marginTop: spacing[4] }}
-              />
+              <View ref={submitRef} collapsable={false}>
+                <Button
+                  title={
+                    isLoading
+                      ? isSignUp
+                        ? t('auth.signingUp', { defaultValue: 'Signing up...' })
+                        : t('auth.signingIn', { defaultValue: 'Signing in...' })
+                      : isSignUp
+                        ? t('auth.signUp')
+                        : t('auth.signIn')
+                  }
+                  onPress={handleAuth}
+                  isLoading={isLoading}
+                  disabled={!isFormValid}
+                  style={{ marginTop: spacing[4] }}
+                />
+              </View>
             </View>
 
             {/* Divider */}
