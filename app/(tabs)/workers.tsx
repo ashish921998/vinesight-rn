@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { View, Text, FlatList, Pressable, RefreshControl, Alert, StyleSheet } from 'react-native';
+import { View, Text, FlatList, Pressable, RefreshControl, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -27,6 +27,7 @@ import { GuidedTourTarget, GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour
 import { WorkersTourCoachmark } from '@/features/guided-tour/workers-tour-coachmark';
 import { useWorkersTourStore } from '@/features/guided-tour/workers-tour-store';
 import { WorkersFabSheet } from '@/components/modals/workers-fab-sheet';
+import { Fab } from '@/components/screens/fab';
 import { computeWorkerMetrics, getDefaultDateRange } from '@/utils/worker-analytics';
 
 type WorkersTab = 'workers' | 'attendance' | 'analytics';
@@ -466,37 +467,7 @@ export default function WorkersScreen() {
               right: spacing[6],
             }}
           >
-            <Pressable
-              onPress={handleFabPress}
-              style={{
-                width: 56,
-                height: 56,
-                backgroundColor: m3.colorScheme.primary,
-                borderRadius: borderRadius.full,
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={t('workers.actions.title')}
-            >
-              {({ pressed }) => (
-                <>
-                  <UiSymbol name="plus" size={28} color={m3.colorScheme.onPrimary} />
-                  <View
-                    pointerEvents="none"
-                    style={[
-                      StyleSheet.absoluteFill,
-                      {
-                        backgroundColor: pressed
-                          ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)
-                          : 'transparent',
-                      },
-                    ]}
-                  />
-                </>
-              )}
-            </Pressable>
+            <Fab onPress={handleFabPress} accessibilityLabel={t('workers.actions.title')} />
           </GuidedTourTarget>
         )}
       </View>

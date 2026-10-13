@@ -83,6 +83,7 @@ export function FarmSelectSheet({
 
         <View style={{ paddingHorizontal: spacing[5], flex: 1 }}>
           <FlatList
+            nestedScrollEnabled
             data={farms}
             keyExtractor={(item) => item.id?.toString() ?? item.name}
             showsVerticalScrollIndicator={false}
