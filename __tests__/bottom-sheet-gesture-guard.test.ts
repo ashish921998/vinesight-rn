@@ -46,4 +46,15 @@ describe('dismissible Android bottom sheets', () => {
     expect(scrollViews.length).toBeGreaterThan(0);
     expect(scrollViews.every((tag) => tag.includes('nestedScrollEnabled'))).toBe(true);
   });
+
+  it.each([
+    'components/modals/farm-select-sheet.tsx',
+    'components/modals/worker-select-sheet.tsx',
+  ])('%s sets nestedScrollEnabled on its inner FlatList', (relativePath) => {
+    const source = fs.readFileSync(path.join(srcRoot, relativePath), 'utf8');
+
+    const lists = source.match(/<FlatList[^>]*>/g) ?? [];
+    expect(lists.length).toBeGreaterThan(0);
+    expect(lists.every((tag) => tag.includes('nestedScrollEnabled'))).toBe(true);
+  });
 });
