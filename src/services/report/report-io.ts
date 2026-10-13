@@ -155,12 +155,8 @@ export async function exportPDF(
   areaUnit: AreaUnitPreference = 'acres',
   fpcColumns: FpcColumnOptions = FPC_LEAN_COLUMNS,
 ): Promise<void> {
-  const html = generatePDFHtml(data, summary, reportType, preferredCurrency, areaUnit, fpcColumns);
-
-  const { uri } = await Print.printToFileAsync({
-    html,
-    base64: false,
-  });
+  // Share the named copy so recipients see the farm name, not a temp UUID.
+  const uri = await downloadPDF(data, summary, reportType, preferredCurrency, areaUnit, fpcColumns);
 
   if (await Sharing.isAvailableAsync()) {
     await Sharing.shareAsync(uri, {

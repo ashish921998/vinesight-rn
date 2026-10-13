@@ -135,7 +135,15 @@ export const hi = {
     unavailableFarmer: 'यह किसान अब उपलब्ध नहीं है। सूची रीफ़्रेश करें।',
     unavailableFarm: 'खेत की पहुँच अब उपलब्ध नहीं है।',
     activity: 'गतिविधि',
+    recentActivity: 'हाल की गतिविधि',
     emptyActivity: 'अभी कोई गतिविधि नहीं।',
+    seeAllLogs_one: 'सभी {{count}} लॉग देखें',
+    seeAllLogs_other: 'सभी {{count}} लॉग देखें',
+    allLogs: 'सभी लॉग',
+    searchLogsPlaceholder: 'लॉग खोजें',
+    noMatchingLogs: 'आपके फ़िल्टर से कोई लॉग मेल नहीं खाता।',
+    clearFilters: 'फ़िल्टर साफ़ करें',
+    clearSearch: 'खोज साफ़ करें',
     addLog: 'लॉग जोड़ें',
     addDelegatedLog: 'प्रतिनिधि लॉग जोड़ें',
     logType: 'लॉग प्रकार',
@@ -146,6 +154,10 @@ export const hi = {
     attribution: '{{member}} · {{organization}} द्वारा जोड़ा गया',
     organizationMember: 'संगठन सदस्य',
     organization: 'संगठन',
+    metrics: {
+      safeToHarvest: '{{date}} से $t(glossary.harvest) के लिए सुरक्षित',
+      harvested: '{{value}} किग्रा $t(glossary.harvest) हुई',
+    },
     fields: {
       duration: 'अवधि (घंटे)',
       chemical: 'कैटलॉग स्प्रे',
@@ -515,6 +527,8 @@ export const hi = {
       locationOptional: 'स्थान (वैकल्पिक)',
       soilPropertiesOptional: 'मिट्टी गुण (वैकल्पिक)',
       soilTexture: 'मिट्टी की बनावट',
+      agronomyDetails: 'कृषि विवरण जोड़ें (वैकल्पिक)',
+      agronomyDetailsHint: 'किस्म, दूरी, सिंचाई, स्थान, मिट्टी और अन्य',
     },
     fields: {
       name: {

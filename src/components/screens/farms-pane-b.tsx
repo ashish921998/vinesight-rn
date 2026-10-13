@@ -16,6 +16,7 @@ import { colorWithOpacity } from '@/utils/color';
 import { parseDbDateToLocalDate } from '@/utils/date';
 import { formatNumber } from '@/i18n/format';
 import { useM3 } from '@/styles/use-theme';
+import { useFarmAreaAcres } from '@/hooks/use-farm-area-acres';
 import type { Farm } from '@/types';
 import { isLowWater } from '@/types';
 
@@ -65,6 +66,8 @@ export function FarmsPaneB({
 }: FarmsPaneBProps) {
   const m3 = useM3();
   const { t } = useTranslation();
+  // farms.area is stored in the owner's preferred unit, so only the label varies.
+  const { preferredAreaUnit } = useFarmAreaAcres(undefined);
 
   // ── Search ──────────────────────────────────────────────────────────────
   const filteredFarms = useMemo<Farm[]>(() => {
@@ -128,13 +131,19 @@ export function FarmsPaneB({
       const subtitleParts = [
         item.crop_variety,
         Number.isFinite(area)
-          ? `${formatNumber(area, { maximumFractionDigits: 1 })} ha`
+          ? `${formatNumber(area, { maximumFractionDigits: 1 })} ${t(`units.${preferredAreaUnit}`)}`
           : undefined,
         item.region,
       ].filter(Boolean);
 
       // Visible metadata: "Pruning · 45/130" (or just the stage pre-pruning).
-      const metaText = days != null ? `${stage} · ${days}/${SEASON_LENGTH_DAYS}` : stage;
+      // Past the season length the total is dropped so it never reads "341/130".
+      const metaText =
+        days == null
+          ? stage
+          : pastHarvest
+            ? `${stage} · ${days}`
+            : `${stage} · ${days}/${SEASON_LENGTH_DAYS}`;
 
       return (
         <Pressable
@@ -213,13 +222,13 @@ export function FarmsPaneB({
                 fontVariant: ['tabular-nums'],
               }}
             >
-              {days != null ? `${stage} · ${days}/${SEASON_LENGTH_DAYS}` : stage}
+              {metaText}
             </Text>
           </View>
         </Pressable>
       );
     },
-    [onFarmPress, onEditFarm, today, t, m3],
+    [onFarmPress, onEditFarm, today, t, m3, preferredAreaUnit],
   );
 
   return (

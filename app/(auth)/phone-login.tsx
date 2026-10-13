@@ -33,6 +33,7 @@ import { isPhoneNumberHintSupported, requestPhoneNumberHint } from '@/services/p
 import appLogoDark from '../../assets/icons/ios-dark.png';
 import appLogoLight from '../../assets/icons/ios-light.png';
 import * as WebBrowser from 'expo-web-browser';
+import { useRevealAboveKeyboard } from '@/hooks/use-reveal-above-keyboard';
 
 interface Country {
   name: string;
@@ -67,6 +68,7 @@ const DEFAULT_COUNTRY = COUNTRIES[0]; // India
 
 export default function PhoneLoginScreen() {
   const { t } = useTranslation();
+  const { targetRef: submitRef, scrollProps } = useRevealAboveKeyboard();
   const m3 = useM3();
   const isDark = useIsDark();
   const appLogo = isDark ? appLogoDark : appLogoLight;
@@ -521,6 +523,7 @@ export default function PhoneLoginScreen() {
       style={containerStyle}
     >
       <ScrollView
+        {...scrollProps}
         contentContainerStyle={{ flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -628,17 +631,19 @@ export default function PhoneLoginScreen() {
               )}
 
               {/* Send Code Button */}
-              <Button
-                title={
-                  isLoading
-                    ? t('authPhone.sendingCode')
-                    : t('authPhone.continueButton', { defaultValue: 'Continue' })
-                }
-                onPress={handleSendCode}
-                isLoading={isLoading}
-                disabled={!phoneNumber || !normalizedPhoneNumber}
-                style={{ marginTop: spacing[3] }}
-              />
+              <View ref={submitRef} collapsable={false}>
+                <Button
+                  title={
+                    isLoading
+                      ? t('authPhone.sendingCode')
+                      : t('authPhone.continueButton', { defaultValue: 'Continue' })
+                  }
+                  onPress={handleSendCode}
+                  isLoading={isLoading}
+                  disabled={!phoneNumber || !normalizedPhoneNumber}
+                  style={{ marginTop: spacing[3] }}
+                />
+              </View>
             </View>
 
             {/* Divider */}

@@ -18,11 +18,13 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useIsDark, useM3 } from '@/styles/use-theme';
 import { formatNumber } from '@/i18n/format';
+import { useRevealAboveKeyboard } from '@/hooks/use-reveal-above-keyboard';
 
 const RESEND_COOLDOWN = 30;
 
 export default function ForgotPasswordScreen() {
   const { t } = useTranslation();
+  const { targetRef: submitRef, scrollProps } = useRevealAboveKeyboard();
   const m3 = useM3();
   const isDark = useIsDark();
 
@@ -203,6 +205,7 @@ export default function ForgotPasswordScreen() {
       style={containerStyle}
     >
       <ScrollView
+        {...scrollProps}
         contentContainerStyle={contentContainerStyle}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -275,15 +278,17 @@ export default function ForgotPasswordScreen() {
               </View>
             )}
 
-            <Button
-              title={
-                isLoading ? t('authForgotPassword.sending') : t('authForgotPassword.sendButton')
-              }
-              onPress={handleSend}
-              isLoading={isLoading}
-              disabled={!email.trim() || isLoading}
-              style={{ marginTop: spacing[6] }}
-            />
+            <View ref={submitRef} collapsable={false}>
+              <Button
+                title={
+                  isLoading ? t('authForgotPassword.sending') : t('authForgotPassword.sendButton')
+                }
+                onPress={handleSend}
+                isLoading={isLoading}
+                disabled={!email.trim() || isLoading}
+                style={{ marginTop: spacing[6] }}
+              />
+            </View>
 
             {renderBackButton()}
           </>
